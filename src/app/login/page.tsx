@@ -4,8 +4,9 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase-client';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Building2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Building2, ArrowLeft } from 'lucide-react';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -40,70 +41,107 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 p-4">
-      <Card className="w-full max-w-md shadow-2xl">
-        <CardHeader className="space-y-4 text-center">
-          <div className="mx-auto w-16 h-16 bg-primary rounded-2xl flex items-center justify-center">
-            <Building2 className="w-10 h-10 text-primary-foreground" />
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Grid pattern background */}
+      <div className="absolute inset-0 grid-pattern opacity-50 pointer-events-none" />
+
+      {/* Gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-br from-transparent via-background/80 to-background pointer-events-none" />
+
+      {/* Back to home link */}
+      <div className="absolute top-6 left-6 z-50">
+        <button
+          onClick={() => router.push('/')}
+          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Volver al inicio
+        </button>
+      </div>
+
+      {/* Login Form */}
+      <div className="relative z-10 min-h-screen flex items-center justify-center p-4">
+        <div className="w-full max-w-md">
+          {/* Logo */}
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 mb-4">
+              <Building2 className="w-8 h-8 text-primary" />
+            </div>
+            <h1 className="text-3xl font-bold text-foreground mb-2">Blok</h1>
+            <p className="text-muted-foreground">Inicia sesión en tu cuenta</p>
           </div>
-          <CardTitle className="text-3xl">Blok</CardTitle>
-          <CardDescription className="text-lg">
-            Gestión Inteligente para Condominios
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleLogin} className="space-y-6">
-            <div className="space-y-2">
-              <label htmlFor="email" className="text-base font-medium block">
-                Correo Electrónico
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full h-14 px-4 rounded-lg border border-input bg-background text-base focus:outline-none focus:ring-2 focus:ring-ring"
-                placeholder="admin@edificio.com"
-                required
-              />
-            </div>
 
-            <div className="space-y-2">
-              <label htmlFor="password" className="text-base font-medium block">
-                Contraseña
-              </label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full h-14 px-4 rounded-lg border border-input bg-background text-base focus:outline-none focus:ring-2 focus:ring-ring"
-                placeholder="••••••••"
-                required
-              />
-            </div>
+          {/* Form Card */}
+          <div className="gradient-border p-1">
+            <div className="bg-card rounded-lg p-8">
+              <form onSubmit={handleLogin} className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="email">Correo Electrónico</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="admin@edificio.com"
+                    required
+                    className="h-12"
+                  />
+                </div>
 
-            {error && (
-              <div className="p-4 rounded-lg bg-destructive/10 text-destructive text-base">
-                {error}
+                <div className="space-y-2">
+                  <Label htmlFor="password">Contraseña</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    required
+                    className="h-12"
+                  />
+                </div>
+
+                {error && (
+                  <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20">
+                    <p className="text-sm text-destructive">{error}</p>
+                  </div>
+                )}
+
+                <Button
+                  type="submit"
+                  className="w-full h-12 bg-foreground text-background hover:bg-foreground/90"
+                  disabled={loading}
+                >
+                  {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+                </Button>
+              </form>
+
+              {/* Demo credentials */}
+              <div className="mt-6 pt-6 border-t border-border">
+                <p className="text-xs text-muted-foreground text-center mb-2">
+                  Cuenta de demostración:
+                </p>
+                <p className="text-sm text-foreground text-center font-mono">
+                  admin@demo.com / demo123
+                </p>
               </div>
-            )}
 
-            <Button
-              type="submit"
-              className="w-full"
-              size="lg"
-              disabled={loading}
-            >
-              {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
-            </Button>
-          </form>
-
-          <div className="mt-6 text-center text-sm text-muted-foreground">
-            <p>Demo: admin@demo.com / demo123</p>
+              {/* Sign up link */}
+              <div className="mt-6 text-center">
+                <p className="text-sm text-muted-foreground">
+                  ¿No tienes una cuenta?{' '}
+                  <button
+                    onClick={() => router.push('/signup')}
+                    className="text-primary hover:underline font-medium"
+                  >
+                    Regístrate gratis
+                  </button>
+                </p>
+              </div>
+            </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
