@@ -110,7 +110,7 @@ npx supabase functions logs whatsapp-webhook --tail
 
 You should see:
 ```
-🏢 CondoSync webhook received
+🏢 Blok webhook received
 ✅ Building found: Edificio Vista del Mar
 ✅ Resident found: Ana Martínez
 🤖 Analyzing message with Claude AI...

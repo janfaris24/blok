@@ -4,13 +4,17 @@ import { useState } from 'react';
 import { createClient } from '@/lib/supabase-client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Building2, Plus, Zap, Home, Users, Trash2 } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Building2, Plus, Zap, Home, Users, Trash2, Pencil } from 'lucide-react';
 
 interface Building {
   id: string;
   name: string;
   address: string;
-  whatsapp_business_number: string;
+  city?: string;
+  whatsapp_business_number?: string;
 }
 
 interface Unit {
@@ -29,10 +33,17 @@ interface BuildingManagerProps {
 export function BuildingManager({ building, initialUnits }: BuildingManagerProps) {
   const [units, setUnits] = useState(initialUnits);
   const [showBulkModal, setShowBulkModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [bulkData, setBulkData] = useState({
     floors: 8,
     unitsPerFloor: 12,
     startFloor: 1,
+  });
+  const [editData, setEditData] = useState({
+    name: building.name,
+    address: building.address,
+    city: building.city || 'San Juan',
+    whatsapp_business_number: building.whatsapp_business_number || '',
   });
   const [loading, setLoading] = useState(false);
   const supabase = createClient();
@@ -115,6 +126,38 @@ export function BuildingManager({ building, initialUnits }: BuildingManagerProps
     }
   };
 
+  const handleUpdateBuilding = async () => {
+    if (!editData.name.trim() || !editData.address.trim()) {
+      alert('Nombre y dirección son requeridos');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await fetch('/api/building/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Error al actualizar');
+      }
+
+      alert('✅ Información del edificio actualizada');
+      setShowEditModal(false);
+      window.location.reload();
+    } catch (error: any) {
+      console.error('Error updating building:', error);
+      alert(error.message || 'Error al actualizar el edificio');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const groupedUnits: { [floor: number]: Unit[] } = {};
   units.forEach(unit => {
     if (!groupedUnits[unit.floor]) {
@@ -141,24 +184,39 @@ export function BuildingManager({ building, initialUnits }: BuildingManagerProps
         {/* Building Info */}
         <Card className="border-border/40">
           <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Building2 className="w-4 h-4" />
-              Información del Edificio
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Building2 className="w-4 h-4" />
+                Información del Edificio
+              </CardTitle>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowEditModal(true)}
+                className="gap-2"
+              >
+                <Pencil className="w-3 h-3" />
+                Editar
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
                 <p className="text-xs text-muted-foreground mb-1">Nombre</p>
                 <p className="text-sm font-semibold">{building.name}</p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground mb-1">Dirección</p>
-                <p className="text-sm font-semibold">{building.address || 'No especificada'}</p>
+                <p className="text-sm font-semibold">{building.address}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">Ciudad</p>
+                <p className="text-sm font-semibold">{building.city || 'San Juan'}</p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground mb-1">WhatsApp Business</p>
-                <p className="text-sm font-semibold">{building.whatsapp_business_number}</p>
+                <p className="text-sm font-semibold">{building.whatsapp_business_number || 'No configurado'}</p>
               </div>
             </div>
           </CardContent>
@@ -293,6 +351,76 @@ export function BuildingManager({ building, initialUnits }: BuildingManagerProps
           </Card>
         )}
       </div>
+
+      {/* Edit Building Modal */}
+      <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Editar Información del Edificio</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Nombre *</Label>
+              <Input
+                id="name"
+                value={editData.name}
+                onChange={(e) => setEditData({ ...editData, name: e.target.value })}
+                placeholder="Ej: Condominio Vista Verde"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="address">Dirección *</Label>
+              <Input
+                id="address"
+                value={editData.address}
+                onChange={(e) => setEditData({ ...editData, address: e.target.value })}
+                placeholder="Ej: Calle Principal #123"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="city">Ciudad</Label>
+              <Input
+                id="city"
+                value={editData.city}
+                onChange={(e) => setEditData({ ...editData, city: e.target.value })}
+                placeholder="Ej: San Juan"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="whatsapp">WhatsApp Business</Label>
+              <Input
+                id="whatsapp"
+                value={editData.whatsapp_business_number}
+                onChange={(e) => setEditData({ ...editData, whatsapp_business_number: e.target.value })}
+                placeholder="Ej: +1787XXXXXXX"
+              />
+              <p className="text-xs text-muted-foreground">
+                Formato: +1787XXXXXXX (incluye código de país)
+              </p>
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <Button
+                onClick={handleUpdateBuilding}
+                disabled={loading}
+                className="flex-1"
+              >
+                {loading ? 'Guardando...' : 'Guardar Cambios'}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setShowEditModal(false)}
+                disabled={loading}
+              >
+                Cancelar
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Bulk Creation Modal */}
       {showBulkModal && (

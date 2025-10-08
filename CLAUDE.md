@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**CondoSync** is an AI-powered communication platform for Puerto Rico condominium associations. It handles resident messaging through WhatsApp (primary), email, and SMS, with AI-driven intent analysis, smart routing, and automated responses.
+**Blok** is an AI-powered communication platform for Puerto Rico condominium associations. It handles resident messaging through WhatsApp (primary), email, and SMS, with AI-driven intent analysis, smart routing, and automated responses.
 
 **Primary Language**: Spanish (with English support)
 **Target Market**: 20-100 unit condo buildings in Puerto Rico
@@ -253,7 +253,7 @@ await sendWhatsAppMessage(
 
 ### AI Analysis
 ```typescript
-import { analyzeMessage } from '@/lib/condosync-ai';
+import { analyzeMessage } from '@/lib/blok-ai';
 
 const analysis = await analyzeMessage(
   messageText,

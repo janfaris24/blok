@@ -1,8 +1,8 @@
-# CondoSync - Complete Implementation Specification
+# Blok - Complete Implementation Specification
 
 ## 🎯 Executive Summary
 
-**Product Name:** CondoSync  
+**Product Name:** Blok  
 **Tagline:** "AI-Powered Communication Platform for Puerto Rico Condominiums"  
 **Target Market:** Condo associations (20-100+ units) in Puerto Rico  
 **Pricing:** $199-399/month per building  
@@ -328,7 +328,7 @@ export async function analyzeMessage(
   buildingContext?: string
 ): Promise<AIAnalysisResult> {
   const prompt = `
-You are an AI assistant for a Puerto Rico condominium management system called CondoSync.
+You are an AI assistant for a Puerto Rico condominium management system called Blok.
 
 CONTEXT:
 - Resident type: ${residentType}
@@ -1092,6 +1092,6 @@ Cierra: {{4}}
 
 ---
 
-This specification covers the complete end-to-end implementation of CondoSync. Focus on MVP features first (Weeks 1-4), validate with pilot customers, then expand with polls, advanced features, and scale to more buildings.
+This specification covers the complete end-to-end implementation of Blok. Focus on MVP features first (Weeks 1-4), validate with pilot customers, then expand with polls, advanced features, and scale to more buildings.
 
 **Key to Success:** Solve the communication chaos problem first. Everything else is secondary.

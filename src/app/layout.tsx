@@ -9,7 +9,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'CondoSync - Gestión Inteligente para Condominios',
+  title: 'Blok - Gestión Inteligente para Condominios',
   description: 'Plataforma de comunicación con IA para asociaciones de condominios en Puerto Rico',
 };
 

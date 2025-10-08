@@ -1,4 +1,4 @@
-# 🎨 CondoSync Admin Dashboard
+# 🎨 Blok Admin Dashboard
 
 ## ✅ What's Built
 

@@ -21,69 +21,58 @@ export function RealtimeNotifications({ buildingId }: RealtimeNotificationsProps
   const router = useRouter();
 
   useEffect(() => {
-    // Subscribe to new messages from residents
-    const messagesChannel = supabase
-      .channel('global_messages_changes')
+    // Subscribe to new notifications (created by webhook or other sources)
+    const notificationsChannel = supabase
+      .channel('global_notifications_changes')
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'messages',
+          table: 'notifications',
+          filter: `building_id=eq.${buildingId}`,
         },
         async (payload) => {
-          // Only notify for resident messages
-          if (payload.new.sender_type === 'resident') {
-            // Fetch the conversation to get resident info
-            const { data: message } = await supabase
-              .from('messages')
-              .select(`
-                *,
-                conversations (
-                  id,
-                  building_id,
-                  residents (
-                    first_name,
-                    last_name
-                  )
-                )
-              `)
-              .eq('id', payload.new.id)
-              .single();
+          const notification = payload.new;
 
-            // Only show notification if message is for this building
-            if (message && message.conversations && message.conversations.building_id === buildingId) {
-              const residentName = `${message.conversations.residents.first_name} ${message.conversations.residents.last_name}`;
-              const conversationId = message.conversations.id;
-              const description = `${residentName}: ${message.content.substring(0, 60)}${message.content.length > 60 ? '...' : ''}`;
+          console.log('[RealtimeNotifications] New notification received:', notification);
 
-              // Save notification to database
-              await supabase.from('notifications').insert({
-                building_id: buildingId,
-                type: 'message',
-                title: 'Nuevo Mensaje',
-                description,
-                reference_id: conversationId,
-                reference_type: 'conversation',
-                read: false,
-              });
+          // Show toast for all notification types
+          const toastTitle = notification.title || 'Nueva Notificación';
+          const toastDescription = notification.description || notification.message || '';
 
-              // Show toast
-              toast.info('Nuevo Mensaje', {
-                description,
-                duration: 5000,
-                action: {
-                  label: 'Ver',
-                  onClick: () => {
-                    router.push(`/dashboard/conversations?conversation=${conversationId}`);
-                  },
+          // Choose toast variant based on type
+          if (notification.type === 'message' || notification.type === 'new_message') {
+            toast.info(toastTitle, {
+              description: toastDescription,
+              duration: 5000,
+              action: notification.link ? {
+                label: 'Ver',
+                onClick: () => {
+                  router.push(notification.link);
                 },
-              });
-
-              // Play notification sound
-              playNotificationSound();
-            }
+              } : undefined,
+            });
+          } else if (notification.type === 'maintenance_request') {
+            toast.warning(toastTitle, {
+              description: toastDescription,
+              duration: 6000,
+              action: notification.link ? {
+                label: 'Ver',
+                onClick: () => {
+                  router.push(notification.link);
+                },
+              } : undefined,
+            });
+          } else {
+            toast(toastTitle, {
+              description: toastDescription,
+              duration: 5000,
+            });
           }
+
+          // Play notification sound
+          playNotificationSound();
         }
       )
       .subscribe();
@@ -153,7 +142,7 @@ export function RealtimeNotifications({ buildingId }: RealtimeNotificationsProps
       .subscribe();
 
     return () => {
-      supabase.removeChannel(messagesChannel);
+      supabase.removeChannel(notificationsChannel);
       supabase.removeChannel(maintenanceChannel);
     };
   }, [buildingId, supabase]);

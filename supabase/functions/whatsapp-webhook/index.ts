@@ -1,8 +1,8 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 
-// 🏢 CONDOSYNC - AI-Powered Condo Communication Platform
-console.log("🏢 CondoSync WhatsApp webhook starting...");
+// 🏢 BLOK - AI-Powered Condo Communication Platform
+console.log("🏢 Blok WhatsApp webhook starting...");
 
 interface IncomingMessageData {
   messageId: string;
@@ -52,7 +52,7 @@ interface AIAnalysisResult {
 // Main webhook handler
 Deno.serve(async (req: Request) => {
   try {
-    console.log('🏢 CondoSync webhook received');
+    console.log('🏢 Blok webhook received');
     const startTime = Date.now();
 
     if (req.method !== 'POST') {
@@ -157,13 +157,15 @@ Deno.serve(async (req: Request) => {
       console.log('✅ Using existing conversation');
     }
 
-    // 4. Analyze message with AI
+    // 4. Analyze message with AI (with knowledge base lookup)
     console.log('🤖 Analyzing message with Claude AI...');
     const analysis = await analyzeMessage(
       messageData.body,
       resident.type,
       resident.preferred_language || 'es',
-      building.name
+      building.name,
+      building.id,
+      supabase
     );
 
     console.log(`✅ AI Analysis: intent=${analysis.intent}, priority=${analysis.priority}, routeTo=${analysis.routeTo}`);
@@ -243,14 +245,14 @@ Deno.serve(async (req: Request) => {
       .update({ last_message_at: new Date().toISOString() })
       .eq('id', conversation.id);
 
-    console.log(`✅ CondoSync processed in ${Date.now() - startTime}ms`);
+    console.log(`✅ Blok processed in ${Date.now() - startTime}ms`);
 
     return new Response('<?xml version="1.0" encoding="UTF-8"?><Response></Response>', {
       headers: { 'Content-Type': 'application/xml' }
     });
 
   } catch (error) {
-    console.error('❌ CondoSync error:', error);
+    console.error('❌ Blok error:', error);
     return new Response('<?xml version="1.0" encoding="UTF-8"?><Response></Response>', {
       headers: { 'Content-Type': 'application/xml' }
     });
@@ -278,12 +280,38 @@ function parseWebhookData(body: string): IncomingMessageData | null {
   }
 }
 
+// Search knowledge base for relevant information
+async function searchKnowledgeBase(query: string, buildingId: string, supabase: any): Promise<any[]> {
+  try {
+    const { data: entries, error } = await supabase
+      .from('knowledge_base')
+      .select('*')
+      .eq('building_id', buildingId)
+      .eq('active', true)
+      .or(`question.ilike.%${query}%,answer.ilike.%${query}%,keywords.cs.{${query}}`)
+      .order('priority', { ascending: false })
+      .limit(5);
+
+    if (error) {
+      console.error('❌ Knowledge base search error:', error);
+      return [];
+    }
+
+    return entries || [];
+  } catch (error) {
+    console.error('❌ Knowledge base search error:', error);
+    return [];
+  }
+}
+
 // AI Message Analysis using Claude
 async function analyzeMessage(
   message: string,
   residentType: 'owner' | 'renter',
   language: 'es' | 'en' = 'es',
-  buildingContext?: string
+  buildingContext?: string,
+  buildingId?: string,
+  supabase?: any
 ): Promise<AIAnalysisResult> {
   const anthropicApiKey = Deno.env.get('ANTHROPIC_API_KEY');
 
@@ -292,7 +320,25 @@ async function analyzeMessage(
     return getFallbackResponse(language);
   }
 
-  const prompt = buildAIPrompt(message, residentType, language, buildingContext);
+  // Search knowledge base for relevant information
+  let knowledgeContext = '';
+  if (buildingId && supabase) {
+    const knowledgeEntries = await searchKnowledgeBase(message, buildingId, supabase);
+
+    if (knowledgeEntries.length > 0) {
+      console.log(`🔍 Found ${knowledgeEntries.length} knowledge base entries`);
+      knowledgeContext = `
+BASE DE CONOCIMIENTO DEL EDIFICIO (Usa esta información para responder preguntas):
+${knowledgeEntries.map((entry, idx) => `
+${idx + 1}. Pregunta: ${entry.question}
+   Respuesta: ${entry.answer}
+   Categoría: ${entry.category}
+`).join('\n')}
+`;
+    }
+  }
+
+  const prompt = buildAIPrompt(message, residentType, language, buildingContext, knowledgeContext);
 
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -350,17 +396,19 @@ function buildAIPrompt(
   message: string,
   residentType: 'owner' | 'renter',
   language: 'es' | 'en',
-  buildingContext?: string
+  buildingContext?: string,
+  knowledgeContext?: string
 ): string {
   const isSpanish = language === 'es';
 
   return isSpanish ? `
-Eres un asistente AI para CondoSync, un sistema de gestión de condominios en Puerto Rico.
+Eres un asistente AI para Blok, un sistema de gestión de condominios en Puerto Rico.
 
 CONTEXTO:
 - Tipo de residente: ${residentType === 'owner' ? 'Propietario' : 'Inquilino'}
 - Idioma: Español
 - Edificio: ${buildingContext || 'N/A'}
+${knowledgeContext || ''}
 
 MENSAJE DEL RESIDENTE:
 "${message}"
@@ -388,8 +436,9 @@ TAREA: Analiza este mensaje y responde en formato JSON con estos campos:
 
 4. **suggestedResponse**: Respuesta útil en español (2-3 oraciones)
    - Profesional, cálida y concisa
+   - **IMPORTANTE**: Si la BASE DE CONOCIMIENTO DEL EDIFICIO contiene información relevante, ÚSALA para responder la pregunta con precisión
    - Si es mantenimiento, confirma recepción y di que admin revisará
-   - Si es pregunta que puedes responder, provee la respuesta
+   - Si es pregunta que puedes responder con info de la base de conocimiento, provee esa respuesta específica
    - Si no sabes, di que admin responderá en 24 horas
 
 5. **requiresHumanReview**: true si admin DEBE revisar (emergencias, quejas, problemas complejos)
@@ -410,12 +459,13 @@ RESPUESTA (solo JSON, sin markdown):
   }
 }
 ` : `
-You are an AI assistant for CondoSync, a Puerto Rico condominium management system.
+You are an AI assistant for Blok, a Puerto Rico condominium management system.
 
 CONTEXT:
 - Resident type: ${residentType === 'owner' ? 'Owner' : 'Renter'}
 - Language: English
 - Building: ${buildingContext || 'N/A'}
+${knowledgeContext || ''}
 
 MESSAGE FROM RESIDENT:
 "${message}"
@@ -443,8 +493,9 @@ TASK: Analyze this message and respond in JSON format with these fields:
 
 4. **suggestedResponse**: Helpful response in English (2-3 sentences)
    - Professional, warm, and concise
+   - **IMPORTANT**: If the BUILDING KNOWLEDGE BASE contains relevant information, USE IT to answer the question accurately
    - If maintenance, acknowledge and say admin will review
-   - If question you can answer, provide the answer
+   - If question you can answer with knowledge base info, provide that specific answer
    - If you don't know, say admin will follow up within 24 hours
 
 5. **requiresHumanReview**: true if admin MUST review (emergencies, complaints, complex issues)

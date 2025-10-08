@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
-import type { AIAnalysisResult, MessageIntent, Language, ResidentType } from '@/types/condosync';
+import type { AIAnalysisResult, MessageIntent, Language, ResidentType } from '@/types/blok';
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,

@@ -1,9 +1,9 @@
-# CondoSync - Technical Implementation Guide
+# Blok - Technical Implementation Guide
 
 ## 🏗️ Project Structure
 
 ```
-condosync/
+blok/
 ├── src/
 │   ├── app/
 │   │   ├── api/
@@ -76,7 +76,7 @@ condosync/
 │   │       └── [id]/
 │   │           └── page.tsx             # Public poll voting page
 │   ├── components/
-│   │   ├── condosync/
+│   │   ├── blok/
 │   │   │   ├── ConversationList.tsx     # Conversations sidebar
 │   │   │   ├── MessageThread.tsx        # Message thread view
 │   │   │   ├── BroadcastComposer.tsx    # Broadcast creation form
@@ -93,7 +93,7 @@ condosync/
 │   │       ├── dialog.tsx
 │   │       └── badge.tsx
 │   ├── lib/
-│   │   ├── condosync-ai.ts              # AI message analysis
+│   │   ├── blok-ai.ts              # AI message analysis
 │   │   ├── whatsapp-client.ts           # WhatsApp/Twilio integration
 │   │   ├── email-client.ts              # Resend email client
 │   │   ├── sms-client.ts                # Twilio SMS client
@@ -102,10 +102,10 @@ condosync/
 │   │   ├── message-router.ts            # Smart routing logic
 │   │   └── broadcast-engine.ts          # Broadcast sending logic
 │   └── types/
-│       └── condosync.ts                 # TypeScript types
+│       └── blok.ts                 # TypeScript types
 ├── supabase/
 │   └── migrations/
-│       └── 001_condosync_schema.sql     # Database schema
+│       └── 001_blok_schema.sql     # Database schema
 └── package.json
 ```
 
@@ -122,7 +122,7 @@ npm install -D @types/node
 
 ## 🗄️ Complete Database Migration
 
-Create file: `supabase/migrations/001_condosync_schema.sql`
+Create file: `supabase/migrations/001_blok_schema.sql`
 
 ```sql
 -- Enable UUID extension
@@ -371,7 +371,7 @@ CREATE POLICY "Admins can manage announcements in their building"
 
 ## 🔑 Core Library Files
 
-### 1. AI Message Analysis (`src/lib/condosync-ai.ts`)
+### 1. AI Message Analysis (`src/lib/blok-ai.ts`)
 
 ````typescript
 import Anthropic from '@anthropic-ai/sdk';
@@ -412,7 +412,7 @@ export async function analyzeMessage(
   buildingContext?: string
 ): Promise<AIAnalysisResult> {
   const prompt = `
-You are an AI assistant for CondoSync, a Puerto Rico condominium management system.
+You are an AI assistant for Blok, a Puerto Rico condominium management system.
 
 CONTEXT:
 - Resident type: ${residentType}
@@ -666,7 +666,7 @@ export async function sendBroadcast(broadcastId: string) {
 ```typescript
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
-import { analyzeMessage } from '@/lib/condosync-ai';
+import { analyzeMessage } from '@/lib/blok-ai';
 import { sendWhatsAppMessage } from '@/lib/whatsapp-client';
 import { routeMessage } from '@/lib/message-router';
 
@@ -836,7 +836,7 @@ export async function POST(req: NextRequest) {
 
 ## 🎨 UI Components
 
-### Message Thread (`src/components/condosync/MessageThread.tsx`)
+### Message Thread (`src/components/blok/MessageThread.tsx`)
 
 ```typescript
 'use client';
@@ -970,7 +970,7 @@ export function MessageThread({ conversationId }: { conversationId: string }) {
 }
 ```
 
-### Broadcast Composer (`src/components/condosync/BroadcastComposer.tsx`)
+### Broadcast Composer (`src/components/blok/BroadcastComposer.tsx`)
 
 ```typescript
 'use client';
@@ -1110,7 +1110,7 @@ TWILIO_WHATSAPP_NUMBER=+14155238886
 
 RESEND_API_KEY=re_xxxxx
 
-NEXT_PUBLIC_APP_URL=https://condosync.app
+NEXT_PUBLIC_APP_URL=https://blok.app
 ```
 
 ### 3. Vercel Deployment
@@ -1171,4 +1171,4 @@ vercel --prod
 
 ---
 
-This technical guide provides all the code structure, database schema, and implementation details needed to build CondoSync from scratch. Start with the MVP features and iterate based on user feedback.
+This technical guide provides all the code structure, database schema, and implementation details needed to build Blok from scratch. Start with the MVP features and iterate based on user feedback.

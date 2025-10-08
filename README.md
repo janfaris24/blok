@@ -1,4 +1,4 @@
-# CondoSync - AI-Powered Condo Communication Platform
+# Blok - AI-Powered Condo Communication Platform
 
 WhatsApp-first communication platform for Puerto Rico condominium associations with AI-driven message analysis, smart routing, and automated responses.
 
@@ -147,19 +147,19 @@ Uses Claude Sonnet 4.5 to extract:
 ## 📁 Project Structure
 
 ```
-condosync/
+blok/
 ├── app/
 │   ├── api/webhooks/whatsapp/route.ts  # Main webhook endpoint
 │   ├── layout.tsx
 │   └── page.tsx
 ├── lib/
-│   ├── condosync-ai.ts                 # AI analysis (Claude)
+│   ├── blok-ai.ts                 # AI analysis (Claude)
 │   ├── whatsapp-client.ts              # Twilio WhatsApp
 │   ├── message-router.ts               # Smart routing
 │   ├── supabase-server.ts              # Server-side DB
 │   └── supabase-client.ts              # Client-side DB
 ├── types/
-│   └── condosync.ts                    # TypeScript types
+│   └── blok.ts                    # TypeScript types
 ├── scripts/
 │   ├── setup-test-data.ts              # Populate test data
 │   └── test-ai.ts                      # Test AI analysis
@@ -277,7 +277,7 @@ npm start
 
 ## 📝 License
 
-Private - CondoSync POC
+Private - Blok POC
 
 ## 🔗 Resources
 

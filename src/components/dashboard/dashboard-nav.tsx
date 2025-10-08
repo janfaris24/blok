@@ -11,7 +11,13 @@ import {
   Megaphone,
   LogOut,
   Building2,
-  Bell
+  Bell,
+  Search,
+  Settings,
+  User,
+  Command,
+  HelpCircle,
+  BookOpen
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -19,12 +25,10 @@ import { Button } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase-client';
 import { NotificationsPanel } from './notifications-panel';
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from '@/components/ui/sheet';
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 
 interface DashboardNavProps {
   buildingName: string;
@@ -32,45 +36,64 @@ interface DashboardNavProps {
   buildingId: string;
 }
 
-const navItems = [
+const navSections = [
   {
-    title: 'Resumen',
-    href: '/dashboard',
-    icon: LayoutDashboard,
+    label: 'GENERAL',
+    items: [
+      {
+        title: 'Resumen',
+        href: '/dashboard',
+        icon: LayoutDashboard,
+      },
+      {
+        title: 'Conversaciones',
+        href: '/dashboard/conversations',
+        icon: MessageSquare,
+      },
+    ],
   },
   {
-    title: 'Conversaciones',
-    href: '/dashboard/conversations',
-    icon: MessageSquare,
-  },
-  {
-    title: 'Mantenimiento',
-    href: '/dashboard/maintenance',
-    icon: Wrench,
-  },
-  {
-    title: 'Residentes',
-    href: '/dashboard/residents',
-    icon: Users,
-  },
-  {
-    title: 'Edificio',
-    href: '/dashboard/building',
-    icon: Building2,
-  },
-  {
-    title: 'Anuncios',
-    href: '/dashboard/broadcasts',
-    icon: Megaphone,
+    label: 'HERRAMIENTAS',
+    items: [
+      {
+        title: 'Mantenimiento',
+        href: '/dashboard/maintenance',
+        icon: Wrench,
+      },
+      {
+        title: 'Anuncios',
+        href: '/dashboard/broadcasts',
+        icon: Megaphone,
+      },
+      {
+        title: 'Residentes',
+        href: '/dashboard/residents',
+        icon: Users,
+      },
+      {
+        title: 'Edificio',
+        href: '/dashboard/building',
+        icon: Building2,
+      },
+      {
+        title: 'Base de Conocimiento',
+        href: '/dashboard/knowledge',
+        icon: BookOpen,
+      },
+    ],
   },
 ];
+
+// Flat array for mobile nav
+const navItems = navSections.flatMap(section => section.items);
 
 export function DashboardNav({ buildingName, userEmail, buildingId }: DashboardNavProps) {
   const pathname = usePathname();
   const router = useRouter();
   const supabase = createClient();
   const [unreadCount, setUnreadCount] = useState(0);
-  const [isOpen, setIsOpen] = useState(false);
+  const [isDesktopOpen, setIsDesktopOpen] = useState(false);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   // Load unread count
   useEffect(() => {
@@ -118,104 +141,183 @@ export function DashboardNav({ buildingName, userEmail, buildingId }: DashboardN
 
   return (
     <>
+      {/* Top Navigation Bar - Desktop (Minimal Nexus Style) */}
+      <div className="hidden lg:block fixed top-0 left-64 right-0 h-16 bg-background border-b border-border/40 z-40">
+        <div className="h-full flex items-center justify-between px-6">
+          {/* Search Bar */}
+          <div className="flex-1 max-w-md">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Search"
+                className="w-full h-9 pl-10 pr-16 rounded-lg bg-muted/50 border border-transparent text-sm placeholder:text-muted-foreground focus:outline-none focus:bg-background focus:border-border transition-all"
+              />
+              <kbd className="absolute right-3 top-1/2 -translate-y-1/2 px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground bg-background border border-border/60 rounded">
+                ⌘ + F
+              </kbd>
+            </div>
+          </div>
+
+          {/* Right Actions */}
+          <div className="flex items-center gap-1">
+            <button className="w-9 h-9 rounded-lg hover:bg-accent transition-colors flex items-center justify-center" title="Ayuda">
+              <HelpCircle className="w-[18px] h-[18px] text-muted-foreground" />
+            </button>
+
+            <Popover open={isDesktopOpen} onOpenChange={setIsDesktopOpen}>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="relative w-9 h-9 rounded-lg hover:bg-accent transition-colors flex items-center justify-center"
+                  title="Notificaciones"
+                >
+                  <Bell className="w-[18px] h-[18px] text-muted-foreground" />
+                  {unreadCount > 0 && (
+                    <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-destructive rounded-full" />
+                  )}
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[380px] p-0" align="end" sideOffset={8}>
+                <NotificationsPanel buildingId={buildingId} onClose={() => setIsDesktopOpen(false)} />
+              </PopoverContent>
+            </Popover>
+
+            <button className="w-9 h-9 rounded-lg hover:bg-accent transition-colors flex items-center justify-center" title="Configuración">
+              <Settings className="w-[18px] h-[18px] text-muted-foreground" />
+            </button>
+
+            {/* User Menu */}
+            <button className="flex items-center gap-2.5 ml-2 pl-1.5 pr-3 h-9 rounded-lg hover:bg-accent transition-colors">
+              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
+                <User className="w-3.5 h-3.5 text-white" />
+              </div>
+              <div className="text-left">
+                <p className="text-xs font-semibold leading-none">{buildingName.split(' ')[0]}</p>
+                <p className="text-[10px] text-muted-foreground leading-none mt-0.5">Administración</p>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Mobile header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 h-14 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border/40 z-50 flex items-center justify-between px-4">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-            <Building2 className="w-4 h-4 text-primary-foreground" />
+          <div className="w-8 h-8 bg-gradient-to-br from-primary to-secondary rounded-lg flex items-center justify-center">
+            <Building2 className="w-4 h-4 text-white" />
           </div>
           <div>
-            <p className="font-semibold text-sm">{buildingName}</p>
+            <p className="font-semibold text-sm">CondoSync</p>
           </div>
         </div>
         <div className="flex items-center gap-1">
-          <Sheet open={isOpen} onOpenChange={setIsOpen}>
-            <SheetTrigger asChild>
+          <Popover open={isMobileOpen} onOpenChange={setIsMobileOpen}>
+            <PopoverTrigger asChild>
               <Button variant="ghost" size="icon" className="relative h-9 w-9">
                 <Bell className="w-4 h-4" />
                 {unreadCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center font-medium">
-                    {unreadCount > 9 ? '9+' : unreadCount}
-                  </span>
+                  <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-destructive rounded-full" />
                 )}
               </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-full sm:w-[420px] p-0">
-              <SheetTitle className="sr-only">Notificaciones</SheetTitle>
-              <NotificationsPanel buildingId={buildingId} />
-            </SheetContent>
-          </Sheet>
+            </PopoverTrigger>
+            <PopoverContent className="w-[380px] p-0" align="end">
+              <NotificationsPanel buildingId={buildingId} onClose={() => setIsMobileOpen(false)} />
+            </PopoverContent>
+          </Popover>
           <ThemeToggle />
         </div>
       </div>
 
       {/* Sidebar */}
-      <aside className="fixed top-0 left-0 bottom-0 w-64 bg-background border-r border-border/40 hidden lg:flex flex-col">
-        {/* Header */}
-        <div className="h-16 flex items-center gap-3 px-5 border-b border-border/40">
-          <div className="w-9 h-9 bg-primary rounded-lg flex items-center justify-center">
-            <Building2 className="w-5 h-5 text-primary-foreground" />
+      <aside className="fixed top-0 left-0 bottom-0 w-64 bg-background border-r border-border/40 hidden lg:flex flex-col z-50">
+        {/* Logo Header */}
+        <div className="h-16 flex items-center justify-between px-5 border-b border-border/40">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 bg-gradient-to-br from-primary to-secondary rounded-lg flex items-center justify-center">
+              <Building2 className="w-4 h-4 text-white" />
+            </div>
+            <span className="font-bold text-base">Blok</span>
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="font-semibold text-sm truncate">{buildingName}</p>
-            <p className="text-xs text-muted-foreground truncate">{userEmail}</p>
-          </div>
+          <kbd className="px-1.5 py-1 text-[10px] font-semibold text-muted-foreground bg-muted rounded border border-border/60">
+            ⌘
+          </kbd>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-          {navItems.map((item) => {
-            const isActive = pathname === item.href ||
-              (item.href !== '/dashboard' && pathname.startsWith(item.href));
+        <nav className="flex-1 px-3 py-5 overflow-y-auto">
+          {navSections.map((section, sectionIdx) => (
+            <div key={section.label} className={sectionIdx > 0 ? 'mt-6' : ''}>
+              <p className="px-3 mb-2 text-[11px] font-semibold text-muted-foreground/60 tracking-wider">
+                {section.label}
+              </p>
+              <div className="space-y-0.5">
+                {section.items.map((item) => {
+                  const isActive = pathname === item.href ||
+                    (item.href !== '/dashboard' && pathname.startsWith(item.href));
 
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  'flex items-center gap-3 px-3 h-10 rounded-lg text-sm font-medium transition-all',
-                  isActive
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:bg-accent hover:text-foreground'
-                )}
-              >
-                <item.icon className="w-4 h-4" />
-                <span>{item.title}</span>
-              </Link>
-            );
-          })}
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={cn(
+                        'flex items-center gap-3 px-3 h-9 rounded-lg text-sm font-medium transition-all',
+                        isActive
+                          ? 'bg-muted text-foreground'
+                          : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+                      )}
+                    >
+                      <item.icon className="w-[18px] h-[18px]" />
+                      <span>{item.title}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+
+          {/* SUPPORT Section */}
+          <div className="mt-6">
+            <p className="px-3 mb-2 text-[11px] font-semibold text-muted-foreground/60 tracking-wider">
+              SOPORTE
+            </p>
+            <div className="space-y-0.5">
+              <button className="w-full flex items-center gap-3 px-3 h-9 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-all">
+                <Settings className="w-[18px] h-[18px]" />
+                <span>Configuración</span>
+              </button>
+              <button className="w-full flex items-center gap-3 px-3 h-9 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-all">
+                <HelpCircle className="w-[18px] h-[18px]" />
+                <span>Ayuda</span>
+              </button>
+            </div>
+          </div>
         </nav>
 
         {/* Footer */}
-        <div className="p-3 border-t border-border/40 space-y-2">
-          <Sheet open={isOpen} onOpenChange={setIsOpen}>
-            <SheetTrigger asChild>
-              <Button variant="outline" className="w-full justify-start h-9 text-sm font-medium" size="sm">
-                <Bell className="w-4 h-4 mr-2" />
-                Notificaciones
-                {unreadCount > 0 && (
-                  <span className="ml-auto w-5 h-5 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center font-medium">
-                    {unreadCount > 9 ? '9+' : unreadCount}
-                  </span>
-                )}
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-full sm:w-[420px] p-0">
-              <SheetTitle className="sr-only">Notificaciones</SheetTitle>
-              <NotificationsPanel buildingId={buildingId} />
-            </SheetContent>
-          </Sheet>
-          <div className="flex items-center justify-between gap-2">
+        <div className="p-3 border-t border-border/40 space-y-3">
+          {/* Building/Team Switcher */}
+          <button className="w-full flex items-center gap-2.5 p-2 rounded-lg bg-secondary/10 hover:bg-secondary/20 transition-colors group">
+            <div className="w-9 h-9 bg-gradient-to-br from-secondary to-primary rounded-lg flex items-center justify-center flex-shrink-0">
+              <Building2 className="w-4 h-4 text-white" />
+            </div>
+            <div className="flex-1 text-left min-w-0">
+              <p className="font-semibold text-xs truncate">{buildingName}</p>
+              <p className="text-[10px] text-muted-foreground">Administración</p>
+            </div>
+            <Command className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
+          </button>
+
+          {/* Theme Toggle & Logout */}
+          <div className="flex items-center gap-2">
             <ThemeToggle />
-            <Button
-              variant="ghost"
-              className="flex-1 justify-start h-9 text-sm font-medium text-muted-foreground hover:text-foreground"
-              size="sm"
+            <button
               onClick={handleLogout}
+              className="flex-1 flex items-center justify-center gap-2 h-9 px-3 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-all"
             >
-              <LogOut className="w-4 h-4 mr-2" />
-              Cerrar Sesión
-            </Button>
+              <LogOut className="w-[18px] h-[18px]" />
+              <span className="text-xs">Salir</span>
+            </button>
           </div>
         </div>
       </aside>

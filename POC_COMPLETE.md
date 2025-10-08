@@ -1,8 +1,8 @@
-# ✅ CondoSync POC - COMPLETE
+# ✅ Blok POC - COMPLETE
 
 ## 🎉 Status: 100% Functional & Ready to Test
 
-The production-quality Proof of Concept for CondoSync has been **fully implemented and tested**. All core features are working end-to-end.
+The production-quality Proof of Concept for Blok has been **fully implemented and tested**. All core features are working end-to-end.
 
 ---
 
@@ -27,7 +27,7 @@ The production-quality Proof of Concept for CondoSync has been **fully implement
 
 ### 2. AI Message Analysis Engine
 
-**File:** `lib/condosync-ai.ts` (147 lines)
+**File:** `lib/blok-ai.ts` (147 lines)
 
 **Capabilities:**
 - ✅ Intent classification (9 types)
@@ -87,7 +87,7 @@ The production-quality Proof of Concept for CondoSync has been **fully implement
 ## 🏗️ Project Architecture
 
 ```
-condosync/
+blok/
 ├── app/
 │   ├── api/webhooks/whatsapp/route.ts    # Main webhook endpoint
 │   ├── layout.tsx                        # Root layout
@@ -95,14 +95,14 @@ condosync/
 │   └── globals.css                       # Tailwind styles
 │
 ├── lib/
-│   ├── condosync-ai.ts                   # AI analysis engine
+│   ├── blok-ai.ts                   # AI analysis engine
 │   ├── whatsapp-client.ts                # Twilio WhatsApp client
 │   ├── message-router.ts                 # Smart routing logic
 │   ├── supabase-server.ts                # Server-side DB client
 │   └── supabase-client.ts                # Client-side DB client
 │
 ├── types/
-│   └── condosync.ts                      # TypeScript interfaces
+│   └── blok.ts                      # TypeScript interfaces
 │
 ├── scripts/
 │   ├── setup-test-data.ts                # Test data setup
@@ -367,8 +367,8 @@ vercel --prod
 
 ### Option 2: Docker
 ```bash
-docker build -t condosync .
-docker run -p 3000:3000 condosync
+docker build -t blok .
+docker run -p 3000:3000 blok
 ```
 
 ### Option 3: Node.js

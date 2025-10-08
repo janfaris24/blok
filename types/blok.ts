@@ -1,4 +1,4 @@
-// Core types for CondoSync
+// Core types for Blok
 
 export type MessageIntent =
   | 'maintenance_request'

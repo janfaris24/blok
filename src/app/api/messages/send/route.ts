@@ -65,9 +65,11 @@ export async function POST(request: NextRequest) {
       .insert({
         conversation_id: conversationId,
         sender_type: 'admin',
-        sender_id: user.id,
         content: message,
-        channel: conversation.channel,
+        intent: null,
+        priority: null,
+        routing: null,
+        requires_human_review: false,
       })
       .select()
       .single();
@@ -81,7 +83,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Send WhatsApp message if resident is opted in
-    if (conversation.channel === 'whatsapp' && resident.opted_in_whatsapp) {
+    if (resident.opted_in_whatsapp) {
       const recipientNumber = resident.whatsapp_number || resident.phone;
 
       try {

@@ -1,4 +1,4 @@
-# CondoSync POC - Setup Guide
+# Blok POC - Setup Guide
 
 ## ✅ What's Already Done
 

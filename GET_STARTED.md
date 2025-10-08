@@ -1,4 +1,4 @@
-# 🚀 Get Started - CondoSync POC
+# 🚀 Get Started - Blok POC
 
 ## ✅ What's Been Built (100% Complete!)
 

@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase-server';
 import { sendWhatsAppMessage } from '@/lib/whatsapp-client';
-import type { AIAnalysisResult, Resident, Unit } from '@/types/condosync';
+import type { AIAnalysisResult, Resident, Unit } from '@/types/blok';
 
 /**
  * Routes a message based on AI analysis and resident type

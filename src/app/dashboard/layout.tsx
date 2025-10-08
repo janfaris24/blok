@@ -30,8 +30,8 @@ export default async function DashboardLayout({
         userEmail={user.email || ''}
         buildingId={building?.id || ''}
       />
-      <main className="lg:pl-64 pt-14 lg:pt-0 pb-16 lg:pb-0">
-        <div className="p-4 lg:p-6 max-w-[1600px] mx-auto">
+      <main className="lg:pl-64 pt-14 lg:pt-16 pb-16 lg:pb-0">
+        <div className="p-4 lg:p-6 max-w-[1800px] mx-auto">
           {children}
         </div>
       </main>

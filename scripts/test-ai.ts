@@ -10,7 +10,7 @@ import { resolve } from 'path';
 // Load environment variables from .env.local
 config({ path: resolve(process.cwd(), '.env.local') });
 
-import { analyzeMessage } from '../lib/condosync-ai';
+import { analyzeMessage } from '../lib/blok-ai';
 
 if (!process.env.ANTHROPIC_API_KEY) {
   console.error('❌ Error: ANTHROPIC_API_KEY not set in .env.local');

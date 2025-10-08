@@ -1,5 +1,5 @@
 /**
- * Setup Test Data for CondoSync POC
+ * Setup Test Data for Blok POC
  *
  * This script populates the database with test data:
  * - 1 test building
@@ -28,7 +28,7 @@ if (!supabaseUrl || !supabaseKey) {
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function setupTestData() {
-  console.log('🚀 Setting up test data for CondoSync POC...\n');
+  console.log('🚀 Setting up test data for Blok POC...\n');
 
   try {
     // 1. Create test building

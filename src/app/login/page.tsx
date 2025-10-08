@@ -46,7 +46,7 @@ export default function LoginPage() {
           <div className="mx-auto w-16 h-16 bg-primary rounded-2xl flex items-center justify-center">
             <Building2 className="w-10 h-10 text-primary-foreground" />
           </div>
-          <CardTitle className="text-3xl">CondoSync</CardTitle>
+          <CardTitle className="text-3xl">Blok</CardTitle>
           <CardDescription className="text-lg">
             Gestión Inteligente para Condominios
           </CardDescription>

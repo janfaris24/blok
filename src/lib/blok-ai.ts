@@ -1,9 +1,28 @@
 import Anthropic from '@anthropic-ai/sdk';
-import type { AIAnalysisResult, MessageIntent, Language, ResidentType } from '@/types/condosync';
+import type { AIAnalysisResult, MessageIntent, Language, ResidentType } from '@/types/blok';
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
+
+/**
+ * Searches the knowledge base for relevant information
+ */
+async function searchKnowledgeBase(query: string, buildingId: string): Promise<any[]> {
+  try {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/knowledge/search?q=${encodeURIComponent(query)}&building_id=${buildingId}`
+    );
+
+    if (!response.ok) return [];
+
+    const data = await response.json();
+    return data.entries || [];
+  } catch (error) {
+    console.error('[Knowledge Base Search Error]', error);
+    return [];
+  }
+}
 
 /**
  * Analyzes a resident's message using Claude AI to determine intent, priority, routing, and generate a response
@@ -12,21 +31,41 @@ const anthropic = new Anthropic({
  * @param residentType - Whether the resident is an 'owner' or 'renter'
  * @param language - The resident's preferred language ('es' or 'en')
  * @param buildingContext - Optional building name/context for better responses
+ * @param buildingId - Building ID for knowledge base lookup
  * @returns AI analysis with intent, priority, routing, suggested response, and extracted data
  */
 export async function analyzeMessage(
   message: string,
   residentType: ResidentType,
   language: Language = 'es',
-  buildingContext?: string
+  buildingContext?: string,
+  buildingId?: string
 ): Promise<AIAnalysisResult> {
+  // Search knowledge base for relevant information
+  let knowledgeContext = '';
+  if (buildingId) {
+    const knowledgeEntries = await searchKnowledgeBase(message, buildingId);
+
+    if (knowledgeEntries.length > 0) {
+      knowledgeContext = `
+BUILDING KNOWLEDGE BASE (Use this information to answer questions):
+${knowledgeEntries.map((entry, idx) => `
+${idx + 1}. Q: ${entry.question}
+   A: ${entry.answer}
+   Category: ${entry.category}
+`).join('\n')}
+`;
+    }
+  }
+
   const prompt = `
-You are an AI assistant for CondoSync, a Puerto Rico condominium management system.
+You are an AI assistant for Blok, a Puerto Rico condominium management system.
 
 CONTEXT:
 - Resident type: ${residentType}
 - Language: ${language}
 - Building: ${buildingContext || 'N/A'}
+${knowledgeContext}
 
 MESSAGE FROM RESIDENT:
 "${message}"
@@ -54,8 +93,9 @@ TASK: Analyze this message and provide a structured response in JSON format with
 
 4. **suggestedResponse**: Write a helpful response in ${language === 'es' ? 'Spanish' : 'English'}.
    - Be professional, warm, and concise (2-3 sentences)
+   - **IMPORTANT**: If the BUILDING KNOWLEDGE BASE contains relevant information, USE IT to answer the question accurately
    - If it's a maintenance request, acknowledge and say admin will review
-   - If it's a question you can answer, provide the answer
+   - If it's a question you can answer with knowledge base info, provide that specific answer
    - If you don't know, say admin will follow up within 24 hours
 
 5. **requiresHumanReview**: true if admin MUST review (emergencies, complaints, complex issues)

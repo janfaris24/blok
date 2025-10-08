@@ -1,4 +1,4 @@
-# 🚀 Deploy CondoSync Edge Function to Supabase
+# 🚀 Deploy Blok Edge Function to Supabase
 
 ## ✅ What's Ready
 
@@ -183,6 +183,6 @@ https://ywavxrgibgfcvnxygpbz.supabase.co/functions/v1/whatsapp-webhook
 
 ---
 
-**Your CondoSync Edge Function is ready to deploy!** 🎉
+**Your Blok Edge Function is ready to deploy!** 🎉
 
 Just run the commands above and you'll have a fully functional AI-powered WhatsApp bot for your condo!

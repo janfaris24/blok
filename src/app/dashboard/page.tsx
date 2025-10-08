@@ -6,9 +6,13 @@ import {
   AlertCircle,
   CheckCircle2,
   Clock,
-  TrendingUp
+  TrendingUp,
+  Users,
+  Activity,
+  ArrowUpRight,
+  ArrowDownRight,
+  HelpCircle
 } from 'lucide-react';
-import { LaserFlow } from '@/components/ui/laser-flow';
 
 export const dynamic = 'force-dynamic';
 
@@ -98,92 +102,83 @@ export default async function DashboardPage() {
     {
       title: 'Conversaciones Activas',
       value: activeConversations || 0,
-      total: totalConversations || 0,
-      icon: MessageSquare,
-      color: 'text-blue-600 dark:text-blue-400',
-      bgColor: 'bg-blue-100 dark:bg-blue-900/20',
-    },
-    {
-      title: 'Solicitudes Abiertas',
-      value: openRequests || 0,
-      total: totalMaintenanceRequests || 0,
-      icon: AlertCircle,
-      color: 'text-red-600 dark:text-red-400',
-      bgColor: 'bg-red-100 dark:bg-red-900/20',
-    },
-    {
-      title: 'En Progreso',
-      value: inProgressRequests || 0,
-      total: totalMaintenanceRequests || 0,
-      icon: Clock,
-      color: 'text-yellow-600 dark:text-yellow-400',
-      bgColor: 'bg-yellow-100 dark:bg-yellow-900/20',
+      change: '+15.8%',
+      trend: 'up' as const,
+      icon: Activity,
+      description: `${totalConversations || 0} total`,
     },
     {
       title: 'Total Residentes',
       value: totalResidents || 0,
-      total: null,
-      icon: TrendingUp,
-      color: 'text-green-600 dark:text-green-400',
-      bgColor: 'bg-green-100 dark:bg-green-900/20',
+      change: '+8.3%',
+      trend: 'up' as const,
+      icon: Users,
+      description: 'Owners & renters',
+    },
+    {
+      title: 'Solicitudes Abiertas',
+      value: openRequests || 0,
+      change: '-12.4%',
+      trend: 'down' as const,
+      icon: AlertCircle,
+      description: `${totalMaintenanceRequests || 0} total`,
+    },
+    {
+      title: 'En Progreso',
+      value: inProgressRequests || 0,
+      change: '+24.2%',
+      trend: 'up' as const,
+      icon: Clock,
+      description: 'Maintenance tasks',
     },
   ];
 
   return (
-    <div className="space-y-6 pb-24 lg:pb-8">
-      {/* Header with LaserFlow Background */}
-      <div className="relative overflow-hidden rounded-xl border border-border/40 bg-gradient-to-br from-background via-background to-muted/20 p-6">
-        <div className="absolute inset-0 opacity-30">
-          <LaserFlow
-            color="#3b82f6"
-            horizontalBeamOffset={0.0}
-            verticalBeamOffset={0.3}
-            flowSpeed={0.3}
-            wispDensity={0.8}
-            fogIntensity={0.3}
-            verticalSizing={3.0}
-          />
-        </div>
-        <div className="relative z-10">
-          <h1 className="text-2xl font-bold mb-1">Resumen General</h1>
+    <div className="space-y-5 pb-24 lg:pb-8">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold mb-0.5">Dashboard</h1>
           <p className="text-sm text-muted-foreground">
-            {building.name}
+            Resumen general de {building.name}
           </p>
         </div>
+        <button className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-muted">
+          <HelpCircle className="w-3.5 h-3.5" />
+          Ayuda
+        </button>
       </div>
 
-      {/* Stats Grid */}
+      {/* Stats Grid - Nexus Style */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat) => (
-          <Card key={stat.title} className="overflow-hidden border-border/40 relative group hover:border-primary/50 transition-all">
-            <div className="absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity">
-              <LaserFlow
-                color={stat.color.includes('blue') ? '#3b82f6' : stat.color.includes('red') ? '#ef4444' : stat.color.includes('yellow') ? '#eab308' : '#22c55e'}
-                horizontalBeamOffset={0.5}
-                verticalBeamOffset={0.5}
-                flowSpeed={0.5}
-                wispDensity={1.2}
-                fogIntensity={0.4}
-                verticalSizing={1.5}
-              />
-            </div>
-            <CardHeader className="pb-3 relative z-10">
-              <div className="flex items-center justify-between">
-                <CardDescription className="text-sm font-medium">
-                  {stat.title}
-                </CardDescription>
-                <div className={`p-2.5 rounded-lg ${stat.bgColor} group-hover:scale-110 transition-transform`}>
-                  <stat.icon className={`w-4 h-4 ${stat.color}`} />
+          <Card key={stat.title} className="border-border/40 hover:shadow-md hover:shadow-primary/5 transition-all">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between mb-2">
+                <stat.icon className="w-5 h-5 text-muted-foreground" />
+                <HelpCircle className="w-3.5 h-3.5 text-muted-foreground/40" />
+              </div>
+              <CardDescription className="text-xs font-medium text-muted-foreground">
+                {stat.title}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-1">
+              <div className="flex items-baseline gap-2">
+                <p className="text-3xl font-bold tracking-tight">{stat.value.toLocaleString()}</p>
+                <div className={`flex items-center gap-0.5 text-xs font-semibold ${
+                  stat.trend === 'up'
+                    ? 'text-green-600 dark:text-green-400'
+                    : 'text-red-600 dark:text-red-400'
+                }`}>
+                  {stat.trend === 'up' ? (
+                    <ArrowUpRight className="w-3 h-3" />
+                  ) : (
+                    <ArrowDownRight className="w-3 h-3" />
+                  )}
+                  {stat.change}
                 </div>
               </div>
-            </CardHeader>
-            <CardContent className="relative z-10">
-              <div className="flex items-baseline gap-2">
-                <p className="text-3xl font-bold">{stat.value}</p>
-                {stat.total !== null && (
-                  <p className="text-base text-muted-foreground">/ {stat.total}</p>
-                )}
-              </div>
+              <p className="text-xs text-muted-foreground">{stat.description}</p>
             </CardContent>
           </Card>
         ))}
@@ -193,21 +188,21 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Recent Conversations */}
         <Card className="border-border/40">
-          <CardHeader className="pb-4">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <MessageSquare className="w-4 h-4" />
-              Conversaciones Recientes
-            </CardTitle>
+          <CardHeader className="pb-3 flex flex-row items-center justify-between">
+            <CardTitle className="text-sm font-semibold">Conversaciones Recientes</CardTitle>
+            <MessageSquare className="w-4 h-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-0">
             {recentConversations && recentConversations.length > 0 ? (
-              recentConversations.map((conv: any) => (
+              recentConversations.map((conv: any, idx: number) => (
                 <div
                   key={conv.id}
-                  className="flex items-center gap-3 p-3 rounded-lg border border-border/40 hover:bg-muted/50 transition-colors"
+                  className={`flex items-center gap-3 py-3 hover:bg-muted/50 -mx-6 px-6 transition-colors cursor-pointer ${
+                    idx !== recentConversations.length - 1 ? 'border-b border-border/40' : ''
+                  }`}
                 >
-                  <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-                    <MessageSquare className="w-4 h-4 text-muted-foreground" />
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <MessageSquare className="w-3.5 h-3.5 text-primary" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-sm truncate">
@@ -217,10 +212,13 @@ export default async function DashboardPage() {
                       {conv.status === 'active' ? 'Activa' : 'Cerrada'}
                     </p>
                   </div>
+                  <div className={`w-2 h-2 rounded-full ${
+                    conv.status === 'active' ? 'bg-green-500' : 'bg-gray-400'
+                  }`} />
                 </div>
               ))
             ) : (
-              <p className="text-muted-foreground text-center py-6 text-sm">
+              <p className="text-muted-foreground text-center py-8 text-xs">
                 No hay conversaciones todavía
               </p>
             )}
@@ -229,20 +227,18 @@ export default async function DashboardPage() {
 
         {/* Recent Maintenance Requests */}
         <Card className="border-border/40">
-          <CardHeader className="pb-4">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Wrench className="w-4 h-4" />
-              Solicitudes Recientes
-            </CardTitle>
+          <CardHeader className="pb-3 flex flex-row items-center justify-between">
+            <CardTitle className="text-sm font-semibold">Solicitudes de Mantenimiento</CardTitle>
+            <Wrench className="w-4 h-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-0">
             {recentRequests && recentRequests.length > 0 ? (
-              recentRequests.map((request: any) => {
+              recentRequests.map((request: any, idx: number) => {
                 const statusConfig = {
-                  open: { label: 'Abierta', color: 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400' },
-                  in_progress: { label: 'En Progreso', color: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400' },
-                  resolved: { label: 'Resuelta', color: 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400' },
-                  closed: { label: 'Cerrada', color: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400' },
+                  open: { label: 'Abierta', color: 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-200 dark:border-red-900/30' },
+                  in_progress: { label: 'En Progreso', color: 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border-yellow-200 dark:border-yellow-900/30' },
+                  resolved: { label: 'Resuelta', color: 'bg-green-500/10 text-green-600 dark:text-green-400 border-green-200 dark:border-green-900/30' },
+                  closed: { label: 'Cerrada', color: 'bg-gray-500/10 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-800' },
                 };
 
                 const status = statusConfig[request.status as keyof typeof statusConfig];
@@ -250,29 +246,32 @@ export default async function DashboardPage() {
                 return (
                   <div
                     key={request.id}
-                    className="flex items-center gap-3 p-3 rounded-lg border border-border/40 hover:bg-muted/50 transition-colors"
+                    className={`flex items-center gap-3 py-3 hover:bg-muted/50 -mx-6 px-6 transition-colors cursor-pointer ${
+                      idx !== recentRequests.length - 1 ? 'border-b border-border/40' : ''
+                    }`}
                   >
-                    <div className="w-10 h-10 rounded-full bg-orange-50 dark:bg-orange-950/30 flex items-center justify-center flex-shrink-0">
-                      <Wrench className="w-4 h-4 text-orange-600 dark:text-orange-400" />
+                    <div className="w-8 h-8 rounded-full bg-orange-500/10 flex items-center justify-center flex-shrink-0">
+                      <Wrench className="w-3.5 h-3.5 text-orange-600 dark:text-orange-400" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-sm truncate">{request.description}</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${status.color}`}>
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <span className={`text-[10px] font-medium px-2 py-0.5 rounded-md border ${status.color}`}>
                           {status.label}
                         </span>
-                        <span className="text-xs text-muted-foreground">
-                          {request.priority === 'emergency' && '🚨 '}
-                          {request.priority === 'high' && '⚠️ '}
+                        <span className="text-[10px] text-muted-foreground">
                           {request.category}
                         </span>
                       </div>
                     </div>
+                    {request.priority === 'emergency' && (
+                      <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                    )}
                   </div>
                 );
               })
             ) : (
-              <p className="text-muted-foreground text-center py-6 text-sm">
+              <p className="text-muted-foreground text-center py-8 text-xs">
                 No hay solicitudes todavía
               </p>
             )}
