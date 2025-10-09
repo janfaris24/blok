@@ -1,8 +1,14 @@
+"use client"
+
 import { Button } from "@/components/ui/button"
 import { Check } from "lucide-react"
+import { useLanguage } from "@/contexts/language-context"
 
 export function FinalCTA() {
-  const trustSignals = ["Sin tarjeta de crédito", "Setup en 30 minutos", "Soporte en español"]
+  const { t } = useLanguage()
+
+  // Parse the trial string to get individual trust signals
+  const trustSignals = t.finalCta.trial.split(' • ')
 
   return (
     <section id="contact" className="py-20 sm:py-32 relative overflow-hidden">
@@ -13,11 +19,11 @@ export function FinalCTA() {
         <div className="max-w-4xl mx-auto text-center">
           {/* Headline */}
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6 text-balance">
-            ¿Listo para Transformar Tu <span className="gradient-text">Condominio?</span>
+            {t.finalCta.headline}
           </h2>
 
           {/* Subheadline */}
-          <p className="text-lg text-muted-foreground mb-8">Únete a 30+ edificios que ya usan Blok</p>
+          <p className="text-lg text-muted-foreground mb-8">{t.finalCta.subheadline}</p>
 
           {/* CTA Button */}
           <Button
@@ -25,7 +31,7 @@ export function FinalCTA() {
             className="bg-foreground text-background hover:bg-foreground/90 text-lg px-12 py-6 h-auto mb-8"
             onClick={() => window.location.href = '/signup'}
           >
-            Comenzar Ahora - Gratis
+            {t.finalCta.cta}
           </Button>
 
           {/* Trust Signals */}

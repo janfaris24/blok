@@ -3,9 +3,11 @@
 import { Button } from "@/components/ui/button"
 import { ExternalLink } from "lucide-react"
 import { useScrollAnimation } from "@/hooks/use-scroll-animation"
+import { useLanguage } from "@/contexts/language-context"
 
 export function DashboardPreview() {
   const { ref, isVisible } = useScrollAnimation()
+  const { t } = useLanguage()
 
   return (
     <section className="py-20 sm:py-32 relative">
@@ -14,10 +16,10 @@ export function DashboardPreview() {
           {/* Headline */}
           <div ref={ref} className={`scroll-fade-in ${isVisible ? "visible" : ""}`}>
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-center mb-6 text-balance">
-              Panel de Control Diseñado para <span className="gradient-text">Velocidad</span>
+              {t.dashboardPreview.headline}
             </h2>
             <p className="text-lg text-muted-foreground text-center mb-12 max-w-2xl mx-auto">
-              Gestiona todas las conversaciones, tickets y anuncios desde un dashboard moderno
+              {t.dashboardPreview.subheadline}
             </p>
           </div>
 
@@ -47,7 +49,7 @@ export function DashboardPreview() {
                   {/* Overlay button */}
                   <Button variant="outline" className="relative z-10 gap-2 bg-background/80 backdrop-blur">
                     <ExternalLink size={16} />
-                    Ver Demo Interactivo
+                    {t.dashboardPreview.cta}
                   </Button>
                 </div>
               </div>

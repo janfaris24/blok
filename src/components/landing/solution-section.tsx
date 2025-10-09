@@ -1,24 +1,29 @@
+"use client"
+
 import { MessageSquare, Bot, LayoutDashboard } from "lucide-react"
+import { useLanguage } from "@/contexts/language-context"
 
 export function SolutionSection() {
+  const { t } = useLanguage()
+
   const steps = [
     {
       icon: MessageSquare,
-      title: "Residente escribe",
-      description: "Mensaje directo por WhatsApp",
-      example: '"El aire no funciona"',
+      title: t.solution.steps.step1.title,
+      description: t.solution.steps.step1.subtitle,
+      example: t.solution.steps.step1.example,
     },
     {
       icon: Bot,
-      title: "IA responde al instante",
-      description: "Crea ticket automáticamente",
-      example: "Ticket #1234 creado",
+      title: t.solution.steps.step2.title,
+      description: t.solution.steps.step2.subtitle,
+      example: t.solution.steps.step2.example,
     },
     {
       icon: LayoutDashboard,
-      title: "Admin recibe notificación",
-      description: "Asigna técnico desde dashboard",
-      example: "Técnico asignado",
+      title: t.solution.steps.step3.title,
+      description: t.solution.steps.step3.subtitle,
+      example: t.solution.steps.step3.example,
     },
   ]
 
@@ -28,10 +33,10 @@ export function SolutionSection() {
         <div className="max-w-6xl mx-auto">
           {/* Headline */}
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-center mb-6 text-balance">
-            Un Número de WhatsApp. <span className="gradient-text">Conversaciones Inteligentes.</span>
+            {t.solution.headline}
           </h2>
           <p className="text-lg text-muted-foreground text-center mb-16 max-w-2xl mx-auto">
-            Así funciona Blok en 3 pasos simples
+            {t.solution.subheadline}
           </p>
 
           {/* Steps */}

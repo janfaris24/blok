@@ -4,11 +4,12 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Menu, X, Moon, Sun } from "lucide-react"
 import { useTheme } from "next-themes"
+import { useLanguage } from "@/contexts/language-context"
 
 export function Navigation() {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const [language, setLanguage] = useState<"es" | "en">("es")
+  const { language, setLanguage, t } = useLanguage()
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
 
@@ -24,23 +25,11 @@ export function Navigation() {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
-  const navLinks = {
-    es: [
-      { label: "Características", href: "#features" },
-      { label: "Precios", href: "#pricing" },
-      { label: "Cómo Funciona", href: "#solution" },
-      { label: "Contacto", href: "#contact" },
-    ],
-    en: [
-      { label: "Features", href: "#features" },
-      { label: "Pricing", href: "#pricing" },
-      { label: "How It Works", href: "#solution" },
-      { label: "Contact", href: "#contact" },
-    ],
-  }
-
-  const ctaText = language === "es" ? "Comenzar Gratis" : "Get Started"
-  const loginText = language === "es" ? "Iniciar Sesión" : "Log In"
+  const navLinks = [
+    { label: t.nav.features, href: "#features" },
+    { label: t.nav.pricing, href: "#pricing" },
+    { label: "FAQ", href: "#faq" },
+  ]
 
   return (
     <nav
@@ -57,7 +46,7 @@ export function Navigation() {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">
-            {navLinks[language].map((link) => (
+            {navLinks.map((link) => (
               <a
                 key={link.href}
                 href={link.href}
@@ -110,14 +99,14 @@ export function Navigation() {
               variant="ghost"
               onClick={() => window.location.href = '/login'}
             >
-              {loginText}
+              {t.nav.login}
             </Button>
             <Button
               size="sm"
               className="bg-foreground text-background hover:bg-foreground/90"
               onClick={() => window.location.href = '/signup'}
             >
-              {ctaText}
+              {t.nav.signup}
             </Button>
           </div>
 
@@ -131,7 +120,7 @@ export function Navigation() {
         {isMobileMenuOpen && (
           <div className="md:hidden py-4 border-t border-border">
             <div className="flex flex-col gap-4">
-              {navLinks[language].map((link) => (
+              {navLinks.map((link) => (
                 <a
                   key={link.href}
                   href={link.href}
@@ -178,13 +167,13 @@ export function Navigation() {
                 className="w-full"
                 onClick={() => window.location.href = '/login'}
               >
-                {loginText}
+                {t.nav.login}
               </Button>
               <Button
                 className="bg-foreground text-background hover:bg-foreground/90 w-full"
                 onClick={() => window.location.href = '/signup'}
               >
-                {ctaText}
+                {t.nav.signup}
               </Button>
             </div>
           </div>

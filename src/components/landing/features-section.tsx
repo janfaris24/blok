@@ -2,40 +2,42 @@
 
 import { Bot, Target, Wrench, Megaphone, MessageCircle, BarChart3 } from "lucide-react"
 import { useScrollAnimation } from "@/hooks/use-scroll-animation"
+import { useLanguage } from "@/contexts/language-context"
 
 export function FeaturesSection() {
   const { ref, isVisible } = useScrollAnimation()
+  const { t } = useLanguage()
 
   const features = [
     {
       icon: Bot,
-      title: "Respuestas IA Instantáneas",
-      description: "Residentes reciben respuestas inmediatas 24/7 en español",
+      title: t.features.list.aiResponses.title,
+      description: t.features.list.aiResponses.description,
     },
     {
       icon: Target,
-      title: "Enrutamiento Inteligente",
-      description: "IA decide si notificar al dueño, inquilino o administrador",
+      title: t.features.list.smartRouting.title,
+      description: t.features.list.smartRouting.description,
     },
     {
       icon: Wrench,
-      title: "Tickets de Mantenimiento Automáticos",
-      description: "Extrae solicitudes de mantenimiento de conversaciones",
+      title: t.features.list.autoTickets.title,
+      description: t.features.list.autoTickets.description,
     },
     {
       icon: Megaphone,
-      title: "Anuncios Masivos",
-      description: "Envía mensajes a todos, solo dueños, o solo inquilinos",
+      title: t.features.list.broadcasts.title,
+      description: t.features.list.broadcasts.description,
     },
     {
       icon: MessageCircle,
-      title: "Conversaciones 1-a-1",
-      description: "Cada residente tiene su propio chat privado",
+      title: t.features.list.oneOnOne.title,
+      description: t.features.list.oneOnOne.description,
     },
     {
       icon: BarChart3,
-      title: "Dashboard en Tiempo Real",
-      description: "Monitorea todo desde un panel web moderno",
+      title: t.features.list.realtime.title,
+      description: t.features.list.realtime.description,
     },
   ]
 
@@ -48,7 +50,7 @@ export function FeaturesSection() {
             ref={ref}
             className={`text-3xl sm:text-4xl md:text-5xl font-bold text-center mb-16 text-balance scroll-fade-in ${isVisible ? "visible" : ""}`}
           >
-            Características <span className="gradient-text">Poderosas</span>
+            {t.features.headline}
           </h2>
 
           {/* Features Grid */}

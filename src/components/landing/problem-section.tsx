@@ -2,25 +2,27 @@
 
 import { MessageSquareX, Megaphone, Wrench } from "lucide-react"
 import { useScrollAnimation } from "@/hooks/use-scroll-animation"
+import { useLanguage } from "@/contexts/language-context"
 
 export function ProblemSection() {
   const { ref, isVisible } = useScrollAnimation()
+  const { t } = useLanguage()
 
   const problems = [
     {
       icon: MessageSquareX,
-      title: "Grupos de WhatsApp fragmentados",
-      description: "Residentes perdidos en múltiples chats sin organización",
+      title: t.problem.problems.fragmented.title,
+      description: t.problem.problems.fragmented.description,
     },
     {
       icon: Megaphone,
-      title: "Anuncios importantes que nadie ve",
-      description: "Mensajes críticos enterrados en conversaciones",
+      title: t.problem.problems.announcements.title,
+      description: t.problem.problems.announcements.description,
     },
     {
       icon: Wrench,
-      title: "Reportes de mantenimiento perdidos",
-      description: "Solicitudes perdidas en chats sin seguimiento",
+      title: t.problem.problems.maintenance.title,
+      description: t.problem.problems.maintenance.description,
     },
   ]
 
@@ -33,7 +35,7 @@ export function ProblemSection() {
             ref={ref}
             className={`text-3xl sm:text-4xl md:text-5xl font-bold text-center mb-16 text-balance scroll-fade-in ${isVisible ? "visible" : ""}`}
           >
-            La Comunicación de Condominios es un <span className="gradient-text">Caos</span>
+            {t.problem.headline}
           </h2>
 
           {/* Problem Cards */}

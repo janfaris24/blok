@@ -1,3 +1,4 @@
+import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase-server';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -29,6 +30,11 @@ export default async function DashboardPage() {
 
   if (!building) {
     return <div>No se encontró el edificio</div>;
+  }
+
+  // Check if onboarding is complete
+  if (!building.onboarding_completed) {
+    redirect('/setup');
   }
 
   // Get stats

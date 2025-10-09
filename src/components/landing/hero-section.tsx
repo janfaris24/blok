@@ -2,8 +2,11 @@
 
 import { Button } from "@/components/ui/button"
 import { Play } from "lucide-react"
+import { useLanguage } from "@/contexts/language-context"
 
 export function HeroSection() {
+  const { t } = useLanguage()
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
       {/* Grid pattern background */}
@@ -16,17 +19,17 @@ export function HeroSection() {
         <div className="max-w-5xl mx-auto text-center">
           {/* Eyebrow */}
           <div className="inline-block mb-6">
-            <span className="text-sm font-medium gradient-text">IA para Condominios en Puerto Rico</span>
+            <span className="text-sm font-medium gradient-text">{t.hero.eyebrow}</span>
           </div>
 
           {/* Headline */}
           <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-foreground mb-6 text-balance leading-tight">
-            Comunicación Inteligente para Tu Condominio
+            {t.hero.headline}
           </h1>
 
           {/* Subheadline */}
           <p className="text-lg sm:text-xl text-muted-foreground mb-8 max-w-3xl mx-auto text-pretty leading-relaxed">
-            IA que maneja conversaciones, mantenimiento y anuncios por WhatsApp. Diseñado para Puerto Rico.
+            {t.hero.subheadline}
           </p>
 
           {/* CTAs */}
@@ -36,7 +39,7 @@ export function HeroSection() {
               className="bg-foreground text-background hover:bg-foreground/90 text-base px-8"
               onClick={() => window.location.href = '/signup'}
             >
-              Comenzar Ahora
+              {t.hero.cta}
             </Button>
             <Button
               size="lg"
@@ -44,13 +47,13 @@ export function HeroSection() {
               className="text-base px-8 gap-2 bg-transparent"
               onClick={() => window.location.href = '/login'}
             >
-              Iniciar Sesión
+              {t.hero.login}
             </Button>
           </div>
 
           {/* Social Proof */}
           <p className="text-sm text-muted-foreground">
-            Usado por <span className="text-foreground font-semibold">30+ condominios</span> en Puerto Rico
+            {t.hero.socialProof.replace('{count}', '30')}
           </p>
 
           {/* Mockup placeholder */}

@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase-client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Building2, ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -60,23 +60,20 @@ export default function LoginPage() {
       </div>
 
       {/* Login Form */}
-      <div className="relative z-10 min-h-screen flex items-center justify-center p-4">
+      <div className="relative z-10 min-h-screen flex items-center justify-center p-4 py-12">
         <div className="w-full max-w-md">
           {/* Logo */}
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 mb-4">
-              <Building2 className="w-8 h-8 text-primary" />
-            </div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">Blok</h1>
-            <p className="text-muted-foreground">Inicia sesión en tu cuenta</p>
+          <div className="text-center mb-6">
+            <h1 className="text-2xl font-bold text-foreground mb-1">Bienvenido a Blok</h1>
+            <p className="text-sm text-muted-foreground">Inicia sesión en tu cuenta</p>
           </div>
 
           {/* Form Card */}
           <div className="gradient-border p-1">
-            <div className="bg-card rounded-lg p-8">
-              <form onSubmit={handleLogin} className="space-y-6">
-                <div className="space-y-2">
-                  <Label htmlFor="email">Correo Electrónico</Label>
+            <div className="bg-card rounded-lg p-6">
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div className="space-y-1">
+                  <Label htmlFor="email" className="text-xs">Correo Electrónico</Label>
                   <Input
                     id="email"
                     type="email"
@@ -84,12 +81,12 @@ export default function LoginPage() {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="admin@edificio.com"
                     required
-                    className="h-12"
+                    className="h-9"
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="password">Contraseña</Label>
+                <div className="space-y-1">
+                  <Label htmlFor="password" className="text-xs">Contraseña</Label>
                   <Input
                     id="password"
                     type="password"
@@ -97,28 +94,28 @@ export default function LoginPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
                     required
-                    className="h-12"
+                    className="h-9"
                   />
                 </div>
 
                 {error && (
-                  <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20">
-                    <p className="text-sm text-destructive">{error}</p>
+                  <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+                    <p className="text-xs text-destructive">{error}</p>
                   </div>
                 )}
 
                 <Button
                   type="submit"
-                  className="w-full h-12 bg-foreground text-background hover:bg-foreground/90"
+                  className="w-full h-10 bg-foreground text-background hover:bg-foreground/90"
                   disabled={loading}
                 >
                   {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
                 </Button>
               </form>
 
-              {/* Sign up link */}
-              <div className="mt-6 text-center">
-                <p className="text-sm text-muted-foreground">
+              {/* Signup link */}
+              <div className="mt-4 pt-4 border-t border-border text-center">
+                <p className="text-xs text-muted-foreground">
                   ¿No tienes una cuenta?{' '}
                   <button
                     onClick={() => router.push('/signup')}

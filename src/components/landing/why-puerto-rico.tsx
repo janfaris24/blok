@@ -1,24 +1,29 @@
+"use client"
+
 import { MessageSquare, Languages, MapPin } from "lucide-react"
+import { useLanguage } from "@/contexts/language-context"
 
 export function WhyPuertoRico() {
+  const { t } = useLanguage()
+
   const reasons = [
     {
       icon: MessageSquare,
       emoji: "🇵🇷",
-      title: "WhatsApp Primero",
-      description: "El canal #1 en PR",
+      title: t.why.features.whatsapp.title,
+      description: t.why.features.whatsapp.description,
     },
     {
       icon: Languages,
       emoji: "🗣️",
-      title: "Español Nativo",
-      description: "IA entrenada en español caribeño",
+      title: t.why.features.language.title,
+      description: t.why.features.language.description,
     },
     {
       icon: MapPin,
       emoji: "🏝️",
-      title: "Local",
-      description: "Entendemos la cultura de condominios boricuas",
+      title: t.why.features.local.title,
+      description: t.why.features.local.description,
     },
   ]
 
@@ -28,7 +33,7 @@ export function WhyPuertoRico() {
         <div className="max-w-6xl mx-auto">
           {/* Headline */}
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-center mb-16 text-balance">
-            Hecho para <span className="gradient-text">Puerto Rico</span>
+            {t.why.headline} <span className="gradient-text">{t.why.emoji}</span>
           </h2>
 
           {/* Reasons */}

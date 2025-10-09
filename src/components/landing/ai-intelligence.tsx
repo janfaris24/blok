@@ -2,25 +2,27 @@
 
 import { Brain, Zap, BookOpen } from "lucide-react"
 import { useScrollAnimation } from "@/hooks/use-scroll-animation"
+import { useLanguage } from "@/contexts/language-context"
 
 export function AIIntelligence() {
   const { ref, isVisible } = useScrollAnimation()
+  const { t } = useLanguage()
 
   const capabilities = [
     {
       icon: Brain,
-      title: "Análisis de Intención",
-      description: "Detecta mantenimiento, quejas, preguntas generales",
+      title: t.ai.capabilities.intent.title,
+      description: t.ai.capabilities.intent.description,
     },
     {
       icon: Zap,
-      title: "Priorización Automática",
-      description: "Emergencias flagged instantly",
+      title: t.ai.capabilities.priority.title,
+      description: t.ai.capabilities.priority.description,
     },
     {
       icon: BookOpen,
-      title: "Base de Conocimiento",
-      description: "Responde preguntas frecuentes (días de basura, horarios)",
+      title: t.ai.capabilities.knowledge.title,
+      description: t.ai.capabilities.knowledge.description,
     },
   ]
 
@@ -33,7 +35,7 @@ export function AIIntelligence() {
             ref={ref}
             className={`text-3xl sm:text-4xl md:text-5xl font-bold text-center mb-16 text-balance scroll-fade-in ${isVisible ? "visible" : ""}`}
           >
-            IA Entrenada para <span className="gradient-text">Condominios</span>
+            {t.ai.headline} <span className="gradient-text">{t.ai.headlineAccent}</span>
           </h2>
 
           {/* Capabilities */}
@@ -60,7 +62,7 @@ export function AIIntelligence() {
               <div className="grid md:grid-cols-2 gap-8 items-center">
                 {/* Input */}
                 <div>
-                  <div className="text-sm text-muted-foreground mb-2">Mensaje del residente:</div>
+                  <div className="text-sm text-muted-foreground mb-2">{t.ai.demo.input}</div>
                   <div className="bg-muted rounded-lg p-4 font-mono text-sm text-foreground">
                     "El aire acondicionado de mi apartamento no está enfriando. Es urgente porque hace mucho calor."
                   </div>
@@ -68,7 +70,7 @@ export function AIIntelligence() {
 
                 {/* Output */}
                 <div>
-                  <div className="text-sm text-muted-foreground mb-2">Análisis de IA:</div>
+                  <div className="text-sm text-muted-foreground mb-2">{t.ai.demo.output}</div>
                   <div className="bg-muted rounded-lg p-4 font-mono text-xs space-y-2">
                     <div>
                       <span className="text-secondary">intent:</span>{" "}

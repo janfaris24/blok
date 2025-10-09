@@ -1,5 +1,6 @@
 "use client";
 
+import { LanguageProvider } from "@/contexts/language-context";
 import { Navigation } from "@/components/landing/navigation";
 import { HeroSection } from "@/components/landing/hero-section";
 import { ProblemSection } from "@/components/landing/problem-section";
@@ -16,22 +17,24 @@ import { Footer } from "@/components/landing/footer";
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-background">
-      <Navigation />
-      <main>
-        <HeroSection />
-        <ProblemSection />
-        <SolutionSection />
-        <FeaturesSection />
-        <DashboardPreview />
-        <AIIntelligence />
-        <PricingSection />
-        <WhyPuertoRico />
-        <StatsSection />
-        <FAQSection />
-        <FinalCTA />
-      </main>
-      <Footer />
-    </div>
+    <LanguageProvider>
+      <div className="min-h-screen bg-background">
+        <Navigation />
+        <main>
+          <HeroSection />
+          <ProblemSection />
+          <SolutionSection />
+          <FeaturesSection />
+          <DashboardPreview />
+          <AIIntelligence />
+          <PricingSection />
+          <WhyPuertoRico />
+          <StatsSection />
+          <FAQSection />
+          <FinalCTA />
+        </main>
+        <Footer />
+      </div>
+    </LanguageProvider>
   );
 }

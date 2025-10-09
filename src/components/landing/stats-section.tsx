@@ -1,11 +1,15 @@
 "use client"
 
+import { useLanguage } from "@/contexts/language-context"
+
 export function StatsSection() {
+  const { t } = useLanguage()
+
   const stats = [
-    { value: "<2", suffix: " segundos", label: "Tiempo de respuesta promedio" },
-    { value: "85", suffix: "%+", label: "Precisión de IA" },
-    { value: "10", suffix: "+ horas", label: "Ahorradas por admin/semana" },
-    { value: "80", suffix: "%+", label: "Tasa de adopción de residentes" },
+    { value: t.stats.responseTime.value, label: t.stats.responseTime.label },
+    { value: t.stats.accuracy.value, label: t.stats.accuracy.label },
+    { value: t.stats.timeSaved.value, label: t.stats.timeSaved.label },
+    { value: t.stats.adoption.value, label: t.stats.adoption.label },
   ]
 
   return (
@@ -17,7 +21,6 @@ export function StatsSection() {
               <div key={index} className="text-center flex flex-col items-center justify-start">
                 <div className="text-4xl sm:text-5xl font-bold gradient-text mb-2 flex-shrink-0 min-h-[3rem] flex items-center justify-center">
                   {stat.value}
-                  {stat.suffix}
                 </div>
                 <p className="text-muted-foreground text-sm sm:text-base">{stat.label}</p>
               </div>
