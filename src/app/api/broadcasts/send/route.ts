@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
 import { sendBulkWhatsApp } from '@/lib/whatsapp-client';
-import type { BroadcastRecipient } from '@/types/blok';
 
 /**
  * Send a broadcast to recipients
@@ -107,13 +106,13 @@ export async function POST(request: NextRequest) {
 
     // Send via WhatsApp
     if (broadcast.send_via_whatsapp) {
-      const whatsappRecipients: BroadcastRecipient[] = residents
+      const whatsappRecipients = residents
         .filter((r) => r.opted_in_whatsapp && (r.whatsapp_number || r.phone))
         .map((r) => ({
           phone: r.whatsapp_number || r.phone,
           message: `📢 *${broadcast.subject}*\n\n${broadcast.message}\n\n_${building.name}_`,
-          residentId: r.id,
-          residentName: `${r.first_name} ${r.last_name}`,
+          id: r.id,
+          name: `${r.first_name} ${r.last_name}`,
         }));
 
       console.log('[Broadcast] 📱 WhatsApp recipients:', whatsappRecipients.length);
