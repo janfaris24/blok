@@ -10,11 +10,12 @@ import { createClient } from '@/lib/supabase-server';
  *   password: string;
  *   fullName: string;
  *   buildingName: string;
+ *   language?: string; // 'es' | 'en'
  * }
  */
 export async function POST(request: NextRequest) {
   try {
-    const { email, password, fullName, buildingName } = await request.json();
+    const { email, password, fullName, buildingName, language } = await request.json();
 
     // Validate required fields
     if (!email || !password || !fullName || !buildingName) {
@@ -41,6 +42,7 @@ export async function POST(request: NextRequest) {
       options: {
         data: {
           full_name: fullName,
+          language: language || 'es', // Pass language preference
         },
         // Auto-confirm for development (remove in production)
         emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`,

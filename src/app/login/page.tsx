@@ -7,14 +7,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ArrowLeft } from 'lucide-react';
+import { LanguageProvider, useLanguage } from '@/contexts/language-context';
 
-export default function LoginPage() {
+function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
   const supabase = createClient();
+  const { t, language, setLanguage } = useLanguage();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,15 +50,38 @@ export default function LoginPage() {
       {/* Gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-transparent via-background/80 to-background pointer-events-none" />
 
-      {/* Back to home link */}
-      <div className="absolute top-6 left-6 z-50">
+      {/* Back to home link + Language toggle */}
+      <div className="absolute top-6 left-6 right-6 z-50 flex items-center justify-between">
         <button
           onClick={() => router.push('/')}
           className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          Volver al inicio
+          {language === 'es' ? 'Volver al inicio' : 'Back to home'}
         </button>
+
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setLanguage('es')}
+            className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
+              language === 'es'
+                ? 'bg-foreground text-background'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            ES
+          </button>
+          <button
+            onClick={() => setLanguage('en')}
+            className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
+              language === 'en'
+                ? 'bg-foreground text-background'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            EN
+          </button>
+        </div>
       </div>
 
       {/* Login Form */}
@@ -64,8 +89,12 @@ export default function LoginPage() {
         <div className="w-full max-w-md">
           {/* Logo */}
           <div className="text-center mb-6">
-            <h1 className="text-2xl font-bold text-foreground mb-1">Bienvenido a Blok</h1>
-            <p className="text-sm text-muted-foreground">Inicia sesión en tu cuenta</p>
+            <h1 className="text-2xl font-bold text-foreground mb-1">
+              {language === 'es' ? 'Bienvenido a Blok' : 'Welcome to Blok'}
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              {language === 'es' ? 'Inicia sesión en tu cuenta' : 'Log in to your account'}
+            </p>
           </div>
 
           {/* Form Card */}
@@ -73,7 +102,9 @@ export default function LoginPage() {
             <div className="bg-card rounded-lg p-6">
               <form onSubmit={handleLogin} className="space-y-4">
                 <div className="space-y-1">
-                  <Label htmlFor="email" className="text-xs">Correo Electrónico</Label>
+                  <Label htmlFor="email" className="text-xs">
+                    {language === 'es' ? 'Correo Electrónico' : 'Email'}
+                  </Label>
                   <Input
                     id="email"
                     type="email"
@@ -86,7 +117,9 @@ export default function LoginPage() {
                 </div>
 
                 <div className="space-y-1">
-                  <Label htmlFor="password" className="text-xs">Contraseña</Label>
+                  <Label htmlFor="password" className="text-xs">
+                    {language === 'es' ? 'Contraseña' : 'Password'}
+                  </Label>
                   <Input
                     id="password"
                     type="password"
@@ -109,19 +142,22 @@ export default function LoginPage() {
                   className="w-full h-10 bg-foreground text-background hover:bg-foreground/90"
                   disabled={loading}
                 >
-                  {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+                  {loading
+                    ? (language === 'es' ? 'Iniciando sesión...' : 'Logging in...')
+                    : (language === 'es' ? 'Iniciar Sesión' : 'Log In')
+                  }
                 </Button>
               </form>
 
               {/* Signup link */}
               <div className="mt-4 pt-4 border-t border-border text-center">
                 <p className="text-xs text-muted-foreground">
-                  ¿No tienes una cuenta?{' '}
+                  {language === 'es' ? '¿No tienes una cuenta? ' : "Don't have an account? "}
                   <button
                     onClick={() => router.push('/signup')}
                     className="text-primary hover:underline font-medium"
                   >
-                    Regístrate gratis
+                    {language === 'es' ? 'Regístrate gratis' : 'Sign up free'}
                   </button>
                 </p>
               </div>
@@ -130,5 +166,13 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <LanguageProvider>
+      <LoginForm />
+    </LanguageProvider>
   );
 }

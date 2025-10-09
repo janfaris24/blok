@@ -7,8 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ArrowLeft } from 'lucide-react';
+import { LanguageProvider, useLanguage } from '@/contexts/language-context';
 
-export default function SignupPage() {
+function SignupForm() {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -20,6 +21,7 @@ export default function SignupPage() {
   const [error, setError] = useState('');
   const router = useRouter();
   const supabase = createClient();
+  const { language, setLanguage } = useLanguage();
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,14 +30,14 @@ export default function SignupPage() {
 
     // Validate passwords match
     if (formData.password !== formData.confirmPassword) {
-      setError('Las contraseñas no coinciden');
+      setError(language === 'es' ? 'Las contraseñas no coinciden' : 'Passwords do not match');
       setLoading(false);
       return;
     }
 
     // Validate password length
     if (formData.password.length < 6) {
-      setError('La contraseña debe tener al menos 6 caracteres');
+      setError(language === 'es' ? 'La contraseña debe tener al menos 6 caracteres' : 'Password must be at least 6 characters');
       setLoading(false);
       return;
     }
@@ -52,6 +54,7 @@ export default function SignupPage() {
           password: formData.password,
           fullName: formData.fullName,
           buildingName: formData.buildingName,
+          language: language, // Pass the selected language
         }),
       });
 
@@ -94,15 +97,38 @@ export default function SignupPage() {
       {/* Gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-transparent via-background/80 to-background pointer-events-none" />
 
-      {/* Back to home link */}
-      <div className="absolute top-6 left-6 z-50">
+      {/* Back to home link + Language toggle */}
+      <div className="absolute top-6 left-6 right-6 z-50 flex items-center justify-between">
         <button
           onClick={() => router.push('/')}
           className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          Volver al inicio
+          {language === 'es' ? 'Volver al inicio' : 'Back to home'}
         </button>
+
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setLanguage('es')}
+            className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
+              language === 'es'
+                ? 'bg-foreground text-background'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            ES
+          </button>
+          <button
+            onClick={() => setLanguage('en')}
+            className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
+              language === 'en'
+                ? 'bg-foreground text-background'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            EN
+          </button>
+        </div>
       </div>
 
       {/* Signup Form */}
@@ -110,9 +136,14 @@ export default function SignupPage() {
         <div className="w-full max-w-md">
           {/* Logo */}
           <div className="text-center mb-6">
-            <h1 className="text-2xl font-bold text-foreground mb-1">Únete a Blok</h1>
+            <h1 className="text-2xl font-bold text-foreground mb-1">
+              {language === 'es' ? 'Únete a Blok' : 'Join Blok'}
+            </h1>
             <p className="text-sm text-muted-foreground">
-              Cuenta para Administradores • Residentes solo necesitan WhatsApp
+              {language === 'es'
+                ? 'Cuenta para Administradores • Residentes solo necesitan WhatsApp'
+                : 'Admin Account • Residents only need WhatsApp'
+              }
             </p>
           </div>
 
@@ -122,26 +153,30 @@ export default function SignupPage() {
               <form onSubmit={handleSignup} className="space-y-4">
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <Label htmlFor="fullName" className="text-xs">Nombre Completo</Label>
+                    <Label htmlFor="fullName" className="text-xs">
+                      {language === 'es' ? 'Nombre Completo' : 'Full Name'}
+                    </Label>
                     <Input
                       id="fullName"
                       type="text"
                       value={formData.fullName}
                       onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                      placeholder="Juan Pérez"
+                      placeholder={language === 'es' ? 'Juan Pérez' : 'John Doe'}
                       required
                       className="h-9"
                     />
                   </div>
 
                   <div className="space-y-1">
-                    <Label htmlFor="buildingName" className="text-xs">Nombre del Edificio</Label>
+                    <Label htmlFor="buildingName" className="text-xs">
+                      {language === 'es' ? 'Nombre del Edificio' : 'Building Name'}
+                    </Label>
                     <Input
                       id="buildingName"
                       type="text"
                       value={formData.buildingName}
                       onChange={(e) => setFormData({ ...formData, buildingName: e.target.value })}
-                      placeholder="Vista del Mar"
+                      placeholder={language === 'es' ? 'Vista del Mar' : 'Ocean View'}
                       required
                       className="h-9"
                     />
@@ -149,7 +184,9 @@ export default function SignupPage() {
                 </div>
 
                 <div className="space-y-1">
-                  <Label htmlFor="email" className="text-xs">Correo Electrónico</Label>
+                  <Label htmlFor="email" className="text-xs">
+                    {language === 'es' ? 'Correo Electrónico' : 'Email'}
+                  </Label>
                   <Input
                     id="email"
                     type="email"
@@ -163,7 +200,9 @@ export default function SignupPage() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <Label htmlFor="password" className="text-xs">Contraseña</Label>
+                    <Label htmlFor="password" className="text-xs">
+                      {language === 'es' ? 'Contraseña' : 'Password'}
+                    </Label>
                     <Input
                       id="password"
                       type="password"
@@ -176,7 +215,9 @@ export default function SignupPage() {
                   </div>
 
                   <div className="space-y-1">
-                    <Label htmlFor="confirmPassword" className="text-xs">Confirmar</Label>
+                    <Label htmlFor="confirmPassword" className="text-xs">
+                      {language === 'es' ? 'Confirmar' : 'Confirm'}
+                    </Label>
                     <Input
                       id="confirmPassword"
                       type="password"
@@ -200,19 +241,22 @@ export default function SignupPage() {
                   className="w-full h-10 bg-foreground text-background hover:bg-foreground/90"
                   disabled={loading}
                 >
-                  {loading ? 'Creando cuenta...' : 'Crear Cuenta Gratis'}
+                  {loading
+                    ? (language === 'es' ? 'Creando cuenta...' : 'Creating account...')
+                    : (language === 'es' ? 'Crear Cuenta Gratis' : 'Create Free Account')
+                  }
                 </Button>
               </form>
 
               {/* Login link */}
               <div className="mt-4 pt-4 border-t border-border text-center">
                 <p className="text-xs text-muted-foreground">
-                  ¿Ya tienes una cuenta?{' '}
+                  {language === 'es' ? '¿Ya tienes una cuenta? ' : 'Already have an account? '}
                   <button
                     onClick={() => router.push('/login')}
                     className="text-primary hover:underline font-medium"
                   >
-                    Inicia sesión
+                    {language === 'es' ? 'Inicia sesión' : 'Log in'}
                   </button>
                 </p>
               </div>
@@ -221,5 +265,13 @@ export default function SignupPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <LanguageProvider>
+      <SignupForm />
+    </LanguageProvider>
   );
 }
