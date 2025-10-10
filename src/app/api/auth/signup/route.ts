@@ -92,6 +92,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Create building_admins record (owner role)
+    const { error: adminError } = await supabase
+      .from('building_admins')
+      .insert({
+        building_id: building.id,
+        user_id: authData.user.id,
+        role: 'owner',
+      });
+
+    if (adminError) {
+      console.error('[Signup] Building admin creation error:', adminError);
+      // Non-fatal - record exists from migration
+    }
+
     console.log('[Signup] ✅ User and building created:', {
       email,
       buildingId: building.id,

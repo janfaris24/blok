@@ -6,11 +6,12 @@ import { createClient } from '@/lib/supabase-client';
 import { Card } from '@/components/ui/card';
 import { MessageThread } from './message-thread';
 import { formatRelativeTime } from '@/lib/utils';
-import { MessageSquare, Search } from 'lucide-react';
+import { MessageSquare, Search, MessageCircle, Mail } from 'lucide-react';
 
 interface Conversation {
   id: string;
   status: string;
+  channel: 'whatsapp' | 'sms' | 'email';
   last_message_at: string;
   residents: {
     id: string;
@@ -136,6 +137,30 @@ export function ConversationsList({ initialConversations, buildingId }: Conversa
                             : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
                         }`}>
                           {conv.status === 'active' ? 'Activa' : 'Cerrada'}
+                        </span>
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium flex items-center gap-1 ${
+                          conv.channel === 'whatsapp'
+                            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400'
+                            : conv.channel === 'sms'
+                            ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400'
+                            : 'bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400'
+                        }`}>
+                          {conv.channel === 'whatsapp' ? (
+                            <>
+                              <MessageCircle className="w-2.5 h-2.5" />
+                              WhatsApp
+                            </>
+                          ) : conv.channel === 'sms' ? (
+                            <>
+                              <MessageSquare className="w-2.5 h-2.5" />
+                              SMS
+                            </>
+                          ) : (
+                            <>
+                              <Mail className="w-2.5 h-2.5" />
+                              Email
+                            </>
+                          )}
                         </span>
                         <span className="text-[11px] text-muted-foreground">
                           {conv.residents.type === 'owner' ? 'Dueño' : 'Inquilino'}

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
-import { sendBulkWhatsApp } from '@/lib/whatsapp-client';
+import { sendBulkWhatsApp, sendBulkSMS } from '@/lib/messaging-client';
 
 /**
  * Send a broadcast to recipients
@@ -143,10 +143,37 @@ export async function POST(request: NextRequest) {
       console.log('[Broadcast] ⚠️ Email sending not yet implemented');
     }
 
-    // Send via SMS (if implemented)
+    // Send via SMS
     if (broadcast.send_via_sms) {
-      // TODO: Implement SMS sending
-      console.log('[Broadcast] ⚠️ SMS sending not yet implemented');
+      const smsRecipients = residents
+        .filter((r) => r.opted_in_sms && r.phone)
+        .map((r) => ({
+          phone: r.phone,
+          message: `📢 ${broadcast.subject}\n\n${broadcast.message}\n\n${building.name}`,
+          id: r.id,
+          name: `${r.first_name} ${r.last_name}`,
+        }));
+
+      console.log('[Broadcast] 📱 SMS recipients:', smsRecipients.length);
+
+      if (smsRecipients.length > 0) {
+        try {
+          const result = await sendBulkSMS(
+            smsRecipients.map(r => ({ phone: r.phone, message: r.message })),
+            building.sms_number || building.whatsapp_business_number
+          );
+
+          totalSent += result.success;
+          totalFailed += result.failed;
+          errors.push(...result.errors);
+
+          console.log('[Broadcast] ✅ SMS sent:', result.success, 'failed:', result.failed);
+        } catch (error) {
+          console.error('[Broadcast] SMS send error:', error);
+          totalFailed += smsRecipients.length;
+          errors.push(`SMS bulk send failed: ${error}`);
+        }
+      }
     }
 
     // Update broadcast status

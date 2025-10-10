@@ -40,6 +40,7 @@ export interface Building {
   total_units: number;
   admin_user_id?: string;
   whatsapp_business_number?: string;
+  sms_number?: string;
   created_at: string;
   updated_at: string;
   subscription_plan: string;
@@ -148,13 +149,16 @@ export interface BroadcastRecipient {
   phone?: string;
 }
 
-// WhatsApp Webhook types
-export interface WhatsAppWebhookPayload {
+// Messaging Webhook types (handles both WhatsApp and SMS from Twilio)
+export interface TwilioWebhookPayload {
   MessageSid: string;
-  From: string;
-  To: string;
+  From: string; // Format: 'whatsapp:+14155238886' for WhatsApp, '+14155238886' for SMS
+  To: string;   // Format: 'whatsapp:+14155238886' for WhatsApp, '+14155238886' for SMS
   Body: string;
   NumMedia?: string;
   MediaUrl0?: string;
   MediaContentType0?: string;
 }
+
+// Alias for backward compatibility
+export type WhatsAppWebhookPayload = TwilioWebhookPayload;

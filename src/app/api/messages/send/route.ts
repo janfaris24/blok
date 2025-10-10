@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
-import { sendWhatsAppMessage } from '@/lib/whatsapp-client';
+import { sendMessage } from '@/lib/messaging-client';
 
 export async function POST(request: NextRequest) {
   try {
@@ -46,10 +46,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Resident not found' }, { status: 404 });
     }
 
-    // Verify conversation exists
+    // Verify conversation exists and get channel
     const { data: conversation } = await supabase
       .from('conversations')
-      .select('*')
+      .select('*, channel')
       .eq('id', conversationId)
       .eq('building_id', buildingId)
       .eq('resident_id', residentId)
@@ -59,6 +59,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Conversation not found' }, { status: 404 });
     }
 
+    const channel = conversation.channel || 'whatsapp'; // Default to whatsapp for legacy conversations
+
     // Save message to database (with sender_type = 'admin')
     const { data: savedMessage, error: saveError } = await supabase
       .from('messages')
@@ -66,6 +68,7 @@ export async function POST(request: NextRequest) {
         conversation_id: conversationId,
         sender_type: 'admin',
         content: message,
+        channel: channel,
         intent: null,
         priority: null,
         routing: null,
@@ -82,25 +85,38 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Send WhatsApp message if resident is opted in
-    if (resident.opted_in_whatsapp) {
-      const recipientNumber = resident.whatsapp_number || resident.phone;
+    // Send message via appropriate channel if resident is opted in
+    const isOptedIn = channel === 'whatsapp' ? resident.opted_in_whatsapp : resident.opted_in_sms;
+
+    if (isOptedIn) {
+      const recipientNumber = channel === 'whatsapp'
+        ? (resident.whatsapp_number || resident.phone)
+        : resident.phone;
+
+      const businessNumber = channel === 'whatsapp'
+        ? building.whatsapp_business_number
+        : (building.sms_number || building.whatsapp_business_number);
 
       try {
-        await sendWhatsAppMessage(
+        await sendMessage(
           recipientNumber,
-          building.whatsapp_business_number,
-          message
+          businessNumber,
+          message,
+          channel
         );
-      } catch (whatsappError) {
-        console.error('WhatsApp send error:', whatsappError);
+
+        console.log(`[Message API] ✅ ${channel.toUpperCase()} message sent to ${recipientNumber}`);
+      } catch (sendError) {
+        console.error(`[Message API] ${channel.toUpperCase()} send error:`, sendError);
         // Don't fail the request - message is saved in DB
         return NextResponse.json({
           success: true,
           message: savedMessage,
-          warning: 'Message saved but WhatsApp delivery failed'
+          warning: `Message saved but ${channel} delivery failed`
         });
       }
+    } else {
+      console.log(`[Message API] ⚠️ Resident not opted in to ${channel}`);
     }
 
     // Update conversation last_message_at

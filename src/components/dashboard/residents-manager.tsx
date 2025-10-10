@@ -18,6 +18,7 @@ interface Resident {
   preferred_language: 'es' | 'en';
   opted_in_whatsapp: boolean;
   opted_in_email: boolean;
+  opted_in_sms: boolean;
   unit_id: string | null;
 }
 
@@ -46,6 +47,7 @@ export function ResidentsManager({ initialResidents, units, buildingId }: Reside
     unit_id: '',
     preferred_language: 'es' as 'es' | 'en',
     opted_in_whatsapp: true,
+    opted_in_sms: false,
   });
   const [loading, setLoading] = useState(false);
   const supabase = createClient();
@@ -65,6 +67,7 @@ export function ResidentsManager({ initialResidents, units, buildingId }: Reside
       unit_id: '',
       preferred_language: 'es',
       opted_in_whatsapp: true,
+      opted_in_sms: false,
     });
     setIsModalOpen(true);
   };
@@ -80,6 +83,7 @@ export function ResidentsManager({ initialResidents, units, buildingId }: Reside
       unit_id: resident.unit_id || '',
       preferred_language: resident.preferred_language,
       opted_in_whatsapp: resident.opted_in_whatsapp,
+      opted_in_sms: resident.opted_in_sms,
     });
     setIsModalOpen(true);
   };
@@ -93,7 +97,6 @@ export function ResidentsManager({ initialResidents, units, buildingId }: Reside
         building_id: buildingId,
         whatsapp_number: formData.phone,
         opted_in_email: true,
-        opted_in_sms: false,
         unit_id: formData.unit_id || null,
       };
 

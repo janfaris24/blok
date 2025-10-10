@@ -23,6 +23,7 @@ export default async function ConversationsPage() {
     .from('conversations')
     .select(`
       *,
+      channel,
       residents (
         id,
         first_name,
