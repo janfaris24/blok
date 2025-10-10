@@ -1,6 +1,46 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
 
+/**
+ * Generate embedding using OpenAI for knowledge base entry
+ */
+async function generateEmbedding(question: string, answer: string): Promise<number[] | null> {
+  try {
+    const openaiApiKey = process.env.OPENAI_API_KEY;
+
+    if (!openaiApiKey) {
+      console.warn('[Knowledge Base] OPENAI_API_KEY not configured - skipping embedding generation');
+      return null;
+    }
+
+    // Combine question and answer for better semantic search
+    const text = `${question}\n${answer}`;
+
+    const response = await fetch('https://api.openai.com/v1/embeddings', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openaiApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'text-embedding-3-small',
+        input: text,
+        encoding_format: 'float',
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`OpenAI API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.data[0].embedding;
+  } catch (error) {
+    console.error('[Knowledge Base] Error generating embedding:', error);
+    return null;
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
@@ -32,7 +72,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Building not found' }, { status: 404 });
     }
 
-    // Create knowledge base entry
+    // Generate embedding for semantic search
+    const embedding = await generateEmbedding(question, answer);
+
+    // Create knowledge base entry with embedding
     const { data: entry, error } = await supabase
       .from('knowledge_base')
       .insert({
@@ -43,6 +86,7 @@ export async function POST(request: NextRequest) {
         keywords: keywords || [],
         priority: priority || 0,
         created_by: user.id,
+        embedding: embedding,
       })
       .select()
       .single();

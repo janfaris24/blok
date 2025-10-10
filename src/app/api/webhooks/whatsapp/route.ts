@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
     // 2. Find resident by phone number
     const { data: resident, error: residentError } = await supabase
       .from('residents')
-      .select('*, units(*)')
+      .select('*, units!residents_unit_id_fkey(*)')
       .eq('building_id', building.id)
       .or(`phone.eq.${residentPhone},whatsapp_number.eq.${residentPhone}`)
       .single();

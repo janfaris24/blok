@@ -1,25 +1,104 @@
 import Anthropic from '@anthropic-ai/sdk';
 import type { AIAnalysisResult, MessageIntent, Language, ResidentType } from '@/types/blok';
+import { createClient } from '@/lib/supabase-server';
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
 /**
- * Searches the knowledge base for relevant information
+ * Generate embedding for text using OpenAI
+ * Uses text-embedding-3-small (1536 dimensions, $0.02 per 1M tokens)
+ */
+async function generateEmbedding(text: string): Promise<number[] | null> {
+  try {
+    const openaiApiKey = process.env.OPENAI_API_KEY;
+
+    if (!openaiApiKey) {
+      console.warn('[Embeddings] OPENAI_API_KEY not configured, falling back to keyword search');
+      return null;
+    }
+
+    const response = await fetch('https://api.openai.com/v1/embeddings', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openaiApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'text-embedding-3-small',
+        input: text,
+        encoding_format: 'float',
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`OpenAI API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.data[0].embedding;
+  } catch (error) {
+    console.error('[Embeddings] Error generating embedding:', error);
+    return null;
+  }
+}
+
+/**
+ * Searches the knowledge base for relevant information using semantic search
+ * Falls back to keyword search if embeddings are not available
  */
 async function searchKnowledgeBase(query: string, buildingId: string): Promise<any[]> {
   try {
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/knowledge/search?q=${encodeURIComponent(query)}&building_id=${buildingId}`
-    );
+    console.log(`[Knowledge Base] Searching for: "${query}" in building ${buildingId}`);
 
-    if (!response.ok) return [];
+    const supabase = await createClient();
 
-    const data = await response.json();
-    return data.entries || [];
+    // Try semantic search first
+    const embedding = await generateEmbedding(query);
+
+    if (embedding) {
+      console.log('[Knowledge Base] Using semantic search with embeddings');
+
+      // Use the match_knowledge function for semantic search
+      const { data: entries, error } = await supabase.rpc('match_knowledge', {
+        query_embedding: embedding,
+        match_threshold: 0.7, // 70% similarity threshold
+        match_count: 5,
+        filter_building_id: buildingId,
+      });
+
+      if (error) {
+        console.error('[Knowledge Base] Semantic search error:', error);
+        // Fall back to keyword search below
+      } else {
+        console.log(`[Knowledge Base] Found ${entries?.length || 0} entries (semantic)`);
+        if (entries && entries.length > 0) {
+          return entries;
+        }
+      }
+    }
+
+    // Fallback to keyword search if semantic search failed or returned no results
+    console.log('[Knowledge Base] Falling back to keyword search');
+    const { data: entries, error } = await supabase
+      .from('knowledge_base')
+      .select('*')
+      .eq('building_id', buildingId)
+      .eq('active', true)
+      .or(`question.ilike.%${query}%,answer.ilike.%${query}%,keywords.cs.{${query}}`)
+      .order('priority', { ascending: false })
+      .limit(5);
+
+    if (error) {
+      console.error('[Knowledge Base] Keyword search error:', error);
+      return [];
+    }
+
+    console.log(`[Knowledge Base] Found ${entries?.length || 0} entries (keyword)`);
+    return entries || [];
   } catch (error) {
-    console.error('[Knowledge Base Search Error]', error);
+    console.error('[Knowledge Base] Search error:', error);
     return [];
   }
 }
@@ -118,6 +197,7 @@ RESPONSE FORMAT (JSON only, no markdown):
 `;
 
   try {
+    console.log('[AI] Starting Claude API call...');
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-5-20250929',
       max_tokens: 2000,
@@ -129,6 +209,8 @@ RESPONSE FORMAT (JSON only, no markdown):
         },
       ],
     });
+
+    console.log('[AI] Claude API call completed');
 
     const content = response.content[0];
     if (content.type !== 'text') {
@@ -144,6 +226,7 @@ RESPONSE FORMAT (JSON only, no markdown):
         .replace(/\n?```\s*$/i, '');
     }
 
+    console.log('[AI] Parsing JSON response...');
     const result: AIAnalysisResult = JSON.parse(jsonText);
 
     console.log('[AI Analysis]', {
@@ -157,6 +240,7 @@ RESPONSE FORMAT (JSON only, no markdown):
     return result;
   } catch (error) {
     console.error('[AI Analysis Error]', error);
+    console.error('[AI Analysis Error Stack]', error instanceof Error ? error.stack : 'No stack trace');
 
     // Fallback response when AI fails
     return {

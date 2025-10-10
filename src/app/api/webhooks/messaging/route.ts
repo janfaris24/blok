@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
     };
 
     // 1. Detect channel (WhatsApp or SMS)
-    const channel: Channel = detectChannelFromPayload(payload.From);
+    const channel = detectChannelFromPayload(payload.From);
     const channelLabel = channel.toUpperCase();
 
     console.log(`[${channelLabel}] Payload:`, {
@@ -86,13 +86,15 @@ export async function POST(request: NextRequest) {
     // 4. Find resident by phone number
     const { data: resident, error: residentError} = await supabase
       .from('residents')
-      .select('*, units(*)')
+      .select('*, units!residents_unit_id_fkey(*)')
       .eq('building_id', building.id)
       .or(`phone.eq.${residentPhone},whatsapp_number.eq.${residentPhone}`)
       .single();
 
     if (residentError || !resident) {
       console.error(`[${channelLabel}] Resident not found:`, residentPhone);
+      console.error(`[${channelLabel}] Resident error:`, residentError);
+      console.error(`[${channelLabel}] Query: building_id=${building.id}, phone=${residentPhone}`);
 
       // Send friendly message to unknown number via same channel
       const unknownNumberMessage = resident?.preferred_language === 'en'
@@ -166,6 +168,54 @@ export async function POST(request: NextRequest) {
     }
 
     console.log(`[${channelLabel}] Conversation ID:`, conversation.id);
+
+    // Return 200 to Twilio immediately (before AI analysis to avoid timeout)
+    const response = NextResponse.json({ success: true, channel }, { status: 200 });
+
+    // Process AI analysis and response asynchronously (don't await)
+    processMessageAsync(
+      payload,
+      channel,
+      channelLabel,
+      resident,
+      building,
+      conversation,
+      residentPhone,
+      businessPhone
+    ).catch(error => {
+      console.error(`[${channelLabel}] ❌ Async processing error:`, error);
+      console.error(`[${channelLabel}] Error stack:`, error.stack);
+    });
+
+    console.log(`[${channelLabel}] ⏳ Async processing started in background...`);
+
+    return response;
+  } catch (error) {
+    console.error('[Messaging] ❌ Error processing webhook:', error);
+    // Still return 200 to Twilio to avoid retries
+    return NextResponse.json(
+      { success: false, error: String(error) },
+      { status: 200 }
+    );
+  }
+}
+
+/**
+ * Process message with AI asynchronously
+ */
+async function processMessageAsync(
+  payload: any,
+  channel: 'whatsapp' | 'sms',
+  channelLabel: string,
+  resident: any,
+  building: any,
+  conversation: any,
+  residentPhone: string,
+  businessPhone: string
+) {
+  try {
+    // Create new Supabase client for async processing (request-scoped client won't work here)
+    const supabase = await createClient();
 
     // 6. Analyze message with AI (with knowledge base lookup)
     console.log(`[${channelLabel}] Analyzing message with AI...`);
@@ -313,18 +363,8 @@ export async function POST(request: NextRequest) {
 
     console.log(`[${channelLabel}] ✅ Admin notification created`);
     console.log(`[${channelLabel}] ✅ Message processed successfully`);
-
-    // Return 200 to Twilio
-    return NextResponse.json({ success: true, channel }, { status: 200 });
-
   } catch (error) {
-    console.error('[Messaging] ❌ Error processing webhook:', error);
-
-    // Still return 200 to Twilio to avoid retries
-    return NextResponse.json(
-      { success: false, error: String(error) },
-      { status: 200 }
-    );
+    console.error(`[${channelLabel}] ❌ Error in async processing:`, error);
   }
 }
 
