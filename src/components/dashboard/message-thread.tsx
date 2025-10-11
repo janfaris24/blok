@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase-client';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { formatDate } from '@/lib/utils';
-import { Send, User, Bot, UserCircle, MessageCircle, MessageSquare, Mail } from 'lucide-react';
+import { Send, User, Bot, UserCircle, MessageCircle, MessageSquare, Mail, Image as ImageIcon, Video, FileText } from 'lucide-react';
 import { LaserFlow } from '@/components/ui/laser-flow';
 
 interface Message {
@@ -15,6 +15,9 @@ interface Message {
   content: string;
   created_at: string;
   channel: string;
+  media_url?: string | null;
+  media_type?: string | null;
+  media_storage_path?: string | null;
 }
 
 interface Conversation {
@@ -120,6 +123,61 @@ export function MessageThread({ conversation, buildingId }: MessageThreadProps) 
     }
   }
 
+  // Helper function to render media content
+  function renderMedia(message: Message) {
+    if (!message.media_url || !message.media_type) return null;
+
+    const mediaType = message.media_type.split('/')[0];
+
+    if (mediaType === 'image') {
+      return (
+        <div className="mt-2 rounded-lg overflow-hidden max-w-sm">
+          <a href={message.media_url} target="_blank" rel="noopener noreferrer">
+            <img
+              src={message.media_url}
+              alt="Shared image"
+              className="w-full h-auto cursor-pointer hover:opacity-90 transition-opacity"
+              loading="lazy"
+            />
+          </a>
+        </div>
+      );
+    }
+
+    if (mediaType === 'video') {
+      return (
+        <div className="mt-2 rounded-lg overflow-hidden max-w-sm">
+          <video
+            src={message.media_url}
+            controls
+            className="w-full h-auto"
+            preload="metadata"
+          >
+            Tu navegador no soporta videos.
+          </video>
+        </div>
+      );
+    }
+
+    if (mediaType === 'application' || mediaType === 'audio') {
+      return (
+        <div className="mt-2">
+          <a
+            href={message.media_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/50 hover:bg-muted transition-colors text-sm"
+          >
+            <FileText className="w-4 h-4" />
+            <span>Ver archivo adjunto</span>
+          </a>
+        </div>
+      );
+    }
+
+    return null;
+  }
+
   return (
     <Card className="h-full flex flex-col border-border/40">
       {/* Header */}
@@ -193,9 +251,12 @@ export function MessageThread({ conversation, buildingId }: MessageThreadProps) 
                         : 'bg-primary text-primary-foreground'
                     }`}
                   >
-                    <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
-                      {message.content}
-                    </p>
+                    {message.content && (
+                      <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
+                        {message.content}
+                      </p>
+                    )}
+                    {renderMedia(message)}
                   </div>
                   <div className="flex items-center gap-2 px-1">
                     <p className="text-[11px] text-muted-foreground">

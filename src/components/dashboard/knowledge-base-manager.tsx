@@ -159,6 +159,18 @@ export function KnowledgeBaseManager({ initialEntries, buildingId }: KnowledgeBa
         });
 
         if (!response.ok) throw new Error('Failed to update entry');
+
+        const { entry: updatedEntry } = await response.json();
+
+        // Immediately update in UI (don't wait for real-time subscription)
+        if (updatedEntry) {
+          setEntries((prev) =>
+            prev.map((entry) =>
+              entry.id === editingEntry.id ? (updatedEntry as KnowledgeEntry) : entry
+            )
+          );
+        }
+
         toast.success('Entrada actualizada');
       } else {
         // Create
@@ -169,6 +181,14 @@ export function KnowledgeBaseManager({ initialEntries, buildingId }: KnowledgeBa
         });
 
         if (!response.ok) throw new Error('Failed to create entry');
+
+        const { entry: newEntry } = await response.json();
+
+        // Immediately add to UI (don't wait for real-time subscription)
+        if (newEntry) {
+          setEntries((prev) => [newEntry as KnowledgeEntry, ...prev]);
+        }
+
         toast.success('Entrada creada');
       }
 
@@ -189,6 +209,10 @@ export function KnowledgeBaseManager({ initialEntries, buildingId }: KnowledgeBa
       });
 
       if (!response.ok) throw new Error('Failed to delete');
+
+      // Immediately remove from UI (don't wait for real-time subscription)
+      setEntries((prev) => prev.filter((entry) => entry.id !== id));
+
       toast.success('Entrada eliminada');
     } catch (error) {
       console.error('Error deleting:', error);
@@ -205,6 +229,14 @@ export function KnowledgeBaseManager({ initialEntries, buildingId }: KnowledgeBa
       });
 
       if (!response.ok) throw new Error('Failed to toggle');
+
+      // Immediately update in UI (don't wait for real-time subscription)
+      setEntries((prev) =>
+        prev.map((e) =>
+          e.id === entry.id ? { ...e, active: !e.active } : e
+        )
+      );
+
       toast.success(entry.active ? 'Desactivada' : 'Activada');
     } catch (error) {
       console.error('Error toggling:', error);

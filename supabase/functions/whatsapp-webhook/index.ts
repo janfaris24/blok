@@ -60,10 +60,28 @@ Deno.serve(async (req: Request) => {
     }
 
     const body = await req.text();
+    console.log('📨 Raw webhook body received');
     const messageData = parseWebhookData(body);
 
-    if (!messageData || !messageData.body) {
-      console.log('⚠️ Invalid message data or empty body');
+    // Debug: Log all incoming parameters
+    console.log('🔍 Webhook data:', JSON.stringify({
+      hasBody: !!messageData?.body,
+      hasMediaUrl: !!messageData?.mediaUrl,
+      hasMediaContentType: !!messageData?.mediaContentType,
+      mediaUrl: messageData?.mediaUrl?.substring(0, 50) || 'none',
+      mediaType: messageData?.mediaContentType || 'none',
+    }));
+
+    if (!messageData) {
+      console.log('⚠️ Invalid message data');
+      return new Response('<?xml version="1.0" encoding="UTF-8"?><Response></Response>', {
+        headers: { 'Content-Type': 'application/xml' }
+      });
+    }
+
+    // Allow messages with either body text OR media
+    if (!messageData.body && !messageData.mediaUrl) {
+      console.log('⚠️ Message has no text and no media');
       return new Response('<?xml version="1.0" encoding="UTF-8"?><Response></Response>', {
         headers: { 'Content-Type': 'application/xml' }
       });
@@ -99,7 +117,7 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    console.log(`✅ Building found: ${building.name}`);
+    console.log(`✅ [${Date.now() - startTime}ms] Building found: ${building.name}`);
 
     // 2. Find resident by phone or WhatsApp number
     const { data: resident, error: residentError } = await supabase
@@ -122,7 +140,7 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    console.log(`✅ Resident found: ${resident.first_name} ${resident.last_name} (${resident.type})`);
+    console.log(`✅ [${Date.now() - startTime}ms] Resident found: ${resident.first_name} ${resident.last_name} (${resident.type})`);
 
     // 3. Find or create conversation
     let { data: conversation } = await supabase
@@ -157,10 +175,64 @@ Deno.serve(async (req: Request) => {
       console.log('✅ Using existing conversation');
     }
 
-    // 4. Analyze message with AI (with knowledge base lookup)
-    console.log('🤖 Analyzing message with Claude AI...');
+    // 4. ⚡ INSTANT ACKNOWLEDGMENT - Send immediately for better UX
+    const isSpanish = (resident.preferred_language || 'es') === 'es';
+    const quickAck = isSpanish
+      ? '⏳ Un momento, estoy buscando esa información...'
+      : '⏳ One moment, looking that up for you...';
+
+    console.log(`⚡ [${Date.now() - startTime}ms] Sending instant acknowledgment...`);
+    await sendWhatsAppMessage(phoneNumber, buildingNumber, quickAck);
+    console.log(`✅ [${Date.now() - startTime}ms] Instant ack sent`);
+
+    // 4.5. 📸 MEDIA PROCESSING - Download and store media if present
+    let storedMediaUrl: string | null = null;
+    let storedMediaPath: string | null = null;
+    let mediaType: string | null = null;
+
+    if (messageData.mediaUrl && messageData.mediaContentType) {
+      console.log(`📸 [${Date.now() - startTime}ms] Media detected: ${messageData.mediaContentType}`);
+
+      try {
+        const accountSid = Deno.env.get('TWILIO_ACCOUNT_SID')!;
+        const authToken = Deno.env.get('TWILIO_AUTH_TOKEN')!;
+
+        // Download from Twilio
+        console.log(`📥 [${Date.now() - startTime}ms] Downloading media from Twilio...`);
+        const mediaData = await downloadMediaFromTwilio(
+          messageData.mediaUrl,
+          accountSid,
+          authToken
+        );
+
+        // Upload to Supabase Storage
+        console.log(`☁️ [${Date.now() - startTime}ms] Uploading to Supabase Storage...`);
+        const { url, path } = await uploadMediaToStorage(
+          supabase,
+          mediaData,
+          messageData.mediaContentType,
+          building.id,
+          messageData.messageId
+        );
+
+        storedMediaUrl = url;
+        storedMediaPath = path;
+        mediaType = messageData.mediaContentType;
+
+        console.log(`✅ [${Date.now() - startTime}ms] Media stored successfully`);
+        console.log(`🔗 [${Date.now() - startTime}ms] Media URL: ${storedMediaUrl}`);
+      } catch (error) {
+        console.error(`❌ [${Date.now() - startTime}ms] Failed to process media:`, error);
+        // Continue without media - don't block the message flow
+      }
+    } else {
+      console.log(`📝 [${Date.now() - startTime}ms] Text-only message (no media)`);
+    }
+
+    // 5. Analyze message with AI (with knowledge base lookup)
+    console.log(`🤖 [${Date.now() - startTime}ms] Analyzing message with Claude AI...`);
     const analysis = await analyzeMessage(
-      messageData.body,
+      messageData.body || (storedMediaUrl ? 'Imagen enviada' : ''),
       resident.type,
       resident.preferred_language || 'es',
       building.name,
@@ -168,22 +240,28 @@ Deno.serve(async (req: Request) => {
       supabase
     );
 
-    console.log(`✅ AI Analysis: intent=${analysis.intent}, priority=${analysis.priority}, routeTo=${analysis.routeTo}`);
+    console.log(`✅ [${Date.now() - startTime}ms] AI Analysis complete: intent=${analysis.intent}, priority=${analysis.priority}, routeTo=${analysis.routeTo}`);
 
     // 5. Save incoming message to database
     await supabase.from('messages').insert({
       conversation_id: conversation.id,
       sender_type: 'resident',
       sender_id: resident.id,
-      content: messageData.body,
+      content: messageData.body || (storedMediaUrl ? '📎 Media message' : ''),
       intent: analysis.intent,
       ai_response: analysis.suggestedResponse,
       channel: 'whatsapp',
       routed_to: analysis.routeTo,
-      metadata: { whatsapp_sid: messageData.messageId },
+      media_url: storedMediaUrl,
+      media_type: mediaType,
+      media_storage_path: storedMediaPath,
+      metadata: {
+        whatsapp_sid: messageData.messageId,
+        twilio_media_url: messageData.mediaUrl, // Keep original for reference
+      },
     });
 
-    console.log('✅ Message saved to database');
+    console.log(`✅ Message saved to database${storedMediaUrl ? ' (with media)' : ''}`);
 
     // 6. Create maintenance request if AI detected one
     if (analysis.intent === 'maintenance_request') {
@@ -197,25 +275,72 @@ Deno.serve(async (req: Request) => {
         priority: analysis.priority,
         extracted_by_ai: true,
         conversation_id: conversation.id,
+        photo_urls: storedMediaUrl ? [storedMediaUrl] : null,
+        has_photos: !!storedMediaUrl,
       });
 
-      console.log('✅ Maintenance request created');
+      console.log(`✅ Maintenance request created${storedMediaUrl ? ' with photo attachment' : ''}`);
     }
 
-    // 7. Send response to resident
+    // 6.5. Handle status inquiry - fetch and send resident's tickets
+    if (analysis.intent === 'status_inquiry') {
+      console.log(`📋 [${Date.now() - startTime}ms] Status inquiry detected, fetching resident's requests...`);
+
+      const { requests, total } = await getResidentMaintenanceRequests(
+        supabase,
+        resident.id,
+        building.id
+      );
+
+      const statusResponse = formatMaintenanceRequestsResponse(
+        requests,
+        total,
+        resident.preferred_language || 'es'
+      );
+
+      console.log(`✅ [${Date.now() - startTime}ms] Found ${requests.length} of ${total} active requests`);
+
+      // Send status response immediately
+      await sendWhatsAppMessage(phoneNumber, buildingNumber, statusResponse);
+
+      // Save status response message
+      await supabase.from('messages').insert({
+        conversation_id: conversation.id,
+        sender_type: 'ai',
+        content: statusResponse,
+        channel: 'whatsapp',
+      });
+
+      console.log(`✅ [${Date.now() - startTime}ms] Status response sent`);
+
+      // Update conversation
+      await supabase
+        .from('conversations')
+        .update({ last_message_at: new Date().toISOString() })
+        .eq('id', conversation.id);
+
+      const totalTime = Date.now() - startTime;
+      console.log(`🎉 [${totalTime}ms] Status inquiry complete`);
+
+      return new Response('<?xml version="1.0" encoding="UTF-8"?><Response></Response>', {
+        headers: { 'Content-Type': 'application/xml' }
+      });
+    }
+
+    // 7. Send actual response to resident
     let responseMessage: string;
 
     if (!analysis.requiresHumanReview && analysis.suggestedResponse) {
       // Send AI's suggested response
       responseMessage = analysis.suggestedResponse;
-      console.log('✅ Sending AI auto-response');
+      console.log(`⚡ [${Date.now() - startTime}ms] Sending AI auto-response`);
     } else {
       // Send acknowledgment for issues requiring human review
       responseMessage = resident.preferred_language === 'en'
         ? `Thank you for contacting us. Your ${analysis.intent === 'maintenance_request' ? 'maintenance request' : 'message'} has been received and forwarded to our team. We'll respond as soon as possible.`
         : `Gracias por contactarnos. Tu ${analysis.intent === 'maintenance_request' ? 'solicitud de mantenimiento' : 'mensaje'} ha sido recibida y enviada a nuestro equipo. Te responderemos lo antes posible.`;
 
-      console.log('✅ Sending acknowledgment (requires human review)');
+      console.log(`⚡ [${Date.now() - startTime}ms] Sending final acknowledgment (requires human review)`);
     }
 
     await sendWhatsAppMessage(
@@ -232,7 +357,7 @@ Deno.serve(async (req: Request) => {
       channel: 'whatsapp',
     });
 
-    console.log('✅ Response sent to resident');
+    console.log(`✅ [${Date.now() - startTime}ms] Response sent to resident`);
 
     // 8. Route message to owner/admin if needed
     if (analysis.routeTo === 'owner' && resident.type === 'renter') {
@@ -245,7 +370,9 @@ Deno.serve(async (req: Request) => {
       .update({ last_message_at: new Date().toISOString() })
       .eq('id', conversation.id);
 
-    console.log(`✅ Blok processed in ${Date.now() - startTime}ms`);
+    const totalTime = Date.now() - startTime;
+    console.log(`🎉 [${totalTime}ms] Blok processing complete`);
+    console.log(`📊 Performance: User saw instant ack in ~500ms, full response in ${totalTime}ms`);
 
     return new Response('<?xml version="1.0" encoding="UTF-8"?><Response></Response>', {
       headers: { 'Content-Type': 'application/xml' }
@@ -280,9 +407,103 @@ function parseWebhookData(body: string): IncomingMessageData | null {
   }
 }
 
-// Search knowledge base for relevant information
+// Generate embedding using OpenAI
+async function generateEmbedding(text: string): Promise<number[] | null> {
+  try {
+    console.log('[Embedding] 🔧 Starting embedding generation...');
+    console.log('[Embedding] 📝 Text to embed:', text.substring(0, 100));
+
+    const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
+
+    if (!openaiApiKey) {
+      console.warn('[Embedding] ⚠️ OPENAI_API_KEY not configured, falling back to keyword search');
+      return null;
+    }
+
+    console.log('[Embedding] 🔑 OpenAI key found, making API call...');
+
+    const response = await fetch('https://api.openai.com/v1/embeddings', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openaiApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'text-embedding-3-small',
+        input: text,
+        encoding_format: 'float',
+      }),
+    });
+
+    console.log('[Embedding] 📡 OpenAI response status:', response.status);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('[Embedding] ❌ OpenAI API error:', response.status, errorText);
+      throw new Error(`OpenAI API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const embedding = data.data[0].embedding;
+    console.log('[Embedding] ✅ Embedding generated successfully, dimensions:', embedding.length);
+
+    return embedding;
+  } catch (error) {
+    console.error('[Embedding] ❌ Error generating embedding:', error);
+    console.error('[Embedding] ❌ Error details:', JSON.stringify(error));
+    return null;
+  }
+}
+
+// Search knowledge base for relevant information using semantic search
 async function searchKnowledgeBase(query: string, buildingId: string, supabase: any): Promise<any[]> {
   try {
+    console.log('[KB Search] 🔍 Starting knowledge base search...');
+    console.log('[KB Search] 📝 Query:', query);
+    console.log('[KB Search] 🏢 Building ID:', buildingId);
+
+    // Try semantic search first
+    const embedding = await generateEmbedding(query);
+
+    if (embedding) {
+      console.log('[KB Search] 🎯 Using semantic search with embeddings');
+      console.log('[KB Search] 📊 Embedding dimensions:', embedding.length);
+
+      // Use the match_knowledge function for semantic search
+      console.log('[KB Search] 🔧 Calling match_knowledge RPC function...');
+      const { data: entries, error } = await supabase.rpc('match_knowledge', {
+        query_embedding: embedding,
+        match_threshold: 0.5, // Lowered from 0.7 to 0.5 (50% similarity)
+        match_count: 5,
+        filter_building_id: buildingId,
+      });
+
+      console.log('[KB Search] 📡 RPC response received');
+
+      if (error) {
+        console.error('[KB Search] ❌ Semantic search error:', error);
+        console.error('[KB Search] ❌ Error details:', JSON.stringify(error));
+      } else {
+        console.log('[KB Search] 📦 Semantic search returned:', entries?.length || 0, 'entries');
+        if (entries && entries.length > 0) {
+          console.log('[KB Search] ✅ Semantic search successful!');
+          console.log('[KB Search] 📄 Results with similarity scores:');
+          entries.forEach((entry: any, idx: number) => {
+            console.log(`[KB Search]   ${idx + 1}. [${(entry.similarity * 100).toFixed(1)}%] ${entry.question?.substring(0, 60)}`);
+          });
+          return entries;
+        } else {
+          console.log('[KB Search] ⚠️ Semantic search returned 0 results (threshold: 0.5)');
+        }
+      }
+    } else {
+      console.log('[KB Search] ⚠️ No embedding generated, skipping semantic search');
+    }
+
+    // Fallback to keyword search
+    console.log('[KB Search] 🔍 Falling back to keyword search');
+    console.log('[KB Search] 📝 Keyword query pattern:', `question.ilike.%${query}%`);
+
     const { data: entries, error } = await supabase
       .from('knowledge_base')
       .select('*')
@@ -292,14 +513,24 @@ async function searchKnowledgeBase(query: string, buildingId: string, supabase: 
       .order('priority', { ascending: false })
       .limit(5);
 
+    console.log('[KB Search] 📡 Keyword search response received');
+
     if (error) {
-      console.error('❌ Knowledge base search error:', error);
+      console.error('[KB Search] ❌ Keyword search error:', error);
+      console.error('[KB Search] ❌ Error details:', JSON.stringify(error));
       return [];
+    }
+
+    console.log('[KB Search] 📦 Keyword search returned:', entries?.length || 0, 'entries');
+    if (entries && entries.length > 0) {
+      console.log('[KB Search] ✅ Keyword search successful!');
+      console.log('[KB Search] 📄 First result:', entries[0].question?.substring(0, 50));
     }
 
     return entries || [];
   } catch (error) {
-    console.error('❌ Knowledge base search error:', error);
+    console.error('[KB Search] ❌ Knowledge base search error:', error);
+    console.error('[KB Search] ❌ Error stack:', error instanceof Error ? error.stack : 'No stack');
     return [];
   }
 }
@@ -322,11 +553,15 @@ async function analyzeMessage(
 
   // Search knowledge base for relevant information
   let knowledgeContext = '';
+  let knowledgeEntries: any[] = [];
+
   if (buildingId && supabase) {
-    const knowledgeEntries = await searchKnowledgeBase(message, buildingId, supabase);
+    console.log('[AI Analysis] 📚 Searching knowledge base...');
+    knowledgeEntries = await searchKnowledgeBase(message, buildingId, supabase);
 
     if (knowledgeEntries.length > 0) {
-      console.log(`🔍 Found ${knowledgeEntries.length} knowledge base entries`);
+      console.log(`[AI Analysis] ✅ Found ${knowledgeEntries.length} knowledge base entries`);
+      console.log('[AI Analysis] 📄 Entries:', knowledgeEntries.map(e => e.question?.substring(0, 50)));
       knowledgeContext = `
 BASE DE CONOCIMIENTO DEL EDIFICIO (Usa esta información para responder preguntas):
 ${knowledgeEntries.map((entry, idx) => `
@@ -335,12 +570,27 @@ ${idx + 1}. Pregunta: ${entry.question}
    Categoría: ${entry.category}
 `).join('\n')}
 `;
+      console.log('[AI Analysis] 📝 Knowledge context added to prompt (length:', knowledgeContext.length, 'chars)');
+    } else {
+      console.log('[AI Analysis] ⚠️ No knowledge base entries found');
     }
+  } else {
+    console.log('[AI Analysis] ⚠️ Skipping knowledge base search (buildingId or supabase missing)');
   }
+
+  // 🚀 SMART MODEL SELECTION - Use fast Haiku for simple KB queries, Sonnet for complex analysis
+  const useHaiku = knowledgeEntries.length > 0;
+  const selectedModel = useHaiku
+    ? 'claude-3-5-haiku-20241022'      // Fast: ~800-1500ms (simple Q&A with KB context)
+    : 'claude-sonnet-4-5-20250929';    // Accurate: ~3-8s (complex analysis, maintenance, routing)
+
+  console.log(`[AI Analysis] 🎯 Model selection: ${useHaiku ? '⚡ HAIKU (fast path)' : '🧠 SONNET 4.5 (quality path)'}`);
+  console.log(`[AI Analysis] 💡 Reason: ${useHaiku ? 'Knowledge base has relevant info' : 'Complex analysis needed'}`);
 
   const prompt = buildAIPrompt(message, residentType, language, buildingContext, knowledgeContext);
 
   try {
+    console.log(`[AI Analysis] 🚀 Calling Anthropic API with model: ${selectedModel}`);
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -349,7 +599,7 @@ ${idx + 1}. Pregunta: ${entry.question}
         'content-type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: selectedModel,
         max_tokens: 2000,
         temperature: 0.3,
         messages: [
@@ -379,7 +629,7 @@ ${idx + 1}. Pregunta: ${entry.question}
       }
 
       const parsed: AIAnalysisResult = JSON.parse(jsonText);
-      console.log('🤖 AI analysis successful');
+      console.log(`🤖 AI analysis successful (model: ${selectedModel})`);
       return parsed;
     }
 
@@ -417,6 +667,7 @@ TAREA: Analiza este mensaje y responde en formato JSON con estos campos:
 
 1. **intent**: Clasifica el mensaje como uno de:
    - maintenance_request (reparaciones, problemas en unidad o áreas comunes)
+   - status_inquiry (preguntar por el estado de su solicitud/ticket/reporte)
    - general_question (reglas, horarios, amenidades)
    - noise_complaint (quejas de ruido)
    - visitor_access (estacionamiento visitantes, códigos de entrada)
@@ -474,6 +725,7 @@ TASK: Analyze this message and respond in JSON format with these fields:
 
 1. **intent**: Classify as one of:
    - maintenance_request (repairs, issues in unit or common areas)
+   - status_inquiry (asking about the status of their request/ticket/report)
    - general_question (HOA rules, amenities, hours)
    - noise_complaint
    - visitor_access (guest parking, entrance codes)
@@ -585,11 +837,212 @@ async function routeToOwner(
   }
 }
 
+// Fetch resident's maintenance requests
+async function getResidentMaintenanceRequests(
+  supabase: any,
+  residentId: string,
+  buildingId: string
+): Promise<{ requests: any[]; total: number }> {
+  try {
+    // Get total count of active tickets
+    const { count: totalCount } = await supabase
+      .from('maintenance_requests')
+      .select('id', { count: 'exact', head: true })
+      .eq('building_id', buildingId)
+      .eq('resident_id', residentId)
+      .in('status', ['open', 'in_progress']);
+
+    // Get tickets sorted by date first (we'll sort by priority in app)
+    const { data, error } = await supabase
+      .from('maintenance_requests')
+      .select('id, title, description, category, priority, status, reported_at, resolved_at')
+      .eq('building_id', buildingId)
+      .eq('resident_id', residentId)
+      .in('status', ['open', 'in_progress'])
+      .order('reported_at', { ascending: false });
+
+    if (error) {
+      console.error('[Maintenance Requests] Error fetching:', error);
+      return { requests: [], total: 0 };
+    }
+
+    // Sort by priority: emergency > high > medium > low, then by date
+    const priorityOrder: Record<string, number> = {
+      emergency: 4,
+      high: 3,
+      medium: 2,
+      low: 1,
+    };
+
+    const sortedData = (data || []).sort((a: any, b: any) => {
+      const priorityDiff = (priorityOrder[b.priority] || 0) - (priorityOrder[a.priority] || 0);
+      if (priorityDiff !== 0) return priorityDiff;
+      // If same priority, sort by date (most recent first)
+      return new Date(b.reported_at).getTime() - new Date(a.reported_at).getTime();
+    });
+
+    return {
+      requests: sortedData.slice(0, 5), // Take top 5 after sorting
+      total: totalCount || 0
+    };
+  } catch (error) {
+    console.error('[Maintenance Requests] Error:', error);
+    return { requests: [], total: 0 };
+  }
+}
+
+// Format maintenance requests for WhatsApp response
+function formatMaintenanceRequestsResponse(
+  requests: any[],
+  total: number,
+  language: 'es' | 'en'
+): string {
+  if (requests.length === 0) {
+    return language === 'es'
+      ? 'No tienes solicitudes de mantenimiento activas en este momento.'
+      : 'You have no active maintenance requests at this time.';
+  }
+
+  const statusLabels = {
+    es: {
+      open: 'Abierta',
+      in_progress: 'En Progreso',
+      resolved: 'Resuelta',
+      closed: 'Cerrada',
+    },
+    en: {
+      open: 'Open',
+      in_progress: 'In Progress',
+      resolved: 'Resolved',
+      closed: 'Closed',
+    },
+  };
+
+  const priorityLabels = {
+    es: { emergency: '🚨 Emergencia', high: '⚠️ Alta', medium: '📌 Media', low: '📝 Baja' },
+    en: { emergency: '🚨 Emergency', high: '⚠️ High', medium: '📌 Medium', low: '📝 Low' },
+  };
+
+  // Header shows count and if there are more
+  const header = language === 'es'
+    ? total > requests.length
+      ? `📋 Mostrando ${requests.length} de ${total} solicitudes activas (más urgentes primero):\n\n`
+      : `📋 Tienes ${requests.length} solicitud(es) activa(s):\n\n`
+    : total > requests.length
+      ? `📋 Showing ${requests.length} of ${total} active requests (most urgent first):\n\n`
+      : `📋 You have ${requests.length} active request(s):\n\n`;
+
+  const requestList = requests.map((req, idx) => {
+    const status = statusLabels[language][req.status as keyof typeof statusLabels.es] || req.status;
+    const priority = priorityLabels[language][req.priority as keyof typeof priorityLabels.es] || req.priority;
+    const title = req.title || req.description.substring(0, 50);
+
+    return language === 'es'
+      ? `${idx + 1}. ${title}\n   Estado: ${status}\n   Prioridad: ${priority}\n   Reportado: ${new Date(req.reported_at).toLocaleDateString('es-PR')}`
+      : `${idx + 1}. ${title}\n   Status: ${status}\n   Priority: ${priority}\n   Reported: ${new Date(req.reported_at).toLocaleDateString('en-US')}`;
+  }).join('\n\n');
+
+  // Footer with note if there are more tickets
+  let footer = language === 'es'
+    ? '\n\n💬 Para más información, contacta a la administración.'
+    : '\n\n💬 For more information, contact the administration.';
+
+  if (total > requests.length) {
+    footer = language === 'es'
+      ? `\n\n⚠️ Tienes ${total - requests.length} solicitud(es) adicional(es).\n💬 Contacta a la administración para ver todas.`
+      : `\n\n⚠️ You have ${total - requests.length} additional request(s).\n💬 Contact administration to view all.`;
+  }
+
+  return header + requestList + footer;
+}
+
+// Download media from Twilio
+async function downloadMediaFromTwilio(
+  mediaUrl: string,
+  accountSid: string,
+  authToken: string
+): Promise<Uint8Array> {
+  try {
+    console.log('[Media] 📥 Downloading from Twilio:', mediaUrl);
+
+    const response = await fetch(mediaUrl, {
+      headers: {
+        'Authorization': `Basic ${btoa(accountSid + ':' + authToken)}`
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to download media: ${response.status}`);
+    }
+
+    const buffer = await response.arrayBuffer();
+    console.log('[Media] ✅ Downloaded successfully, size:', buffer.byteLength, 'bytes');
+    return new Uint8Array(buffer);
+  } catch (error) {
+    console.error('[Media] ❌ Download failed:', error);
+    throw error;
+  }
+}
+
+// Upload media to Supabase Storage
+async function uploadMediaToStorage(
+  supabase: any,
+  mediaData: Uint8Array,
+  contentType: string,
+  buildingId: string,
+  messageSid: string
+): Promise<{ url: string; path: string }> {
+  try {
+    console.log('[Media] ☁️ Uploading to Supabase Storage...');
+    console.log('[Media] 📊 Content-Type:', contentType, 'Size:', mediaData.byteLength, 'bytes');
+
+    // Generate unique filename with proper extension
+    const extension = contentType.split('/')[1]?.split(';')[0] || 'bin';
+    const timestamp = new Date().getTime();
+    const storagePath = `${buildingId}/${timestamp}_${messageSid}.${extension}`;
+
+    console.log('[Media] 📁 Storage path:', storagePath);
+
+    const { data, error } = await supabase
+      .storage
+      .from('blok-media')
+      .upload(storagePath, mediaData, {
+        contentType: contentType,
+        upsert: false
+      });
+
+    if (error) {
+      console.error('[Media] ❌ Upload error:', error);
+      throw error;
+    }
+
+    console.log('[Media] ✅ Upload successful');
+
+    // Get public URL
+    const { data: publicUrlData } = supabase
+      .storage
+      .from('blok-media')
+      .getPublicUrl(storagePath);
+
+    const publicUrl = publicUrlData.publicUrl;
+    console.log('[Media] 🔗 Public URL:', publicUrl);
+
+    return {
+      url: publicUrl,
+      path: storagePath
+    };
+  } catch (error) {
+    console.error('[Media] ❌ Storage upload failed:', error);
+    throw error;
+  }
+}
+
 // Send WhatsApp message via Twilio
 async function sendWhatsAppMessage(
   to: string,
   from: string,
   message: string,
+  mediaUrl?: string,
   retryCount = 0
 ): Promise<void> {
   try {
@@ -600,6 +1053,19 @@ async function sendWhatsAppMessage(
       throw new Error('Missing Twilio credentials');
     }
 
+    // Build request parameters
+    const params: Record<string, string> = {
+      From: `whatsapp:${from}`,
+      To: `whatsapp:${to}`,
+      Body: message,
+    };
+
+    // Add media URL if provided
+    if (mediaUrl) {
+      params.MediaUrl = mediaUrl;
+      console.log('📎 Sending message with media:', mediaUrl);
+    }
+
     const response = await fetch(
       `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`,
       {
@@ -608,11 +1074,7 @@ async function sendWhatsAppMessage(
           'Authorization': `Basic ${btoa(accountSid + ':' + authToken)}`,
           'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: new URLSearchParams({
-          From: `whatsapp:${from}`,
-          To: `whatsapp:${to}`,
-          Body: message,
-        }),
+        body: new URLSearchParams(params),
       }
     );
 

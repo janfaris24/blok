@@ -63,7 +63,7 @@ async function searchKnowledgeBase(query: string, buildingId: string): Promise<a
       // Use the match_knowledge function for semantic search
       const { data: entries, error } = await supabase.rpc('match_knowledge', {
         query_embedding: embedding,
-        match_threshold: 0.7, // 70% similarity threshold
+        match_threshold: 0.5, // 50% similarity threshold (lowered for better recall)
         match_count: 5,
         filter_building_id: buildingId,
       });

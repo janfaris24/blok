@@ -14,21 +14,34 @@ import {
   useDraggable,
 } from '@dnd-kit/core';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { formatRelativeTime } from '@/lib/utils';
-import { AlertCircle, Clock, CheckCircle2, XCircle, Wrench } from 'lucide-react';
+import { AlertCircle, Clock, CheckCircle2, XCircle, Wrench, Camera, Image as ImageIcon } from 'lucide-react';
+import { MaintenanceDetailModal } from './maintenance-detail-modal';
 
 interface MaintenanceRequest {
   id: string;
+  title?: string;
   description: string;
   category: string;
   priority: 'low' | 'medium' | 'high' | 'emergency';
   status: 'open' | 'in_progress' | 'resolved' | 'closed';
   reported_at: string;
+  resolved_at?: string | null;
+  photo_urls?: string[] | null;
+  has_photos?: boolean;
+  location?: string | null;
+  conversation_id?: string | null;
   residents: {
+    id: string;
     first_name: string;
     last_name: string;
+    phone: string;
     type: string;
   };
+  units?: {
+    unit_number: string;
+  } | null;
 }
 
 interface MaintenanceBoardProps {
@@ -93,6 +106,8 @@ const priorityConfig = {
 export function MaintenanceBoard({ initialRequests, buildingId }: MaintenanceBoardProps) {
   const [requests, setRequests] = useState(initialRequests);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [selectedRequest, setSelectedRequest] = useState<MaintenanceRequest | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const supabase = createClient();
 
   const sensors = useSensors(
@@ -178,13 +193,95 @@ export function MaintenanceBoard({ initialRequests, buildingId }: MaintenanceBoa
       )
     );
 
-    // Update in database
-    await supabase
-      .from('maintenance_requests')
-      .update({ status: newStatus })
-      .eq('id', requestId);
+    // Update via API (handles notification if status is closed)
+    try {
+      const response = await fetch('/api/maintenance/update-status', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          requestId,
+          newStatus,
+        }),
+      });
+
+      if (!response.ok) {
+        console.error('Failed to update status');
+        // Revert local update on error
+        const { data: currentRequest } = await supabase
+          .from('maintenance_requests')
+          .select('status')
+          .eq('id', requestId)
+          .single();
+
+        if (currentRequest) {
+          setRequests((prev) =>
+            prev.map((req) =>
+              req.id === requestId
+                ? { ...req, status: currentRequest.status }
+                : req
+            )
+          );
+        }
+      }
+    } catch (error) {
+      console.error('Error updating status:', error);
+    }
 
     setActiveId(null);
+  }
+
+  function handleRequestClick(request: MaintenanceRequest) {
+    setSelectedRequest(request);
+    setIsModalOpen(true);
+  }
+
+  async function handleStatusChange(requestId: string, newStatus: string) {
+    // Update locally
+    setRequests((prev) =>
+      prev.map((req) =>
+        req.id === requestId
+          ? { ...req, status: newStatus as any }
+          : req
+      )
+    );
+
+    // Update via API (handles notification if status is closed)
+    try {
+      const response = await fetch('/api/maintenance/update-status', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          requestId,
+          newStatus,
+        }),
+      });
+
+      if (!response.ok) {
+        console.error('Failed to update status');
+        // Revert local update on error
+        const { data: currentRequest } = await supabase
+          .from('maintenance_requests')
+          .select('status')
+          .eq('id', requestId)
+          .single();
+
+        if (currentRequest) {
+          setRequests((prev) =>
+            prev.map((req) =>
+              req.id === requestId
+                ? { ...req, status: currentRequest.status }
+                : req
+            )
+          );
+        }
+      }
+    } catch (error) {
+      console.error('Error updating status:', error);
+    }
   }
 
   const getRequestsByStatus = (status: string) => {
@@ -223,7 +320,11 @@ export function MaintenanceBoard({ initialRequests, buildingId }: MaintenanceBoa
                 <DroppableColumn id={column.id}>
                   <div className="space-y-2">
                     {columnRequests.map((request) => (
-                      <DraggableCard key={request.id} request={request} />
+                      <DraggableCard
+                        key={request.id}
+                        request={request}
+                        onClick={() => handleRequestClick(request)}
+                      />
                     ))}
 
                     {columnRequests.length === 0 && (
@@ -242,6 +343,14 @@ export function MaintenanceBoard({ initialRequests, buildingId }: MaintenanceBoa
       <DragOverlay>
         {activeRequest ? <RequestCard request={activeRequest} isDragging /> : null}
       </DragOverlay>
+
+      {/* Detail Modal */}
+      <MaintenanceDetailModal
+        request={selectedRequest}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onStatusChange={handleStatusChange}
+      />
     </DndContext>
   );
 }
@@ -256,7 +365,13 @@ function DroppableColumn({ id, children }: { id: string; children: React.ReactNo
   );
 }
 
-function DraggableCard({ request }: { request: MaintenanceRequest }) {
+function DraggableCard({
+  request,
+  onClick,
+}: {
+  request: MaintenanceRequest;
+  onClick?: () => void;
+}) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: request.id,
   });
@@ -275,8 +390,14 @@ function DraggableCard({ request }: { request: MaintenanceRequest }) {
       style={style}
       {...listeners}
       {...attributes}
-      className={`p-3 rounded-lg border border-border/40 bg-card cursor-grab active:cursor-grabbing transition-all hover:shadow-md ${
-        isDragging ? 'opacity-50 rotate-2 scale-105' : ''
+      onClick={(e) => {
+        // Only trigger onClick if not dragging
+        if (!isDragging && onClick) {
+          onClick();
+        }
+      }}
+      className={`p-3 rounded-lg border border-border/40 bg-card cursor-pointer hover:shadow-md transition-all ${
+        isDragging ? 'opacity-50 rotate-2 scale-105 cursor-grabbing' : ''
       }`}
     >
       <div className="flex items-start justify-between gap-2 mb-2">
@@ -298,10 +419,46 @@ function DraggableCard({ request }: { request: MaintenanceRequest }) {
           <span className="font-medium">Residente:</span>{' '}
           {request.residents.first_name} {request.residents.last_name}
         </p>
-        <p className="text-[10px] text-muted-foreground">
-          {formatRelativeTime(request.reported_at)}
-        </p>
+        <div className="flex items-center justify-between">
+          <p className="text-[10px] text-muted-foreground">
+            {formatRelativeTime(request.reported_at)}
+          </p>
+          {request.has_photos && request.photo_urls && request.photo_urls.length > 0 && (
+            <Badge variant="secondary" className="gap-1 h-5 px-1.5">
+              <Camera className="w-3 h-3" />
+              <span className="text-[10px]">{request.photo_urls.length}</span>
+            </Badge>
+          )}
+        </div>
       </div>
+
+      {/* Photo preview */}
+      {request.has_photos && request.photo_urls && request.photo_urls.length > 0 && (
+        <div className="mt-2 flex gap-1 overflow-x-auto">
+          {request.photo_urls.slice(0, 3).map((url, idx) => (
+            <a
+              key={idx}
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-shrink-0 w-16 h-16 rounded-md overflow-hidden bg-muted hover:opacity-80 transition-opacity"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <img
+                src={url}
+                alt={`Photo ${idx + 1}`}
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
+            </a>
+          ))}
+          {request.photo_urls.length > 3 && (
+            <div className="flex-shrink-0 w-16 h-16 rounded-md bg-muted flex items-center justify-center text-[10px] text-muted-foreground">
+              +{request.photo_urls.length - 3}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
