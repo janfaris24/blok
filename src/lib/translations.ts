@@ -235,6 +235,9 @@ export const translations = {
       send: 'Enviar',
       active: 'Activa',
       lastMessage: 'Último mensaje',
+      loadMore: 'Cargar mensajes anteriores',
+      loading: 'Cargando...',
+      noMessages: 'No hay mensajes todavía',
     },
 
     // Broadcasts
@@ -257,6 +260,217 @@ export const translations = {
       answer: 'Respuesta',
       category: 'Categoría',
       active: 'Activa',
+    },
+
+    // Help & Support
+    help: {
+      title: 'Ayuda y Soporte',
+      description: 'Encuentra respuestas a las preguntas más frecuentes',
+      searchTitle: 'Buscar en la ayuda',
+      searchDescription: 'Escribe tu pregunta o palabra clave',
+      searchPlaceholder: '¿Qué necesitas saber?',
+      categoriesTitle: 'Categorías',
+      allCategories: 'Todas',
+      faqTitle: 'Preguntas Frecuentes',
+      totalQuestions: 'preguntas en total',
+      questionsInCategory: 'preguntas en esta categoría',
+      noResults: 'No se encontraron resultados',
+      clearFilters: 'Limpiar filtros',
+
+      categories: {
+        gettingStarted: 'Primeros Pasos',
+        residents: 'Residentes',
+        conversations: 'Conversaciones',
+        maintenance: 'Mantenimiento',
+        broadcasts: 'Anuncios',
+        ai: 'Inteligencia Artificial',
+      },
+
+      support: {
+        title: '¿Necesitas más ayuda?',
+        description: 'Nuestro equipo de soporte está aquí para ayudarte',
+        hours: 'Lunes a Viernes, 9:00 AM - 6:00 PM',
+      },
+
+      faqs: {
+        q1: {
+          category: 'getting-started',
+          question: '¿Cómo empiezo a usar Blok?',
+          answer: `Para comenzar a usar Blok:
+
+1. Agrega las unidades de tu edificio desde "Edificio"
+2. Importa o agrega manualmente a tus residentes
+3. Configura tu número de WhatsApp Business
+4. ¡Listo! Los residentes pueden empezar a escribir
+
+Tip: Puedes crear unidades en masa usando la función "Crear Unidades en Masa" para ahorrar tiempo.`,
+        },
+        q2: {
+          category: 'getting-started',
+          question: '¿Necesito conocimientos técnicos para usar Blok?',
+          answer: `No, Blok está diseñado para ser muy fácil de usar. No necesitas conocimientos técnicos especiales.
+
+Todo es visual y con botones simples. Si sabes usar WhatsApp, puedes usar Blok sin problemas.`,
+        },
+        q3: {
+          category: 'residents',
+          question: '¿Cómo agrego residentes?',
+          answer: `Hay dos formas de agregar residentes:
+
+1. MANUALMENTE: Ve a "Residentes" y haz clic en "Agregar Residente"
+2. EN MASA: Usa la función "Importar" para subir una hoja de Excel con todos tus residentes
+
+Asegúrate de incluir: nombre, teléfono, correo y unidad.`,
+        },
+        q4: {
+          category: 'residents',
+          question: '¿Cuál es la diferencia entre propietario e inquilino?',
+          answer: `PROPIETARIO: Dueño de la unidad. Recibe información sobre pagos y decisiones importantes.
+
+INQUILINO: Persona que renta. Solo recibe información sobre mantenimiento y reglas del edificio.
+
+Esto es importante porque Blok envía mensajes diferentes según el tipo de residente.`,
+        },
+        q5: {
+          category: 'residents',
+          question: '¿Los residentes necesitan instalar algo?',
+          answer: `¡NO! Los residentes solo necesitan WhatsApp, que probablemente ya tienen instalado.
+
+No necesitan:
+- Descargar ninguna app
+- Crear ninguna cuenta
+- Aprender algo nuevo
+
+Simplemente escriben al número de WhatsApp de tu edificio como si fuera cualquier contacto.`,
+        },
+        q6: {
+          category: 'conversations',
+          question: '¿Cómo veo los mensajes de los residentes?',
+          answer: `Ve a la sección "Conversaciones" en el menú.
+
+Ahí verás:
+- Todas las conversaciones activas
+- El último mensaje de cada residente
+- Cuándo fue el último mensaje
+
+Haz clic en cualquier conversación para ver todos los mensajes y responder.`,
+        },
+        q7: {
+          category: 'conversations',
+          question: '¿Cómo respondo a un residente?',
+          answer: `Es muy fácil:
+
+1. Ve a "Conversaciones"
+2. Haz clic en la conversación del residente
+3. Escribe tu mensaje en la caja de abajo
+4. Presiona el botón de enviar (o Enter)
+
+Tu mensaje se enviará inmediatamente por WhatsApp al residente.`,
+        },
+        q8: {
+          category: 'ai',
+          question: '¿La IA responde automáticamente a los residentes?',
+          answer: `Sí, la IA de Blok responde automáticamente a preguntas comunes como:
+- Horarios de amenidades
+- Información de pagos
+- Reglas del edificio
+- Preguntas frecuentes
+
+PERO la IA es inteligente y sabe cuándo un humano debe responder. En esos casos, te notifica para que respondas tú.`,
+        },
+        q9: {
+          category: 'ai',
+          question: '¿Cómo sabe la IA qué responder?',
+          answer: `La IA aprende de la Base de Conocimiento que tú configuras.
+
+Puedes agregar información sobre:
+- Horarios de piscina, gym, áreas comunes
+- Reglas del edificio
+- Días de recogido de basura
+- Contactos importantes
+- Y cualquier otra información frecuente
+
+Entre más información agregues, mejores serán las respuestas automáticas.`,
+        },
+        q10: {
+          category: 'ai',
+          question: '¿Puedo revisar lo que la IA responde?',
+          answer: `¡SÍ! Puedes ver todas las respuestas de la IA en "Conversaciones".
+
+Los mensajes de la IA están marcados con un ícono especial de robot para que los identifiques fácilmente.
+
+Si algo no está bien, puedes corregirlo o agregar más información a la Base de Conocimiento.`,
+        },
+        q11: {
+          category: 'maintenance',
+          question: '¿Cómo funcionan las solicitudes de mantenimiento?',
+          answer: `Cuando un residente reporta un problema por WhatsApp, la IA:
+
+1. Detecta automáticamente que es una solicitud de mantenimiento
+2. Crea un ticket en el tablero de "Mantenimiento"
+3. Clasifica la urgencia (baja, media, alta, emergencia)
+4. Te notifica
+
+Tú puedes entonces mover el ticket por las columnas: Abierta → En Progreso → Resuelta → Cerrada`,
+        },
+        q12: {
+          category: 'maintenance',
+          question: '¿Cómo organizo las solicitudes de mantenimiento?',
+          answer: `Usa el tablero Kanban en "Mantenimiento":
+
+ABIERTA: Solicitudes nuevas que debes revisar
+EN PROGRESO: Estás trabajando en ellas
+RESUELTA: Problema arreglado, esperando confirmación
+CERRADA: Todo completado
+
+Solo arrastra las tarjetas entre columnas. ¡Es muy visual y fácil!`,
+        },
+        q13: {
+          category: 'maintenance',
+          question: '¿Los residentes son notificados cuando resuelvo algo?',
+          answer: `Sí, automáticamente.
+
+Cuando mueves una solicitud a "Cerrada", el residente recibe un mensaje por WhatsApp confirmando que su problema fue resuelto.
+
+No necesitas hacer nada extra, Blok lo hace por ti.`,
+        },
+        q14: {
+          category: 'broadcasts',
+          question: '¿Cómo envío un anuncio a todos los residentes?',
+          answer: `Ve a "Anuncios" y:
+
+1. Haz clic en "Crear Anuncio"
+2. Escribe tu mensaje
+3. Selecciona a quién enviarlo:
+   - Todos los residentes
+   - Solo propietarios
+   - Solo inquilinos
+4. Haz clic en "Enviar"
+
+¡Todos recibirán el mensaje por WhatsApp al mismo tiempo!`,
+        },
+        q15: {
+          category: 'broadcasts',
+          question: '¿Cuántos mensajes puedo enviar a la vez?',
+          answer: `Puedes enviar a TODOS tus residentes de una sola vez.
+
+Blok maneja el envío automáticamente, respetando los límites de WhatsApp para evitar problemas.
+
+No importa si tienes 20 o 200 residentes, Blok se encarga de todo.`,
+        },
+        q16: {
+          category: 'broadcasts',
+          question: '¿Puedo enviar anuncios solo a algunos residentes?',
+          answer: `Sí, puedes seleccionar:
+- TODOS los residentes
+- Solo PROPIETARIOS
+- Solo INQUILINOS
+
+Por ejemplo, si es información sobre cuotas de mantenimiento, envíalo solo a propietarios.
+
+Si es sobre reglas del edificio, envíalo a todos.`,
+        },
+      },
     },
 
     // Common
@@ -775,6 +989,9 @@ export const translations = {
       send: 'Send',
       active: 'Active',
       lastMessage: 'Last message',
+      loadMore: 'Load previous messages',
+      loading: 'Loading...',
+      noMessages: 'No messages yet',
     },
 
     // Broadcasts
@@ -797,6 +1014,217 @@ export const translations = {
       answer: 'Answer',
       category: 'Category',
       active: 'Active',
+    },
+
+    // Help & Support
+    help: {
+      title: 'Help & Support',
+      description: 'Find answers to the most frequently asked questions',
+      searchTitle: 'Search help',
+      searchDescription: 'Type your question or keyword',
+      searchPlaceholder: 'What do you need to know?',
+      categoriesTitle: 'Categories',
+      allCategories: 'All',
+      faqTitle: 'Frequently Asked Questions',
+      totalQuestions: 'questions total',
+      questionsInCategory: 'questions in this category',
+      noResults: 'No results found',
+      clearFilters: 'Clear filters',
+
+      categories: {
+        gettingStarted: 'Getting Started',
+        residents: 'Residents',
+        conversations: 'Conversations',
+        maintenance: 'Maintenance',
+        broadcasts: 'Broadcasts',
+        ai: 'Artificial Intelligence',
+      },
+
+      support: {
+        title: 'Need more help?',
+        description: 'Our support team is here to help you',
+        hours: 'Monday to Friday, 9:00 AM - 6:00 PM',
+      },
+
+      faqs: {
+        q1: {
+          category: 'getting-started',
+          question: 'How do I start using Blok?',
+          answer: `To start using Blok:
+
+1. Add your building units from "Building"
+2. Import or manually add your residents
+3. Configure your WhatsApp Business number
+4. Ready! Residents can start messaging
+
+Tip: You can bulk create units using "Bulk Create Units" to save time.`,
+        },
+        q2: {
+          category: 'getting-started',
+          question: 'Do I need technical knowledge to use Blok?',
+          answer: `No, Blok is designed to be very easy to use. You don't need any special technical knowledge.
+
+Everything is visual with simple buttons. If you know how to use WhatsApp, you can use Blok without problems.`,
+        },
+        q3: {
+          category: 'residents',
+          question: 'How do I add residents?',
+          answer: `There are two ways to add residents:
+
+1. MANUALLY: Go to "Residents" and click "Add Resident"
+2. IN BULK: Use the "Import" function to upload an Excel sheet with all your residents
+
+Make sure to include: name, phone, email, and unit.`,
+        },
+        q4: {
+          category: 'residents',
+          question: 'What\'s the difference between owner and renter?',
+          answer: `OWNER: Unit owner. Receives information about payments and important decisions.
+
+RENTER: Person who rents. Only receives information about maintenance and building rules.
+
+This is important because Blok sends different messages depending on the resident type.`,
+        },
+        q5: {
+          category: 'residents',
+          question: 'Do residents need to install anything?',
+          answer: `NO! Residents only need WhatsApp, which they probably already have installed.
+
+They don't need to:
+- Download any app
+- Create any account
+- Learn anything new
+
+They simply message your building's WhatsApp number like any other contact.`,
+        },
+        q6: {
+          category: 'conversations',
+          question: 'How do I see resident messages?',
+          answer: `Go to the "Conversations" section in the menu.
+
+There you'll see:
+- All active conversations
+- The last message from each resident
+- When the last message was sent
+
+Click on any conversation to see all messages and respond.`,
+        },
+        q7: {
+          category: 'conversations',
+          question: 'How do I respond to a resident?',
+          answer: `It's very easy:
+
+1. Go to "Conversations"
+2. Click on the resident's conversation
+3. Type your message in the box below
+4. Press the send button (or Enter)
+
+Your message will be sent immediately via WhatsApp to the resident.`,
+        },
+        q8: {
+          category: 'ai',
+          question: 'Does the AI automatically respond to residents?',
+          answer: `Yes, Blok's AI automatically responds to common questions like:
+- Amenity schedules
+- Payment information
+- Building rules
+- Frequently asked questions
+
+BUT the AI is smart and knows when a human should respond. In those cases, it notifies you so you can respond.`,
+        },
+        q9: {
+          category: 'ai',
+          question: 'How does the AI know what to respond?',
+          answer: `The AI learns from the Knowledge Base that you configure.
+
+You can add information about:
+- Pool, gym, common area schedules
+- Building rules
+- Trash collection days
+- Important contacts
+- And any other frequent information
+
+The more information you add, the better the automatic responses will be.`,
+        },
+        q10: {
+          category: 'ai',
+          question: 'Can I review what the AI responds?',
+          answer: `YES! You can see all AI responses in "Conversations".
+
+AI messages are marked with a special robot icon so you can easily identify them.
+
+If something isn't right, you can correct it or add more information to the Knowledge Base.`,
+        },
+        q11: {
+          category: 'maintenance',
+          question: 'How do maintenance requests work?',
+          answer: `When a resident reports a problem via WhatsApp, the AI:
+
+1. Automatically detects it's a maintenance request
+2. Creates a ticket on the "Maintenance" board
+3. Classifies the urgency (low, medium, high, emergency)
+4. Notifies you
+
+You can then move the ticket through the columns: Open → In Progress → Resolved → Closed`,
+        },
+        q12: {
+          category: 'maintenance',
+          question: 'How do I organize maintenance requests?',
+          answer: `Use the Kanban board in "Maintenance":
+
+OPEN: New requests you need to review
+IN PROGRESS: You're working on them
+RESOLVED: Problem fixed, awaiting confirmation
+CLOSED: Everything completed
+
+Just drag cards between columns. It's very visual and easy!`,
+        },
+        q13: {
+          category: 'maintenance',
+          question: 'Are residents notified when I resolve something?',
+          answer: `Yes, automatically.
+
+When you move a request to "Closed", the resident receives a WhatsApp message confirming their problem was resolved.
+
+You don't need to do anything extra, Blok does it for you.`,
+        },
+        q14: {
+          category: 'broadcasts',
+          question: 'How do I send an announcement to all residents?',
+          answer: `Go to "Broadcasts" and:
+
+1. Click "Create Broadcast"
+2. Write your message
+3. Select who to send to:
+   - All residents
+   - Only owners
+   - Only renters
+4. Click "Send"
+
+Everyone will receive the message via WhatsApp at the same time!`,
+        },
+        q15: {
+          category: 'broadcasts',
+          question: 'How many messages can I send at once?',
+          answer: `You can send to ALL your residents at once.
+
+Blok handles the sending automatically, respecting WhatsApp limits to avoid problems.
+
+It doesn't matter if you have 20 or 200 residents, Blok takes care of everything.`,
+        },
+        q16: {
+          category: 'broadcasts',
+          question: 'Can I send announcements to only some residents?',
+          answer: `Yes, you can select:
+- ALL residents
+- Only OWNERS
+- Only RENTERS
+
+For example, if it's information about maintenance fees, send it only to owners.
+
+If it's about building rules, send it to everyone.`,
+        },
+      },
     },
 
     // Common

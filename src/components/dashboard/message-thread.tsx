@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { formatDate } from '@/lib/utils';
 import { Send, User, Bot, UserCircle, MessageCircle, MessageSquare, Mail, Image as ImageIcon, Video, FileText } from 'lucide-react';
 import { LaserFlow } from '@/components/ui/laser-flow';
+import { useLanguage } from '@/contexts/language-context';
 
 interface Message {
   id: string;
@@ -39,15 +40,22 @@ interface MessageThreadProps {
 }
 
 export function MessageThread({ conversation, buildingId }: MessageThreadProps) {
+  const { t } = useLanguage();
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [sending, setSending] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const supabase = createClient();
 
-  // Load messages
+  const MESSAGES_PER_PAGE = 50;
+
+  // Load initial messages
   useEffect(() => {
-    loadMessages();
+    loadMessages(true);
   }, [conversation.id]);
 
   // Real-time subscription
@@ -73,20 +81,90 @@ export function MessageThread({ conversation, buildingId }: MessageThreadProps) 
     };
   }, [conversation.id, supabase]);
 
-  // Auto-scroll to bottom
+  // Auto-scroll to bottom only on initial load or new messages
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    if (isInitialLoad && messages.length > 0) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
+      setIsInitialLoad(false);
+    } else if (!loading && messages.length > 0) {
+      // Only auto-scroll if user is near bottom (within 100px)
+      const container = messagesContainerRef.current;
+      if (container) {
+        const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+        if (isNearBottom) {
+          messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }
+      }
+    }
+  }, [messages, loading, isInitialLoad]);
 
-  async function loadMessages() {
-    const { data } = await supabase
-      .from('messages')
-      .select('*')
-      .eq('conversation_id', conversation.id)
-      .order('created_at', { ascending: true });
+  async function loadMessages(isInitial = false) {
+    if (loading || (!isInitial && !hasMore)) return;
 
-    if (data) {
-      setMessages(data);
+    setLoading(true);
+
+    try {
+      const { data, count } = await supabase
+        .from('messages')
+        .select('*', { count: 'exact' })
+        .eq('conversation_id', conversation.id)
+        .order('created_at', { ascending: false })
+        .range(0, MESSAGES_PER_PAGE - 1);
+
+      if (data) {
+        // Reverse to show oldest first
+        const reversedData = data.reverse();
+        setMessages(reversedData);
+        setHasMore((count || 0) > MESSAGES_PER_PAGE);
+      }
+    } catch (error) {
+      console.error('Error loading messages:', error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function loadMoreMessages() {
+    if (loading || !hasMore) return;
+
+    setLoading(true);
+
+    // Save current scroll position
+    const container = messagesContainerRef.current;
+    const oldScrollHeight = container?.scrollHeight || 0;
+
+    try {
+      const oldestMessage = messages[0];
+      if (!oldestMessage) return;
+
+      const { data } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('conversation_id', conversation.id)
+        .lt('created_at', oldestMessage.created_at)
+        .order('created_at', { ascending: false })
+        .limit(MESSAGES_PER_PAGE);
+
+      if (data && data.length > 0) {
+        // Reverse to show oldest first
+        const reversedData = data.reverse();
+        setMessages((prev) => [...reversedData, ...prev]);
+        setHasMore(data.length === MESSAGES_PER_PAGE);
+
+        // Restore scroll position after new messages are added
+        setTimeout(() => {
+          if (container) {
+            const newScrollHeight = container.scrollHeight;
+            container.scrollTop = newScrollHeight - oldScrollHeight;
+          }
+        }, 0);
+      } else {
+        setHasMore(false);
+      }
+    } catch (error) {
+      console.error('Error loading more messages:', error);
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -224,7 +302,22 @@ export function MessageThread({ conversation, buildingId }: MessageThreadProps) 
       </CardHeader>
 
       {/* Messages */}
-      <CardContent className="flex-1 overflow-y-auto p-4 space-y-3">
+      <CardContent ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-3">
+        {/* Load More Button */}
+        {hasMore && messages.length > 0 && (
+          <div className="flex justify-center pb-3">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={loadMoreMessages}
+              disabled={loading}
+              className="text-xs h-8"
+            >
+              {loading ? t.conversations.loading : t.conversations.loadMore}
+            </Button>
+          </div>
+        )}
+
         {messages.length > 0 ? (
           messages.map((message) => {
             const isResident = message.sender_type === 'resident';
@@ -289,7 +382,7 @@ export function MessageThread({ conversation, buildingId }: MessageThreadProps) 
           })
         ) : (
           <div className="h-full flex items-center justify-center text-muted-foreground">
-            <p className="text-sm">No hay mensajes todavía</p>
+            <p className="text-sm">{t.conversations.noMessages}</p>
           </div>
         )}
         <div ref={messagesEndRef} />
@@ -314,7 +407,7 @@ export function MessageThread({ conversation, buildingId }: MessageThreadProps) 
             type="text"
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
-            placeholder="Escribe un mensaje..."
+            placeholder={t.conversations.writeMessage}
             className="flex-1 h-11 px-4 rounded-full border border-border/40 bg-muted/50 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all"
             disabled={sending}
           />

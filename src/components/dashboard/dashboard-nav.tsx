@@ -170,9 +170,13 @@ export function DashboardNav({ buildingName, buildingId, userEmail, userName }: 
 
           {/* Right Actions */}
           <div className="flex items-center gap-1">
-            <button className="w-9 h-9 rounded-lg hover:bg-accent transition-colors flex items-center justify-center" title={t.nav.help}>
+            <Link
+              href="/dashboard/help"
+              className="w-9 h-9 rounded-lg hover:bg-accent transition-colors flex items-center justify-center"
+              title={t.nav.help}
+            >
               <HelpCircle className="w-[18px] h-[18px] text-muted-foreground" />
-            </button>
+            </Link>
 
             <Popover open={isDesktopOpen} onOpenChange={setIsDesktopOpen}>
               <PopoverTrigger asChild>
@@ -192,25 +196,28 @@ export function DashboardNav({ buildingName, buildingId, userEmail, userName }: 
               </PopoverContent>
             </Popover>
 
-            <Link href="/dashboard/settings">
-              <button className="w-9 h-9 rounded-lg hover:bg-accent transition-colors flex items-center justify-center" title={t.nav.settings}>
-                <Settings className="w-[18px] h-[18px] text-muted-foreground" />
-              </button>
+            <Link
+              href="/dashboard/settings"
+              className="w-9 h-9 rounded-lg hover:bg-accent transition-colors flex items-center justify-center"
+              title={t.nav.settings}
+            >
+              <Settings className="w-[18px] h-[18px] text-muted-foreground" />
             </Link>
 
             {/* User Menu */}
-            <Link href="/dashboard/settings">
-              <button className="flex items-center gap-2.5 ml-2 pl-1.5 pr-3 h-9 rounded-lg hover:bg-accent transition-colors">
-                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-                  <User className="w-3.5 h-3.5 text-white" />
-                </div>
-                <div className="text-left">
-                  <p className="text-xs font-semibold leading-none truncate max-w-[120px]">
-                    {userName || userEmail?.split('@')[0] || 'Admin'}
-                  </p>
-                  <p className="text-[10px] text-muted-foreground leading-none mt-0.5">{t.nav.administrator}</p>
-                </div>
-              </button>
+            <Link
+              href="/dashboard/settings"
+              className="flex items-center gap-2.5 ml-2 pl-1.5 pr-3 h-9 rounded-lg hover:bg-accent transition-colors"
+            >
+              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
+                <User className="w-3.5 h-3.5 text-white" />
+              </div>
+              <div className="text-left">
+                <p className="text-xs font-semibold leading-none truncate max-w-[120px]">
+                  {userName || userEmail?.split('@')[0] || 'Admin'}
+                </p>
+                <p className="text-[10px] text-muted-foreground leading-none mt-0.5">{t.nav.administrator}</p>
+              </div>
             </Link>
           </div>
         </div>
@@ -309,10 +316,18 @@ export function DashboardNav({ buildingName, buildingId, userEmail, userName }: 
                 <Settings className="w-[18px] h-[18px]" />
                 <span>{t.nav.settings}</span>
               </Link>
-              <button className="w-full flex items-center gap-3 px-3 h-9 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-all">
+              <Link
+                href="/dashboard/help"
+                className={cn(
+                  'w-full flex items-center gap-3 px-3 h-9 rounded-lg text-sm font-medium transition-all',
+                  pathname === '/dashboard/help'
+                    ? 'bg-muted text-foreground'
+                    : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+                )}
+              >
                 <HelpCircle className="w-[18px] h-[18px]" />
                 <span>{t.nav.help}</span>
-              </button>
+              </Link>
             </div>
           </div>
         </nav>
