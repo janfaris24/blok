@@ -1,36 +1,29 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Language, translations } from '@/lib/translations/landing';
+import { createContext, useContext, ReactNode } from 'react';
+import { translations, Language, Translations } from '@/lib/translations';
 
 interface LanguageContextType {
   language: Language;
-  setLanguage: (lang: Language) => void;
-  t: typeof translations.es;
+  t: Translations;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
-export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguageState] = useState<Language>('es');
-
-  useEffect(() => {
-    // Load saved language from localStorage
-    const saved = localStorage.getItem('blok-language') as Language;
-    if (saved && (saved === 'es' || saved === 'en')) {
-      setLanguageState(saved);
-    }
-  }, []);
-
-  const setLanguage = (lang: Language) => {
-    setLanguageState(lang);
-    localStorage.setItem('blok-language', lang);
+export function LanguageProvider({
+  children,
+  language,
+}: {
+  children: ReactNode;
+  language: Language;
+}) {
+  const value: LanguageContextType = {
+    language,
+    t: translations[language] as Translations,
   };
 
-  const t = translations[language];
-
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t }}>
+    <LanguageContext.Provider value={value}>
       {children}
     </LanguageContext.Provider>
   );
@@ -38,8 +31,8 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
 export function useLanguage() {
   const context = useContext(LanguageContext);
-  if (!context) {
-    throw new Error('useLanguage must be used within LanguageProvider');
+  if (context === undefined) {
+    throw new Error('useLanguage must be used within a LanguageProvider');
   }
   return context;
 }

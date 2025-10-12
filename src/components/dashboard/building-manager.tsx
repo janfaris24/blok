@@ -8,6 +8,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Building2, Plus, Zap, Home, Users, Trash2, Pencil } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { useLanguage } from '@/contexts/language-context';
 
 interface Building {
   id: string;
@@ -15,6 +23,7 @@ interface Building {
   address: string;
   city?: string;
   whatsapp_business_number?: string;
+  maintenance_model?: string;
 }
 
 interface Unit {
@@ -31,6 +40,7 @@ interface BuildingManagerProps {
 }
 
 export function BuildingManager({ building, initialUnits }: BuildingManagerProps) {
+  const { t } = useLanguage();
   const [units, setUnits] = useState(initialUnits);
   const [showBulkModal, setShowBulkModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -44,6 +54,7 @@ export function BuildingManager({ building, initialUnits }: BuildingManagerProps
     address: building.address,
     city: building.city || 'San Juan',
     whatsapp_business_number: building.whatsapp_business_number || '',
+    maintenance_model: building.maintenance_model || 'resident_responsibility',
   });
   const [loading, setLoading] = useState(false);
   const supabase = createClient();
@@ -76,14 +87,14 @@ export function BuildingManager({ building, initialUnits }: BuildingManagerProps
 
       setUnits(prev => [...prev, ...data]);
       setShowBulkModal(false);
-      alert(`✅ ${newUnits.length} unidades creadas exitosamente!`);
+      alert(`✅ ${newUnits.length} ${t.building.unitsCreated}`);
       window.location.reload();
     } catch (error: any) {
       console.error('Error creating units:', error);
       if (error.code === '23505') {
-        alert('Error: Algunas unidades ya existen. Usa "Eliminar Todas las Unidades" primero si quieres empezar de nuevo.');
+        alert(t.building.duplicateError);
       } else {
-        alert('Error al crear unidades. Intenta nuevamente.');
+        alert(t.building.errorCreating);
       }
     } finally {
       setLoading(false);
@@ -91,11 +102,11 @@ export function BuildingManager({ building, initialUnits }: BuildingManagerProps
   };
 
   const handleDeleteAllUnits = async () => {
-    if (!confirm('⚠️ ¿Estás seguro? Esto eliminará TODAS las unidades del edificio. Esta acción no se puede deshacer.')) {
+    if (!confirm(t.building.confirmDeleteAll)) {
       return;
     }
 
-    if (!confirm('¿REALMENTE seguro? Se perderán todas las asociaciones con residentes.')) {
+    if (!confirm(t.building.confirmDeleteAllSecond)) {
       return;
     }
 
@@ -117,10 +128,10 @@ export function BuildingManager({ building, initialUnits }: BuildingManagerProps
       if (error) throw error;
 
       setUnits([]);
-      alert('✅ Todas las unidades han sido eliminadas');
+      alert(t.building.allUnitsDeleted);
     } catch (error) {
       console.error('Error deleting units:', error);
-      alert('Error al eliminar unidades. Intenta nuevamente.');
+      alert(t.building.errorDeleting);
     } finally {
       setLoading(false);
     }
@@ -128,7 +139,7 @@ export function BuildingManager({ building, initialUnits }: BuildingManagerProps
 
   const handleUpdateBuilding = async () => {
     if (!editData.name.trim() || !editData.address.trim()) {
-      alert('Nombre y dirección son requeridos');
+      alert(t.building.nameAndAddressRequired);
       return;
     }
 
@@ -144,15 +155,15 @@ export function BuildingManager({ building, initialUnits }: BuildingManagerProps
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Error al actualizar');
+        throw new Error(data.error || t.building.errorUpdating);
       }
 
-      alert('✅ Información del edificio actualizada');
+      alert(t.building.buildingUpdated);
       setShowEditModal(false);
       window.location.reload();
     } catch (error: any) {
       console.error('Error updating building:', error);
-      alert(error.message || 'Error al actualizar el edificio');
+      alert(error.message || t.building.errorUpdating);
     } finally {
       setLoading(false);
     }
@@ -175,9 +186,9 @@ export function BuildingManager({ building, initialUnits }: BuildingManagerProps
       <div className="space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-bold mb-1">Edificio</h1>
+          <h1 className="text-2xl font-bold mb-1">{t.building.title}</h1>
           <p className="text-sm text-muted-foreground">
-            Gestiona las unidades de {building.name}
+            {t.building.description} {building.name}
           </p>
         </div>
 
@@ -187,7 +198,7 @@ export function BuildingManager({ building, initialUnits }: BuildingManagerProps
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-2 text-base">
                 <Building2 className="w-4 h-4" />
-                Información del Edificio
+                {t.building.buildingInfo}
               </CardTitle>
               <Button
                 variant="outline"
@@ -196,27 +207,27 @@ export function BuildingManager({ building, initialUnits }: BuildingManagerProps
                 className="gap-2"
               >
                 <Pencil className="w-3 h-3" />
-                Editar
+                {t.building.edit}
               </Button>
             </div>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
-                <p className="text-xs text-muted-foreground mb-1">Nombre</p>
+                <p className="text-xs text-muted-foreground mb-1">{t.building.name}</p>
                 <p className="text-sm font-semibold">{building.name}</p>
               </div>
               <div>
-                <p className="text-xs text-muted-foreground mb-1">Dirección</p>
+                <p className="text-xs text-muted-foreground mb-1">{t.building.address}</p>
                 <p className="text-sm font-semibold">{building.address}</p>
               </div>
               <div>
-                <p className="text-xs text-muted-foreground mb-1">Ciudad</p>
+                <p className="text-xs text-muted-foreground mb-1">{t.building.city}</p>
                 <p className="text-sm font-semibold">{building.city || 'San Juan'}</p>
               </div>
               <div>
-                <p className="text-xs text-muted-foreground mb-1">WhatsApp Business</p>
-                <p className="text-sm font-semibold">{building.whatsapp_business_number || 'No configurado'}</p>
+                <p className="text-xs text-muted-foreground mb-1">{t.building.whatsapp}</p>
+                <p className="text-sm font-semibold">{building.whatsapp_business_number || t.building.notConfigured}</p>
               </div>
             </div>
           </CardContent>
@@ -228,7 +239,7 @@ export function BuildingManager({ building, initialUnits }: BuildingManagerProps
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Home className="w-4 h-4" />
-                Total Unidades
+                {t.building.totalUnits}
               </div>
             </CardHeader>
             <CardContent>
@@ -240,7 +251,7 @@ export function BuildingManager({ building, initialUnits }: BuildingManagerProps
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Building2 className="w-4 h-4" />
-                Pisos
+                {t.building.floors}
               </div>
             </CardHeader>
             <CardContent>
@@ -252,7 +263,7 @@ export function BuildingManager({ building, initialUnits }: BuildingManagerProps
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Users className="w-4 h-4" />
-                Ocupadas
+                {t.building.occupied}
               </div>
             </CardHeader>
             <CardContent>
@@ -270,7 +281,7 @@ export function BuildingManager({ building, initialUnits }: BuildingManagerProps
             className="gap-2"
           >
             <Zap className="w-4 h-4" />
-            Crear Unidades en Masa
+            {t.building.createBulkUnits}
           </Button>
           {units.length > 0 && (
             <Button
@@ -280,7 +291,7 @@ export function BuildingManager({ building, initialUnits }: BuildingManagerProps
               className="gap-2"
             >
               <Trash2 className="w-4 h-4" />
-              Eliminar Todas las Unidades
+              {t.building.deleteAllUnits}
             </Button>
           )}
         </div>
@@ -288,13 +299,13 @@ export function BuildingManager({ building, initialUnits }: BuildingManagerProps
         {/* Units by Floor */}
         {floors.length > 0 ? (
           <div className="space-y-4">
-            <h2 className="text-base font-bold">Unidades por Piso</h2>
+            <h2 className="text-base font-bold">{t.building.unitsByFloor}</h2>
             {floors.map(floor => (
               <Card key={floor} className="border-border/40">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-sm">Piso {floor}</CardTitle>
+                  <CardTitle className="text-sm">{t.building.floor} {floor}</CardTitle>
                   <p className="text-xs text-muted-foreground">
-                    {groupedUnits[floor].length} unidades
+                    {groupedUnits[floor].length} {t.building.units}
                   </p>
                 </CardHeader>
                 <CardContent>
@@ -326,7 +337,7 @@ export function BuildingManager({ building, initialUnits }: BuildingManagerProps
                             </p>
                           )}
                           {!hasOwner && !hasRenter && (
-                            <p className="text-xs text-muted-foreground">Disponible</p>
+                            <p className="text-xs text-muted-foreground">{t.building.available}</p>
                           )}
                         </div>
                       );
@@ -341,11 +352,11 @@ export function BuildingManager({ building, initialUnits }: BuildingManagerProps
             <CardContent className="py-8 text-center">
               <Building2 className="w-12 h-12 mx-auto mb-3 text-muted-foreground opacity-20" />
               <p className="text-sm text-muted-foreground mb-3">
-                No hay unidades creadas todavía
+                {t.building.noUnitsYet}
               </p>
               <Button onClick={() => setShowBulkModal(true)} className="gap-2">
                 <Zap className="w-4 h-4" />
-                Crear Unidades Ahora
+                {t.building.createUnitsNow}
               </Button>
             </CardContent>
           </Card>
@@ -356,11 +367,11 @@ export function BuildingManager({ building, initialUnits }: BuildingManagerProps
       <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Editar Información del Edificio</DialogTitle>
+            <DialogTitle>{t.building.editBuilding}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Nombre *</Label>
+              <Label htmlFor="name">{t.building.name} *</Label>
               <Input
                 id="name"
                 value={editData.name}
@@ -370,7 +381,7 @@ export function BuildingManager({ building, initialUnits }: BuildingManagerProps
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="address">Dirección *</Label>
+              <Label htmlFor="address">{t.building.address} *</Label>
               <Input
                 id="address"
                 value={editData.address}
@@ -380,7 +391,7 @@ export function BuildingManager({ building, initialUnits }: BuildingManagerProps
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="city">Ciudad</Label>
+              <Label htmlFor="city">{t.building.city}</Label>
               <Input
                 id="city"
                 value={editData.city}
@@ -390,7 +401,7 @@ export function BuildingManager({ building, initialUnits }: BuildingManagerProps
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="whatsapp">WhatsApp Business</Label>
+              <Label htmlFor="whatsapp">{t.building.whatsapp}</Label>
               <Input
                 id="whatsapp"
                 value={editData.whatsapp_business_number}
@@ -398,7 +409,40 @@ export function BuildingManager({ building, initialUnits }: BuildingManagerProps
                 placeholder="Ej: +1787XXXXXXX"
               />
               <p className="text-xs text-muted-foreground">
-                Formato: +1787XXXXXXX (incluye código de país)
+                {t.building.whatsappFormat}
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="maintenance_model">{t.building.maintenanceModel}</Label>
+              <Select
+                value={editData.maintenance_model}
+                onValueChange={(value) => setEditData({ ...editData, maintenance_model: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={t.building.selectModel} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="resident_responsibility">
+                    <div className="flex flex-col items-start gap-1">
+                      <span className="font-medium">{t.building.residentResponsible}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {t.building.residentDesc}
+                      </span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="admin_responsibility">
+                    <div className="flex flex-col items-start gap-1">
+                      <span className="font-medium">{t.building.adminResponsible}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {t.building.adminDesc}
+                      </span>
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                {t.building.maintenanceModelDesc}
               </p>
             </div>
 
@@ -408,14 +452,14 @@ export function BuildingManager({ building, initialUnits }: BuildingManagerProps
                 disabled={loading}
                 className="flex-1"
               >
-                {loading ? 'Guardando...' : 'Guardar Cambios'}
+                {loading ? t.building.saving : t.building.save}
               </Button>
               <Button
                 variant="outline"
                 onClick={() => setShowEditModal(false)}
                 disabled={loading}
               >
-                Cancelar
+                {t.building.cancel}
               </Button>
             </div>
           </div>
@@ -429,16 +473,16 @@ export function BuildingManager({ building, initialUnits }: BuildingManagerProps
             <CardHeader className="border-b border-border pb-3">
               <CardTitle className="text-base flex items-center gap-2">
                 <Zap className="w-4 h-4" />
-                Crear Unidades en Masa
+                {t.building.createBulkUnits}
               </CardTitle>
               <p className="text-sm text-muted-foreground mt-1">
-                Crea múltiples unidades automáticamente
+                {t.building.createUnitsAutomatically}
               </p>
             </CardHeader>
             <CardContent className="p-4 space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-1.5">
-                  Número de Pisos
+                  {t.building.numberOfFloors}
                 </label>
                 <input
                   type="number"
@@ -452,7 +496,7 @@ export function BuildingManager({ building, initialUnits }: BuildingManagerProps
 
               <div>
                 <label className="block text-sm font-medium mb-1.5">
-                  Unidades por Piso
+                  {t.building.unitsPerFloor}
                 </label>
                 <input
                   type="number"
@@ -466,7 +510,7 @@ export function BuildingManager({ building, initialUnits }: BuildingManagerProps
 
               <div>
                 <label className="block text-sm font-medium mb-1.5">
-                  Piso Inicial
+                  {t.building.startFloor}
                 </label>
                 <input
                   type="number"
@@ -480,12 +524,12 @@ export function BuildingManager({ building, initialUnits }: BuildingManagerProps
 
               {/* Preview */}
               <div className="p-3 rounded-lg bg-primary/10 border border-primary/20">
-                <p className="text-sm font-medium mb-1">Vista Previa:</p>
+                <p className="text-sm font-medium mb-1">{t.building.preview}</p>
                 <p className="text-sm">
-                  Se crearán <span className="font-bold text-primary">{bulkData.floors * bulkData.unitsPerFloor}</span> unidades
+                  {t.building.willCreate} <span className="font-bold text-primary">{bulkData.floors * bulkData.unitsPerFloor}</span> {t.building.willBeCreated}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Ejemplo: {bulkData.startFloor}01, {bulkData.startFloor}02, ... {bulkData.startFloor + bulkData.floors - 1}{bulkData.unitsPerFloor.toString().padStart(2, '0')}
+                  {t.building.example} {bulkData.startFloor}01, {bulkData.startFloor}02, ... {bulkData.startFloor + bulkData.floors - 1}{bulkData.unitsPerFloor.toString().padStart(2, '0')}
                 </p>
               </div>
 
@@ -495,13 +539,13 @@ export function BuildingManager({ building, initialUnits }: BuildingManagerProps
                   disabled={loading}
                   className="flex-1"
                 >
-                  {loading ? 'Creando...' : `Crear ${bulkData.floors * bulkData.unitsPerFloor} Unidades`}
+                  {loading ? t.building.creating : `${t.building.create} ${bulkData.floors * bulkData.unitsPerFloor} ${t.building.units}`}
                 </Button>
                 <Button
                   variant="outline"
                   onClick={() => setShowBulkModal(false)}
                 >
-                  Cancelar
+                  {t.building.cancel}
                 </Button>
               </div>
             </CardContent>

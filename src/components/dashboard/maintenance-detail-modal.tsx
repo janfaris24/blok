@@ -27,7 +27,9 @@ import {
   Bot,
   UserCircle,
   Send,
+  UserCheck,
 } from 'lucide-react';
+import { useLanguage } from '@/contexts/language-context';
 
 interface MaintenanceRequest {
   id: string;
@@ -78,42 +80,13 @@ interface MaintenanceDetailModalProps {
   onStatusChange?: (requestId: string, newStatus: string) => void;
 }
 
-const priorityConfig = {
-  emergency: {
-    label: 'Emergencia',
-    color: 'bg-red-600 text-white',
-    icon: '🚨',
-  },
-  high: {
-    label: 'Alta',
-    color: 'bg-orange-500 text-white',
-    icon: '⚠️',
-  },
-  medium: {
-    label: 'Media',
-    color: 'bg-yellow-500 text-white',
-    icon: '📌',
-  },
-  low: {
-    label: 'Baja',
-    color: 'bg-blue-500 text-white',
-    icon: '📝',
-  },
-};
-
-const statusConfig = {
-  open: { label: 'Abierta', icon: AlertCircle, color: 'text-red-600 dark:text-red-400' },
-  in_progress: { label: 'En Progreso', icon: Clock, color: 'text-yellow-600 dark:text-yellow-400' },
-  resolved: { label: 'Resuelta', icon: CheckCircle2, color: 'text-green-600 dark:text-green-400' },
-  closed: { label: 'Cerrada', icon: XCircle, color: 'text-gray-600 dark:text-gray-400' },
-};
-
 export function MaintenanceDetailModal({
   request,
   isOpen,
   onClose,
   onStatusChange,
 }: MaintenanceDetailModalProps) {
+  const { t } = useLanguage();
   const [messages, setMessages] = useState<Message[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
@@ -122,6 +95,37 @@ export function MaintenanceDetailModal({
   const [sendToResident, setSendToResident] = useState(false);
   const [addingComment, setAddingComment] = useState(false);
   const supabase = createClient();
+
+  const priorityConfig = {
+    emergency: {
+      label: t.maintenance.emergency,
+      color: 'bg-red-600 text-white',
+      icon: '🚨',
+    },
+    high: {
+      label: t.maintenance.high,
+      color: 'bg-orange-500 text-white',
+      icon: '⚠️',
+    },
+    medium: {
+      label: t.maintenance.medium,
+      color: 'bg-yellow-500 text-white',
+      icon: '📌',
+    },
+    low: {
+      label: t.maintenance.low,
+      color: 'bg-blue-500 text-white',
+      icon: '📝',
+    },
+  };
+
+  const statusConfig = {
+    referred_to_provider: { label: t.maintenance.referredToProvider, icon: UserCheck, color: 'text-blue-600 dark:text-blue-400' },
+    open: { label: t.maintenance.opened, icon: AlertCircle, color: 'text-red-600 dark:text-red-400' },
+    in_progress: { label: t.maintenance.inProgress, icon: Clock, color: 'text-yellow-600 dark:text-yellow-400' },
+    resolved: { label: t.maintenance.resolved_single, icon: CheckCircle2, color: 'text-green-600 dark:text-green-400' },
+    closed: { label: t.maintenance.closed_single, icon: XCircle, color: 'text-gray-600 dark:text-gray-400' },
+  };
 
   useEffect(() => {
     if (isOpen && request?.conversation_id) {
@@ -241,7 +245,7 @@ export function MaintenanceDetailModal({
 
           {/* Description */}
           <div className="space-y-2">
-            <h4 className="text-sm font-semibold text-muted-foreground">Descripción</h4>
+            <h4 className="text-sm font-semibold text-muted-foreground">{t.maintenance.description}</h4>
             <p className="text-sm leading-relaxed whitespace-pre-wrap">{request.description}</p>
           </div>
 
@@ -250,7 +254,7 @@ export function MaintenanceDetailModal({
             <div className="flex items-start gap-2">
               <User className="w-4 h-4 mt-0.5 text-muted-foreground" />
               <div>
-                <p className="text-xs text-muted-foreground">Residente</p>
+                <p className="text-xs text-muted-foreground">{t.maintenance.resident}</p>
                 <p className="text-sm font-medium">
                   {request.residents.first_name} {request.residents.last_name}
                 </p>
@@ -262,7 +266,7 @@ export function MaintenanceDetailModal({
               <div className="flex items-start gap-2">
                 <MapPin className="w-4 h-4 mt-0.5 text-muted-foreground" />
                 <div>
-                  <p className="text-xs text-muted-foreground">Unidad</p>
+                  <p className="text-xs text-muted-foreground">{t.residents.unit}</p>
                   <p className="text-sm font-medium">{request.units.unit_number}</p>
                 </div>
               </div>
@@ -271,7 +275,7 @@ export function MaintenanceDetailModal({
             <div className="flex items-start gap-2">
               <Calendar className="w-4 h-4 mt-0.5 text-muted-foreground" />
               <div>
-                <p className="text-xs text-muted-foreground">Reportado</p>
+                <p className="text-xs text-muted-foreground">{t.maintenance.reported}</p>
                 <p className="text-sm font-medium">{formatDate(request.reported_at)}</p>
                 <p className="text-xs text-muted-foreground">
                   {formatRelativeTime(request.reported_at)}
@@ -283,7 +287,7 @@ export function MaintenanceDetailModal({
               <div className="flex items-start gap-2">
                 <CheckCircle2 className="w-4 h-4 mt-0.5 text-muted-foreground" />
                 <div>
-                  <p className="text-xs text-muted-foreground">Resuelto</p>
+                  <p className="text-xs text-muted-foreground">{t.maintenance.resolved_single}</p>
                   <p className="text-sm font-medium">{formatDate(request.resolved_at)}</p>
                 </div>
               </div>
@@ -294,7 +298,7 @@ export function MaintenanceDetailModal({
           <div className="flex gap-3">
             {request.category && (
               <Badge variant="secondary" className="gap-1.5">
-                <span className="text-xs">Categoría: {request.category}</span>
+                <span className="text-xs">{t.maintenance.category}: {request.category}</span>
               </Badge>
             )}
             {request.location && (
@@ -310,7 +314,7 @@ export function MaintenanceDetailModal({
             <div className="space-y-2">
               <h4 className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
                 <Camera className="w-4 h-4" />
-                Fotos ({request.photo_urls.length})
+                {t.maintenance.photos} ({request.photo_urls.length})
               </h4>
               <div className="grid grid-cols-3 gap-2">
                 {request.photo_urls.map((url, idx) => (

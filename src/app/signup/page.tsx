@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ArrowLeft } from 'lucide-react';
-import { LanguageProvider, useLanguage } from '@/contexts/language-context';
+import { LandingLanguageProvider, useLandingLanguage } from '@/contexts/landing-language-context';
 
 function SignupForm() {
   const [formData, setFormData] = useState({
@@ -21,7 +21,7 @@ function SignupForm() {
   const [error, setError] = useState('');
   const router = useRouter();
   const supabase = createClient();
-  const { language, setLanguage } = useLanguage();
+  const { language, setLanguage } = useLandingLanguage();
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -270,8 +270,8 @@ function SignupForm() {
 
 export default function SignupPage() {
   return (
-    <LanguageProvider>
+    <LandingLanguageProvider>
       <SignupForm />
-    </LanguageProvider>
+    </LandingLanguageProvider>
   );
 }

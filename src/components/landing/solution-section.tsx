@@ -1,7 +1,7 @@
 "use client"
 
 import { MessageSquare, Bot, LayoutDashboard } from "lucide-react"
-import { useLanguage } from "@/contexts/language-context"
+import { useLandingLanguage as useLanguage } from "@/contexts/landing-language-context"
 
 export function SolutionSection() {
   const { t } = useLanguage()

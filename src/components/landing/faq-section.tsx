@@ -1,7 +1,7 @@
 "use client"
 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
-import { useLanguage } from "@/contexts/language-context"
+import { useLandingLanguage as useLanguage } from "@/contexts/landing-language-context"
 
 export function FAQSection() {
   const { t } = useLanguage()

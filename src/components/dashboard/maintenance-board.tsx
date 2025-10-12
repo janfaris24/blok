@@ -16,8 +16,9 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { formatRelativeTime } from '@/lib/utils';
-import { AlertCircle, Clock, CheckCircle2, XCircle, Wrench, Camera, Image as ImageIcon } from 'lucide-react';
+import { AlertCircle, Clock, CheckCircle2, XCircle, Wrench, Camera, Image as ImageIcon, UserCheck } from 'lucide-react';
 import { MaintenanceDetailModal } from './maintenance-detail-modal';
+import { useLanguage } from '@/contexts/language-context';
 
 interface MaintenanceRequest {
   id: string;
@@ -49,66 +50,75 @@ interface MaintenanceBoardProps {
   buildingId: string;
 }
 
-const columns = [
-  {
-    id: 'open',
-    title: 'Abiertas',
-    icon: AlertCircle,
-    color: 'text-red-600 dark:text-red-400',
-    bgColor: 'bg-red-100 dark:bg-red-900/20',
-  },
-  {
-    id: 'in_progress',
-    title: 'En Progreso',
-    icon: Clock,
-    color: 'text-yellow-600 dark:text-yellow-400',
-    bgColor: 'bg-yellow-100 dark:bg-yellow-900/20',
-  },
-  {
-    id: 'resolved',
-    title: 'Resueltas',
-    icon: CheckCircle2,
-    color: 'text-green-600 dark:text-green-400',
-    bgColor: 'bg-green-100 dark:bg-green-900/20',
-  },
-  {
-    id: 'closed',
-    title: 'Cerradas',
-    icon: XCircle,
-    color: 'text-gray-600 dark:text-gray-400',
-    bgColor: 'bg-gray-100 dark:bg-gray-800',
-  },
-];
-
-const priorityConfig = {
-  emergency: {
-    label: 'Emergencia',
-    color: 'bg-red-600 text-white',
-    icon: '🚨',
-  },
-  high: {
-    label: 'Alta',
-    color: 'bg-orange-500 text-white',
-    icon: '⚠️',
-  },
-  medium: {
-    label: 'Media',
-    color: 'bg-yellow-500 text-white',
-    icon: '📌',
-  },
-  low: {
-    label: 'Baja',
-    color: 'bg-blue-500 text-white',
-    icon: '📝',
-  },
-};
 
 export function MaintenanceBoard({ initialRequests, buildingId }: MaintenanceBoardProps) {
+  const { t } = useLanguage();
   const [requests, setRequests] = useState(initialRequests);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [selectedRequest, setSelectedRequest] = useState<MaintenanceRequest | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const supabase = createClient();
+
+  const columns = [
+    {
+      id: 'referred_to_provider',
+      title: t.maintenance.referredToProvider,
+      icon: UserCheck,
+      color: 'text-blue-600 dark:text-blue-400',
+      bgColor: 'bg-blue-100 dark:bg-blue-900/20',
+    },
+    {
+      id: 'open',
+      title: t.maintenance.open,
+      icon: AlertCircle,
+      color: 'text-red-600 dark:text-red-400',
+      bgColor: 'bg-red-100 dark:bg-red-900/20',
+    },
+    {
+      id: 'in_progress',
+      title: t.maintenance.inProgress,
+      icon: Clock,
+      color: 'text-yellow-600 dark:text-yellow-400',
+      bgColor: 'bg-yellow-100 dark:bg-yellow-900/20',
+    },
+    {
+      id: 'resolved',
+      title: t.maintenance.resolved,
+      icon: CheckCircle2,
+      color: 'text-green-600 dark:text-green-400',
+      bgColor: 'bg-green-100 dark:bg-green-900/20',
+    },
+    {
+      id: 'closed',
+      title: t.maintenance.closed,
+      icon: XCircle,
+      color: 'text-gray-600 dark:text-gray-400',
+      bgColor: 'bg-gray-100 dark:bg-gray-800',
+    },
+  ];
+
+  const priorityConfig = {
+    emergency: {
+      label: t.maintenance.emergency,
+      color: 'bg-red-600 text-white',
+      icon: '🚨',
+    },
+    high: {
+      label: t.maintenance.high,
+      color: 'bg-orange-500 text-white',
+      icon: '⚠️',
+    },
+    medium: {
+      label: t.maintenance.medium,
+      color: 'bg-yellow-500 text-white',
+      icon: '📌',
+    },
+    low: {
+      label: t.maintenance.low,
+      color: 'bg-blue-500 text-white',
+      icon: '📝',
+    },
+  };
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -329,7 +339,7 @@ export function MaintenanceBoard({ initialRequests, buildingId }: MaintenanceBoa
 
                     {columnRequests.length === 0 && (
                       <div className="text-center text-muted-foreground py-6 text-sm">
-                        Sin solicitudes
+                        {t.maintenance.noRequests}
                       </div>
                     )}
                   </div>
@@ -372,6 +382,7 @@ function DraggableCard({
   request: MaintenanceRequest;
   onClick?: () => void;
 }) {
+  const { t } = useLanguage();
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: request.id,
   });
@@ -381,6 +392,29 @@ function DraggableCard({
         transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
       }
     : undefined;
+
+  const priorityConfig = {
+    emergency: {
+      label: t.maintenance.emergency,
+      color: 'bg-red-600 text-white',
+      icon: '🚨',
+    },
+    high: {
+      label: t.maintenance.high,
+      color: 'bg-orange-500 text-white',
+      icon: '⚠️',
+    },
+    medium: {
+      label: t.maintenance.medium,
+      color: 'bg-yellow-500 text-white',
+      icon: '📌',
+    },
+    low: {
+      label: t.maintenance.low,
+      color: 'bg-blue-500 text-white',
+      icon: '📝',
+    },
+  };
 
   const priority = priorityConfig[request.priority];
 
@@ -413,10 +447,10 @@ function DraggableCard({
 
       <div className="space-y-1 text-xs">
         <p className="text-muted-foreground">
-          <span className="font-medium">Categoría:</span> {request.category}
+          <span className="font-medium">{t.maintenance.category}:</span> {request.category}
         </p>
         <p className="text-muted-foreground truncate">
-          <span className="font-medium">Residente:</span>{' '}
+          <span className="font-medium">{t.maintenance.resident}:</span>{' '}
           {request.residents.first_name} {request.residents.last_name}
         </p>
         <div className="flex items-center justify-between">
@@ -470,6 +504,31 @@ function RequestCard({
   request: MaintenanceRequest;
   isDragging?: boolean;
 }) {
+  const { t } = useLanguage();
+
+  const priorityConfig = {
+    emergency: {
+      label: t.maintenance.emergency,
+      color: 'bg-red-600 text-white',
+      icon: '🚨',
+    },
+    high: {
+      label: t.maintenance.high,
+      color: 'bg-orange-500 text-white',
+      icon: '⚠️',
+    },
+    medium: {
+      label: t.maintenance.medium,
+      color: 'bg-yellow-500 text-white',
+      icon: '📌',
+    },
+    low: {
+      label: t.maintenance.low,
+      color: 'bg-blue-500 text-white',
+      icon: '📝',
+    },
+  };
+
   const priority = priorityConfig[request.priority];
 
   return (
@@ -491,10 +550,10 @@ function RequestCard({
 
       <div className="space-y-1 text-xs">
         <p className="text-muted-foreground">
-          <span className="font-medium">Categoría:</span> {request.category}
+          <span className="font-medium">{t.maintenance.category}:</span> {request.category}
         </p>
         <p className="text-muted-foreground truncate">
-          <span className="font-medium">Residente:</span>{' '}
+          <span className="font-medium">{t.maintenance.resident}:</span>{' '}
           {request.residents.first_name} {request.residents.last_name}
         </p>
         <p className="text-[10px] text-muted-foreground">

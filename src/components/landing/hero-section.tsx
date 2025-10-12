@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { Play } from "lucide-react"
-import { useLanguage } from "@/contexts/language-context"
+import { useLandingLanguage as useLanguage } from "@/contexts/landing-language-context"
 
 export function HeroSection() {
   const { t } = useLanguage()

@@ -2,7 +2,7 @@
 
 import { MessageSquareX, Megaphone, Wrench } from "lucide-react"
 import { useScrollAnimation } from "@/hooks/use-scroll-animation"
-import { useLanguage } from "@/contexts/language-context"
+import { useLandingLanguage as useLanguage } from "@/contexts/landing-language-context"
 
 export function ProblemSection() {
   const { ref, isVisible } = useScrollAnimation()

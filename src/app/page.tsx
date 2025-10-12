@@ -1,6 +1,6 @@
 "use client";
 
-import { LanguageProvider } from "@/contexts/language-context";
+import { LandingLanguageProvider } from "@/contexts/landing-language-context";
 import { Navigation } from "@/components/landing/navigation";
 import { HeroSection } from "@/components/landing/hero-section";
 import { ProblemSection } from "@/components/landing/problem-section";
@@ -17,7 +17,7 @@ import { Footer } from "@/components/landing/footer";
 
 export default function Home() {
   return (
-    <LanguageProvider>
+    <LandingLanguageProvider>
       <div className="min-h-screen bg-background">
         <Navigation />
         <main>
@@ -35,6 +35,6 @@ export default function Home() {
         </main>
         <Footer />
       </div>
-    </LanguageProvider>
+    </LandingLanguageProvider>
   );
 }

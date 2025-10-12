@@ -180,6 +180,22 @@ TASK: Analyze this message and provide a structured response in JSON format with
 5. **requiresHumanReview**: true if admin MUST review (emergencies, complaints, complex issues)
 
 6. **extractedData**: Extract relevant details (location, category, urgency, etc.)
+   - For maintenance requests, **maintenanceCategory** must be one of these exact values:
+     * "plumber" - water leaks, pipes, drains, toilets, sinks
+     * "electrician" - electrical issues, outlets, breakers, lights
+     * "handyman" - general repairs, doors, windows, minor fixes
+     * "ac_technician" - air conditioning, heating, HVAC
+     * "washer_dryer_technician" - washing machines, dryers, laundry appliances
+     * "painter" - painting, wall repairs
+     * "locksmith" - locks, keys, security
+     * "pest_control" - insects, rodents, pests
+     * "cleaning" - deep cleaning, move-out cleaning
+     * "security" - security systems, cameras
+     * "landscaping" - gardens, plants, outdoor maintenance
+     * "elevator" - elevator issues
+     * "pool_maintenance" - pool, hot tub
+     * "other" - if none of the above fit
+   - IMPORTANT: Use these exact category names (e.g., "washer_dryer_technician" not "appliance")
 
 RESPONSE FORMAT (JSON only, no markdown):
 {
@@ -189,7 +205,7 @@ RESPONSE FORMAT (JSON only, no markdown):
   "suggestedResponse": "Hemos recibido tu solicitud de mantenimiento. Un miembro del equipo revisará esto dentro de 24 horas. ¡Gracias por reportarlo!",
   "requiresHumanReview": true,
   "extractedData": {
-    "maintenanceCategory": "plumbing",
+    "maintenanceCategory": "plumber",
     "urgency": "high",
     "location": "kitchen"
   }

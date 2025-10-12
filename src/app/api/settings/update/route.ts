@@ -11,8 +11,6 @@ export async function POST(request: NextRequest) {
       error: userError,
     } = await supabase.auth.getUser();
 
-    console.log('User:', user?.id, 'Error:', userError);
-
     if (userError || !user) {
       console.error('Auth error:', userError);
       return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
@@ -25,8 +23,6 @@ export async function POST(request: NextRequest) {
       .eq('admin_user_id', user.id)
       .single();
 
-    console.log('Building:', building, 'Error:', buildingError);
-
     if (buildingError || !building) {
       console.error('Building error:', buildingError);
       return NextResponse.json(
@@ -37,60 +33,56 @@ export async function POST(request: NextRequest) {
 
     // Parse request body
     const body = await request.json();
-    const { name, address, city, whatsapp_business_number, maintenance_model } = body;
+    const { preferred_language, admin_name } = body;
 
-    console.log('Update data:', { name, address, city, whatsapp_business_number, maintenance_model });
-
-    // Validate required fields
-    if (!name || !address) {
+    // Validate language
+    if (preferred_language && !['es', 'en'].includes(preferred_language)) {
       return NextResponse.json(
-        { error: 'Nombre y dirección son requeridos' },
+        { error: 'Idioma inválido' },
         { status: 400 }
       );
     }
 
-    // Validate maintenance_model if provided
-    if (maintenance_model && !['resident_responsibility', 'admin_responsibility'].includes(maintenance_model)) {
-      return NextResponse.json(
-        { error: 'Modelo de mantenimiento inválido' },
-        { status: 400 }
-      );
+    // Update building language preference
+    const updateData: any = {
+      updated_at: new Date().toISOString(),
+    };
+
+    if (preferred_language) {
+      updateData.preferred_language = preferred_language;
     }
 
-    // Update building
     const { error: updateError } = await supabase
       .from('buildings')
-      .update({
-        name,
-        address,
-        city: city || 'San Juan',
-        whatsapp_business_number,
-        maintenance_model: maintenance_model || 'resident_responsibility',
-        updated_at: new Date().toISOString(),
-      })
+      .update(updateData)
       .eq('id', building.id);
-
-    console.log('Update error:', updateError);
 
     if (updateError) {
       console.error('Update error:', updateError);
       return NextResponse.json(
-        { error: 'Error al actualizar el edificio', details: updateError.message },
+        { error: 'Error al actualizar configuración', details: updateError.message },
         { status: 500 }
       );
     }
 
-    return NextResponse.json({
-      building: {
-        id: building.id,
-        name,
-        address,
-        city: city || 'San Juan',
-        whatsapp_business_number
+    // Update user metadata for admin name
+    if (admin_name) {
+      const { error: metadataError } = await supabase.auth.updateUser({
+        data: { full_name: admin_name }
+      });
+
+      if (metadataError) {
+        console.error('Metadata update error:', metadataError);
+        // Don't fail the whole request if metadata update fails
       }
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'Configuración actualizada correctamente',
     });
   } catch (error: any) {
-    console.error('Error in building update:', error);
+    console.error('Error in settings update:', error);
     return NextResponse.json(
       { error: 'Error interno del servidor', details: error.message },
       { status: 500 }

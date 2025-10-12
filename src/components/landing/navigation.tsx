@@ -4,12 +4,12 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Menu, X, Moon, Sun } from "lucide-react"
 import { useTheme } from "next-themes"
-import { useLanguage } from "@/contexts/language-context"
+import { useLandingLanguage } from "@/contexts/landing-language-context"
 
 export function Navigation() {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const { language, setLanguage, t } = useLanguage()
+  const { language, setLanguage, t } = useLandingLanguage()
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
 

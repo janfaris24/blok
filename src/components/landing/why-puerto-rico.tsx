@@ -1,7 +1,7 @@
 "use client"
 
 import { MessageSquare, Languages, MapPin } from "lucide-react"
-import { useLanguage } from "@/contexts/language-context"
+import { useLandingLanguage as useLanguage } from "@/contexts/landing-language-context"
 
 export function WhyPuertoRico() {
   const { t } = useLanguage()

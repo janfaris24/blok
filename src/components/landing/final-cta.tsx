@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { Check } from "lucide-react"
-import { useLanguage } from "@/contexts/language-context"
+import { useLandingLanguage as useLanguage } from "@/contexts/landing-language-context"
 
 export function FinalCTA() {
   const { t } = useLanguage()

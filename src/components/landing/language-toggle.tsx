@@ -1,11 +1,11 @@
 'use client';
 
-import { useLanguage } from '@/contexts/language-context';
+import { useLandingLanguage } from '@/contexts/landing-language-context';
 import { Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export function LanguageToggle() {
-  const { language, setLanguage } = useLanguage();
+  const { language, setLanguage } = useLandingLanguage();
 
   return (
     <Button

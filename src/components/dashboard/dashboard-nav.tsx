@@ -17,7 +17,8 @@ import {
   User,
   Command,
   HelpCircle,
-  BookOpen
+  BookOpen,
+  UserCog
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -29,71 +30,79 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { useLanguage } from '@/contexts/language-context';
 
 interface DashboardNavProps {
   buildingName: string;
   userEmail: string;
   buildingId: string;
+  userName?: string;
 }
 
-const navSections = [
-  {
-    label: 'GENERAL',
-    items: [
-      {
-        title: 'Resumen',
-        href: '/dashboard',
-        icon: LayoutDashboard,
-      },
-      {
-        title: 'Conversaciones',
-        href: '/dashboard/conversations',
-        icon: MessageSquare,
-      },
-    ],
-  },
-  {
-    label: 'HERRAMIENTAS',
-    items: [
-      {
-        title: 'Mantenimiento',
-        href: '/dashboard/maintenance',
-        icon: Wrench,
-      },
-      {
-        title: 'Anuncios',
-        href: '/dashboard/broadcasts',
-        icon: Megaphone,
-      },
-      {
-        title: 'Residentes',
-        href: '/dashboard/residents',
-        icon: Users,
-      },
-      {
-        title: 'Edificio',
-        href: '/dashboard/building',
-        icon: Building2,
-      },
-      {
-        title: 'Base de Conocimiento',
-        href: '/dashboard/knowledge',
-        icon: BookOpen,
-      },
-    ],
-  },
-];
 
-// Flat array for mobile nav
-const navItems = navSections.flatMap(section => section.items);
-
-export function DashboardNav({ buildingName, userEmail, buildingId }: DashboardNavProps) {
+export function DashboardNav({ buildingName, buildingId, userEmail, userName }: DashboardNavProps) {
   const pathname = usePathname();
   const router = useRouter();
   const supabase = createClient();
+  const { t } = useLanguage();
   const [unreadCount, setUnreadCount] = useState(0);
   const [isDesktopOpen, setIsDesktopOpen] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+
+  const navSections: Array<{ label: string; items: Array<{ title: string; href: string; icon: any }> }> = [
+    {
+      label: t.nav.general,
+      items: [
+        {
+          title: t.nav.dashboard,
+          href: '/dashboard',
+          icon: LayoutDashboard,
+        },
+        {
+          title: t.nav.conversations,
+          href: '/dashboard/conversations',
+          icon: MessageSquare,
+        },
+      ],
+    },
+    {
+      label: t.nav.tools,
+      items: [
+        {
+          title: t.nav.maintenance,
+          href: '/dashboard/maintenance',
+          icon: Wrench,
+        },
+        {
+          title: t.nav.providers,
+          href: '/dashboard/service-providers',
+          icon: UserCog,
+        },
+        {
+          title: t.nav.broadcasts,
+          href: '/dashboard/broadcasts',
+          icon: Megaphone,
+        },
+        {
+          title: t.nav.residents,
+          href: '/dashboard/residents',
+          icon: Users,
+        },
+        {
+          title: t.nav.building,
+          href: '/dashboard/building',
+          icon: Building2,
+        },
+        {
+          title: t.nav.knowledge,
+          href: '/dashboard/knowledge',
+          icon: BookOpen,
+        },
+      ],
+    },
+  ];
+
+  const navItems = navSections.flatMap(section => section.items) as Array<{ title: string; href: string; icon: any }>;
 
   // Load unread count
   useEffect(() => {
@@ -150,7 +159,7 @@ export function DashboardNav({ buildingName, userEmail, buildingId }: DashboardN
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input
                 type="text"
-                placeholder="Search"
+                placeholder={t.common.search}
                 className="w-full h-9 pl-10 pr-16 rounded-lg bg-muted/50 border border-transparent text-sm placeholder:text-muted-foreground focus:outline-none focus:bg-background focus:border-border transition-all"
               />
               <kbd className="absolute right-3 top-1/2 -translate-y-1/2 px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground bg-background border border-border/60 rounded">
@@ -161,7 +170,7 @@ export function DashboardNav({ buildingName, userEmail, buildingId }: DashboardN
 
           {/* Right Actions */}
           <div className="flex items-center gap-1">
-            <button className="w-9 h-9 rounded-lg hover:bg-accent transition-colors flex items-center justify-center" title="Ayuda">
+            <button className="w-9 h-9 rounded-lg hover:bg-accent transition-colors flex items-center justify-center" title={t.nav.help}>
               <HelpCircle className="w-[18px] h-[18px] text-muted-foreground" />
             </button>
 
@@ -183,20 +192,26 @@ export function DashboardNav({ buildingName, userEmail, buildingId }: DashboardN
               </PopoverContent>
             </Popover>
 
-            <button className="w-9 h-9 rounded-lg hover:bg-accent transition-colors flex items-center justify-center" title="Configuración">
-              <Settings className="w-[18px] h-[18px] text-muted-foreground" />
-            </button>
+            <Link href="/dashboard/settings">
+              <button className="w-9 h-9 rounded-lg hover:bg-accent transition-colors flex items-center justify-center" title={t.nav.settings}>
+                <Settings className="w-[18px] h-[18px] text-muted-foreground" />
+              </button>
+            </Link>
 
             {/* User Menu */}
-            <button className="flex items-center gap-2.5 ml-2 pl-1.5 pr-3 h-9 rounded-lg hover:bg-accent transition-colors">
-              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-                <User className="w-3.5 h-3.5 text-white" />
-              </div>
-              <div className="text-left">
-                <p className="text-xs font-semibold leading-none">{buildingName.split(' ')[0]}</p>
-                <p className="text-[10px] text-muted-foreground leading-none mt-0.5">Administración</p>
-              </div>
-            </button>
+            <Link href="/dashboard/settings">
+              <button className="flex items-center gap-2.5 ml-2 pl-1.5 pr-3 h-9 rounded-lg hover:bg-accent transition-colors">
+                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
+                  <User className="w-3.5 h-3.5 text-white" />
+                </div>
+                <div className="text-left">
+                  <p className="text-xs font-semibold leading-none truncate max-w-[120px]">
+                    {userName || userEmail?.split('@')[0] || 'Admin'}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground leading-none mt-0.5">{t.nav.administrator}</p>
+                </div>
+              </button>
+            </Link>
           </div>
         </div>
       </div>
@@ -279,16 +294,24 @@ export function DashboardNav({ buildingName, userEmail, buildingId }: DashboardN
           {/* SUPPORT Section */}
           <div className="mt-6">
             <p className="px-3 mb-2 text-[11px] font-semibold text-muted-foreground/60 tracking-wider">
-              SOPORTE
+              {t.nav.support}
             </p>
             <div className="space-y-0.5">
-              <button className="w-full flex items-center gap-3 px-3 h-9 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-all">
+              <Link
+                href="/dashboard/settings"
+                className={cn(
+                  'w-full flex items-center gap-3 px-3 h-9 rounded-lg text-sm font-medium transition-all',
+                  pathname === '/dashboard/settings'
+                    ? 'bg-muted text-foreground'
+                    : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+                )}
+              >
                 <Settings className="w-[18px] h-[18px]" />
-                <span>Configuración</span>
-              </button>
+                <span>{t.nav.settings}</span>
+              </Link>
               <button className="w-full flex items-center gap-3 px-3 h-9 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-all">
                 <HelpCircle className="w-[18px] h-[18px]" />
-                <span>Ayuda</span>
+                <span>{t.nav.help}</span>
               </button>
             </div>
           </div>
@@ -303,7 +326,7 @@ export function DashboardNav({ buildingName, userEmail, buildingId }: DashboardN
             </div>
             <div className="flex-1 text-left min-w-0">
               <p className="font-semibold text-xs truncate">{buildingName}</p>
-              <p className="text-[10px] text-muted-foreground">Administración</p>
+              <p className="text-[10px] text-muted-foreground">{t.nav.administration}</p>
             </div>
             <Command className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
           </button>
@@ -316,7 +339,7 @@ export function DashboardNav({ buildingName, userEmail, buildingId }: DashboardN
               className="flex-1 flex items-center justify-center gap-2 h-9 px-3 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-all"
             >
               <LogOut className="w-[18px] h-[18px]" />
-              <span className="text-xs">Salir</span>
+              <span className="text-xs">{t.nav.logout}</span>
             </button>
           </div>
         </div>

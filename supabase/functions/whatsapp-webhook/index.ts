@@ -265,6 +265,10 @@ Deno.serve(async (req: Request) => {
 
     // 6. Create maintenance request if AI detected one
     if (analysis.intent === 'maintenance_request') {
+      // Determine initial status based on maintenance model
+      const isResidentResponsibility = building.maintenance_model === 'resident_responsibility';
+      const initialStatus = isResidentResponsibility ? 'referred_to_provider' : 'open';
+
       await supabase.from('maintenance_requests').insert({
         building_id: building.id,
         unit_id: resident.unit_id,
@@ -273,16 +277,94 @@ Deno.serve(async (req: Request) => {
         description: messageData.body,
         category: analysis.extractedData?.maintenanceCategory,
         priority: analysis.priority,
+        status: initialStatus,
+        responsibility_type: building.maintenance_model,
         extracted_by_ai: true,
         conversation_id: conversation.id,
         photo_urls: storedMediaUrl ? [storedMediaUrl] : null,
         has_photos: !!storedMediaUrl,
       });
 
-      console.log(`✅ Maintenance request created${storedMediaUrl ? ' with photo attachment' : ''}`);
+      console.log(`✅ Maintenance request created (${building.maintenance_model}, status: ${initialStatus})${storedMediaUrl ? ' with photo attachment' : ''}`);
+
+      // 6.5. Send recommended service providers if Puerto Rico model
+      if (building.maintenance_model === 'resident_responsibility' && analysis.extractedData?.maintenanceCategory) {
+        console.log(`🔧 [${Date.now() - startTime}ms] Fetching recommended providers for category: ${analysis.extractedData.maintenanceCategory}`);
+
+        try {
+          const { data: providers } = await supabase
+            .from('service_providers')
+            .select('*')
+            .eq('building_id', building.id)
+            .eq('category', analysis.extractedData.maintenanceCategory)
+            .eq('is_recommended', true)
+            .order('rating', { ascending: false, nullsFirst: false })
+            .limit(5);
+
+          if (providers && providers.length > 0) {
+            const language = resident.preferred_language || 'es';
+            const categoryLabels: Record<string, { es: string; en: string }> = {
+              plumber: { es: 'plomería', en: 'plumbing' },
+              electrician: { es: 'electricidad', en: 'electrical' },
+              handyman: { es: 'mantenimiento general', en: 'general maintenance' },
+              ac_technician: { es: 'aire acondicionado', en: 'air conditioning' },
+              washer_dryer_technician: { es: 'lavadora/secadora', en: 'washer/dryer' },
+              painter: { es: 'pintura', en: 'painting' },
+              locksmith: { es: 'cerrajería', en: 'locksmith' },
+              pest_control: { es: 'control de plagas', en: 'pest control' },
+              cleaning: { es: 'limpieza', en: 'cleaning' },
+              security: { es: 'seguridad', en: 'security' },
+              landscaping: { es: 'jardinería', en: 'landscaping' },
+              elevator: { es: 'ascensor', en: 'elevator' },
+              pool_maintenance: { es: 'mantenimiento de piscina', en: 'pool maintenance' },
+              other: { es: 'otros servicios', en: 'other services' },
+            };
+
+            const categoryLabel = categoryLabels[analysis.extractedData.maintenanceCategory]?.[language] || analysis.extractedData.maintenanceCategory;
+
+            let providersMessage = language === 'es'
+              ? `\n\n🔧 *Proveedores Recomendados para ${categoryLabel}:*\n\n`
+              : `\n\n🔧 *Recommended Providers for ${categoryLabel}:*\n\n`;
+
+            providers.forEach((provider: any, index: number) => {
+              providersMessage += `${index + 1}. *${provider.name}*\n`;
+              if (provider.whatsapp_number) {
+                providersMessage += `   📱 WhatsApp: ${provider.whatsapp_number}\n`;
+              }
+              if (provider.phone) {
+                providersMessage += `   ☎️ ${language === 'es' ? 'Teléfono' : 'Phone'}: ${provider.phone}\n`;
+              }
+              if (provider.rating) {
+                providersMessage += `   ⭐ ${language === 'es' ? 'Calificación' : 'Rating'}: ${provider.rating}/5\n`;
+              }
+              providersMessage += '\n';
+            });
+
+            providersMessage += language === 'es'
+              ? 'Puedes contactar directamente a cualquiera de estos proveedores.'
+              : 'You can contact any of these providers directly.';
+
+            // Send providers message
+            await sendWhatsAppMessage(phoneNumber, buildingNumber, providersMessage);
+
+            // Save providers message to conversation
+            await supabase.from('messages').insert({
+              conversation_id: conversation.id,
+              sender_type: 'ai',
+              content: providersMessage,
+              channel: 'whatsapp',
+            });
+
+            console.log(`✅ [${Date.now() - startTime}ms] Sent ${providers.length} recommended providers`);
+          }
+        } catch (error) {
+          console.error('Error fetching/sending providers:', error);
+          // Don't fail the whole flow if provider recommendations fail
+        }
+      }
     }
 
-    // 6.5. Handle status inquiry - fetch and send resident's tickets
+    // 6.6. Handle status inquiry - fetch and send resident's tickets
     if (analysis.intent === 'status_inquiry') {
       console.log(`📋 [${Date.now() - startTime}ms] Status inquiry detected, fetching resident's requests...`);
 
@@ -695,6 +777,22 @@ TAREA: Analiza este mensaje y responde en formato JSON con estos campos:
 5. **requiresHumanReview**: true si admin DEBE revisar (emergencias, quejas, problemas complejos)
 
 6. **extractedData**: Extrae detalles relevantes (categoría, urgencia, ubicación, etc.)
+   - Para solicitudes de mantenimiento, **maintenanceCategory** debe ser EXACTAMENTE uno de estos valores:
+     * "plumber" - fugas de agua, tuberías, desagües, inodoros, lavamanos
+     * "electrician" - problemas eléctricos, enchufes, breakers, luces
+     * "handyman" - reparaciones generales, puertas, ventanas, arreglos menores
+     * "ac_technician" - aire acondicionado, calefacción, HVAC
+     * "washer_dryer_technician" - lavadoras, secadoras, electrodomésticos de lavandería
+     * "painter" - pintura, reparación de paredes
+     * "locksmith" - cerraduras, llaves, seguridad
+     * "pest_control" - insectos, roedores, plagas
+     * "cleaning" - limpieza profunda, limpieza de mudanza
+     * "security" - sistemas de seguridad, cámaras
+     * "landscaping" - jardines, plantas, mantenimiento exterior
+     * "elevator" - problemas con ascensor
+     * "pool_maintenance" - piscina, jacuzzi
+     * "other" - si ninguna de las anteriores aplica
+   - IMPORTANTE: Usa estos nombres EXACTOS de categorías (ej. "washer_dryer_technician" no "appliance" ni "lavadora")
 
 RESPUESTA (solo JSON, sin markdown):
 {
@@ -704,7 +802,7 @@ RESPUESTA (solo JSON, sin markdown):
   "suggestedResponse": "Hemos recibido tu solicitud de mantenimiento. Un miembro del equipo revisará esto dentro de 24 horas. ¡Gracias por reportarlo!",
   "requiresHumanReview": true,
   "extractedData": {
-    "maintenanceCategory": "hvac",
+    "maintenanceCategory": "plumber",
     "urgency": "high",
     "location": "unit"
   }
@@ -753,6 +851,22 @@ TASK: Analyze this message and respond in JSON format with these fields:
 5. **requiresHumanReview**: true if admin MUST review (emergencies, complaints, complex issues)
 
 6. **extractedData**: Extract relevant details (category, urgency, location, etc.)
+   - For maintenance requests, **maintenanceCategory** must be EXACTLY one of these values:
+     * "plumber" - water leaks, pipes, drains, toilets, sinks
+     * "electrician" - electrical issues, outlets, breakers, lights
+     * "handyman" - general repairs, doors, windows, minor fixes
+     * "ac_technician" - air conditioning, heating, HVAC
+     * "washer_dryer_technician" - washing machines, dryers, laundry appliances
+     * "painter" - painting, wall repairs
+     * "locksmith" - locks, keys, security
+     * "pest_control" - insects, rodents, pests
+     * "cleaning" - deep cleaning, move-out cleaning
+     * "security" - security systems, cameras
+     * "landscaping" - gardens, plants, outdoor maintenance
+     * "elevator" - elevator issues
+     * "pool_maintenance" - pool, hot tub
+     * "other" - if none of the above fit
+   - IMPORTANT: Use these EXACT category names (e.g., "washer_dryer_technician" not "appliance")
 
 RESPONSE (JSON only, no markdown):
 {
@@ -762,7 +876,7 @@ RESPONSE (JSON only, no markdown):
   "suggestedResponse": "We received your maintenance request. A team member will review this within 24 hours. Thank you for reporting!",
   "requiresHumanReview": true,
   "extractedData": {
-    "maintenanceCategory": "hvac",
+    "maintenanceCategory": "plumber",
     "urgency": "high",
     "location": "unit"
   }

@@ -1,6 +1,6 @@
 "use client"
 
-import { useLanguage } from "@/contexts/language-context"
+import { useLandingLanguage as useLanguage } from "@/contexts/landing-language-context"
 
 export function StatsSection() {
   const { t } = useLanguage()
