@@ -100,7 +100,7 @@ A **beautiful, accessible, production-ready** admin dashboard for managing condo
 npm run dev
 ```
 
-Visit: **http://localhost:3001**
+Visit: **http://localhost:3000**
 
 ### 2. Login
 

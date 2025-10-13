@@ -30,6 +30,9 @@ yarn-error.log*
 .env
 .env.supabase
 
+# MCP config (contains secrets)
+.mcp.json
+
 # vercel
 .vercel
 

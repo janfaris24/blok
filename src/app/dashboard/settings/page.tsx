@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase-server';
 import { SettingsManager } from '@/components/dashboard/settings-manager';
+import { getUsageStats } from '@/lib/usage-tracking';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,6 +24,23 @@ export default async function SettingsPage() {
     return <div>No se encontró el edificio</div>;
   }
 
+  // Get usage stats if subscription is active
+  let usageStats = null;
+  if (building.stripe_subscription_id && building.subscription_status) {
+    try {
+      usageStats = await getUsageStats(building.id, {
+        stripe_subscription_id: building.stripe_subscription_id,
+        stripe_price_id: building.stripe_price_id,
+        subscription_status: building.subscription_status,
+        current_period_end: building.current_period_end,
+        cancel_at_period_end: building.cancel_at_period_end,
+      });
+    } catch (error) {
+      console.error('Failed to fetch usage stats:', error);
+      // Continue without usage stats
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -36,6 +54,7 @@ export default async function SettingsPage() {
         building={building}
         userEmail={user.email || ''}
         userName={user.user_metadata?.full_name || ''}
+        usageStats={usageStats}
       />
     </div>
   );

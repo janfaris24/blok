@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
+import { getSubscription } from '@/lib/subscription-server';
+import { getUnitCount, canAddUnits } from '@/lib/usage-tracking';
+import { getPlanFromPriceId } from '@/lib/subscription';
+import { PLANS } from '@/lib/stripe-plans';
 
 /**
  * Import residents from CSV
@@ -40,6 +44,51 @@ export async function POST(request: NextRequest) {
         { error: 'No se encontró el edificio' },
         { status: 404 }
       );
+    }
+
+    // SUBSCRIPTION LIMIT CHECK: Verify unit capacity
+    try {
+      const subscription = await getSubscription();
+
+      if (!subscription) {
+        return NextResponse.json(
+          {
+            error: 'Suscripción requerida',
+            message: 'Necesitas una suscripción activa. Ve a Configuración → Facturación.',
+            requiresUpgrade: true,
+          },
+          { status: 403 }
+        );
+      }
+
+      const currentPlan = getPlanFromPriceId(subscription.stripe_price_id);
+
+      if (currentPlan) {
+        const planDetails = PLANS[currentPlan];
+        const currentUnitCount = await getUnitCount(building.id);
+        const maxUnits = planDetails.maxUnits;
+
+        if (currentUnitCount >= maxUnits) {
+          return NextResponse.json(
+            {
+              error: 'Límite de unidades alcanzado',
+              message: `Has alcanzado el límite de ${maxUnits} unidades para el plan ${planDetails.name}. No puedes importar más residentes sin mejorar tu plan.`,
+              currentPlan: planDetails.name,
+              currentUnits: currentUnitCount,
+              maxUnits: maxUnits,
+              requiresUpgrade: true,
+            },
+            { status: 403 }
+          );
+        }
+
+        console.log(`[Residents Import] ✅ Unit limit check passed: ${currentUnitCount}/${maxUnits} (${planDetails.name} plan)`);
+      }
+
+    } catch (subscriptionError: any) {
+      console.error('[Residents Import] Subscription check failed:', subscriptionError);
+      // Continue with import but log warning
+      console.warn('[Residents Import] ⚠️ Proceeding without subscription verification');
     }
 
     // Read CSV file

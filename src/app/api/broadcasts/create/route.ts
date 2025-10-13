@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
+import { requireFeature } from '@/lib/subscription-server';
 
 /**
  * Create a new broadcast
@@ -18,6 +19,16 @@ import { createClient } from '@/lib/supabase-server';
  */
 export async function POST(request: NextRequest) {
   try {
+    // FEATURE GATE: Require Professional plan or higher for broadcasts
+    try {
+      await requireFeature('broadcasts');
+    } catch (error: any) {
+      return NextResponse.json(
+        { error: error.message || 'Feature not available on your plan' },
+        { status: 403 }
+      );
+    }
+
     const {
       subject,
       message,

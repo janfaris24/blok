@@ -279,6 +279,18 @@ npm start
 
 Private - Blok POC
 
+## 📚 Documentation
+
+Comprehensive documentation is organized in the [`/docs`](./docs) folder:
+
+- **[Setup Guides](./docs/setup/)** - Getting started, installation, and configuration
+- **[Implementation](./docs/implementation/)** - Technical specs and architecture
+- **[Features](./docs/features/)** - Feature guides (Stripe, subscriptions, limits, testing)
+- **[Deployment](./docs/deployment/)** - Deployment guides and operations
+- **[Project Management](./docs/project-management/)** - MVP checklists and change logs
+
+See [docs/README.md](./docs/README.md) for the full documentation index.
+
 ## 🔗 Resources
 
 - [Twilio WhatsApp API](https://www.twilio.com/docs/whatsapp)

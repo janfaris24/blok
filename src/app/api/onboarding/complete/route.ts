@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
+import { getSubscription } from '@/lib/subscription-server';
+import { getPlanFromPriceId } from '@/lib/subscription';
+import { PLANS } from '@/lib/stripe-plans';
 
 /**
  * Complete onboarding for a building
@@ -28,6 +31,66 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'El número de unidades debe estar entre 1 y 500' },
         { status: 400 }
+      );
+    }
+
+    // SUBSCRIPTION LIMIT CHECK: Verify user's plan allows this many units
+    try {
+      const subscription = await getSubscription();
+
+      if (!subscription) {
+        return NextResponse.json(
+          {
+            error: 'Suscripción requerida',
+            message: 'Necesitas una suscripción activa para crear unidades. Ve a Configuración → Facturación para suscribirte.',
+            requiresUpgrade: true,
+          },
+          { status: 403 }
+        );
+      }
+
+      const currentPlan = getPlanFromPriceId(subscription.stripe_price_id);
+
+      if (!currentPlan) {
+        return NextResponse.json(
+          {
+            error: 'Plan no encontrado',
+            message: 'No se pudo verificar tu plan actual. Contacta soporte.',
+          },
+          { status: 500 }
+        );
+      }
+
+      const planDetails = PLANS[currentPlan];
+      const maxUnits = planDetails.maxUnits;
+
+      // Check if requested units exceed plan limit
+      if (totalUnits > maxUnits) {
+        return NextResponse.json(
+          {
+            error: 'Límite de unidades excedido',
+            message: `Tu plan ${planDetails.name} permite hasta ${maxUnits} unidades. Intentas crear ${totalUnits} unidades.`,
+            currentPlan: planDetails.name,
+            currentLimit: maxUnits,
+            requestedUnits: totalUnits,
+            requiresUpgrade: true,
+            suggestedPlan: totalUnits <= 75 ? 'Professional' : 'Enterprise',
+          },
+          { status: 403 }
+        );
+      }
+
+      console.log(`[Onboarding] ✅ Unit limit check passed: ${totalUnits}/${maxUnits} (${planDetails.name} plan)`);
+
+    } catch (subscriptionError: any) {
+      console.error('[Onboarding] Subscription check failed:', subscriptionError);
+      return NextResponse.json(
+        {
+          error: 'Error de suscripción',
+          message: subscriptionError.message || 'No se pudo verificar tu suscripción',
+          requiresUpgrade: true,
+        },
+        { status: 403 }
       );
     }
 

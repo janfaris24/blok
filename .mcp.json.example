@@ -1,0 +1,22 @@
+{
+  "mcpServers": {
+    "supabase": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@supabase/mcp-server-supabase@latest",
+        "--project-ref=ywavxrgibgfcvnxygpbz"
+      ],
+      "env": {
+        "SUPABASE_ACCESS_TOKEN": "your_supabase_access_token_here"
+      }
+    },
+    "stripe": {
+      "command": "npx",
+      "args": ["-y", "@stripe/mcp", "--tools=all"],
+      "env": {
+        "STRIPE_SECRET_KEY": "your_stripe_secret_key_here"
+      }
+    }
+  }
+}
