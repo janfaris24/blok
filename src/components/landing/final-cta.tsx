@@ -15,14 +15,9 @@ export function FinalCTA() {
     const searchParams = new URLSearchParams(window.location.search)
     const accessCode = searchParams.get('access')
 
-    console.log('FinalCTA: Current URL:', window.location.href);
-    console.log('FinalCTA: Access code:', accessCode);
-
     if (accessCode === 'blok2025') {
-      console.log('FinalCTA: Redirecting to signup with access code');
       window.location.href = '/signup?access=blok2025'
     } else {
-      console.log('FinalCTA: No access, showing alert');
       // Show coming soon message
       alert(t.hero?.comingSoon || 'Próximamente disponible / Coming soon')
     }

@@ -30,14 +30,9 @@ export function Navigation() {
     const searchParams = new URLSearchParams(window.location.search)
     const accessCode = searchParams.get('access')
 
-    console.log('Nav: Current URL:', window.location.href);
-    console.log('Nav: Access code:', accessCode);
-
     if (accessCode === 'blok2025') {
-      console.log('Nav: Redirecting to signup with access code');
       window.location.href = '/signup?access=blok2025'
     } else {
-      console.log('Nav: No access, showing alert');
       // Show coming soon message
       alert(t.hero?.comingSoon || 'Próximamente disponible / Coming soon')
     }

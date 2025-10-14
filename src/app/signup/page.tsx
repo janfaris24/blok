@@ -29,12 +29,8 @@ function SignupForm() {
     // Use window.location.search directly
     const searchParams = new URLSearchParams(window.location.search);
     const accessCode = searchParams.get('access');
-    console.log('Access code from URL:', accessCode); // Debug log
     if (accessCode === 'blok2025') {
       setAccessGranted(true);
-      console.log('Access granted!'); // Debug log
-    } else {
-      console.log('No access code or wrong code'); // Debug log
     }
   }, []);
 

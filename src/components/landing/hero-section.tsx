@@ -1,24 +1,34 @@
 "use client"
 
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
+import { Loader2 } from "lucide-react"
 import { useLandingLanguage as useLanguage } from "@/contexts/landing-language-context"
 
 export function HeroSection() {
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
+  const [videoLoaded, setVideoLoaded] = useState(false)
+  const [videoError, setVideoError] = useState(false)
+  const videoRef = useRef<HTMLVideoElement>(null)
+
+  useEffect(() => {
+    if (videoRef.current) {
+      const video = videoRef.current;
+      // If video is already loaded
+      if (video.readyState >= 3) {
+        setVideoLoaded(true);
+      }
+    }
+  }, [])
 
   // Check if signup is enabled via URL parameter
   const handleSignupClick = () => {
     const searchParams = new URLSearchParams(window.location.search)
     const accessCode = searchParams.get('access')
 
-    console.log('Hero: Current URL:', window.location.href);
-    console.log('Hero: Access code:', accessCode);
-
     if (accessCode === 'blok2025') {
-      console.log('Hero: Redirecting to signup with access code');
       window.location.href = '/signup?access=blok2025'
     } else {
-      console.log('Hero: No access, showing alert');
       // Show coming soon message
       alert(t.hero.comingSoon || 'Próximamente disponible / Coming soon')
     }
@@ -73,21 +83,59 @@ export function HeroSection() {
             {t.hero.socialProof.replace('{count}', '30')}
           </p> */}
 
-          {/* Removed Mockup placeholder */}
-          {/* <div className="mt-16 relative">
+          {/* Video Demo */}
+          <div className="mt-16 relative">
             <div className="gradient-border p-1 max-w-4xl mx-auto">
-              <div className="bg-card rounded-lg p-8 sm:p-12">
-                <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Play size={32} className="text-primary" />
+              <div className="bg-card rounded-lg p-4 sm:p-6">
+                <div className="relative aspect-video bg-muted rounded-lg overflow-hidden">
+                  {/* Loading Placeholder */}
+                  {!videoLoaded && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-muted z-10">
+                      <div className="text-center">
+                        <Loader2 className="w-12 h-12 text-primary animate-spin mx-auto mb-4" />
+                        <p className="text-sm text-muted-foreground">
+                          {language === 'es' ? 'Cargando demo...' : 'Loading demo...'}
+                        </p>
+                      </div>
                     </div>
-                    <p className="text-muted-foreground">WhatsApp + Dashboard Preview</p>
-                  </div>
+                  )}
+
+                  {/* Video */}
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    className={`w-full h-full object-cover transition-opacity duration-500 ${
+                      videoLoaded ? 'opacity-100' : 'opacity-0'
+                    }`}
+                    onLoadedData={() => setVideoLoaded(true)}
+                    onCanPlayThrough={() => setVideoLoaded(true)}
+                    onError={() => {
+                      setVideoError(true);
+                      setVideoLoaded(true);
+                    }}
+                  >
+                    <source src="/videos/demo-hq.mp4" type="video/mp4" />
+                    Your browser does not support the video tag.
+                  </video>
+
+                  {/* Error message if video fails */}
+                  {videoError && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-muted">
+                      <p className="text-sm text-muted-foreground">
+                        {language === 'es' ? 'Error cargando video' : 'Error loading video'}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
-          </div> */}
+
+            {/* Glow effect */}
+            <div className="absolute inset-0 bg-gradient-to-r from-primary/20 via-secondary/20 to-primary/20 blur-3xl -z-10 opacity-50" />
+          </div>
         </div>
       </div>
     </section>
