@@ -10,6 +10,24 @@ export function FinalCTA() {
   // Parse the trial string to get individual trust signals
   const trustSignals = t.finalCta.trial.split(' • ')
 
+  // Check if signup is enabled via URL parameter
+  const handleSignupClick = () => {
+    const searchParams = new URLSearchParams(window.location.search)
+    const accessCode = searchParams.get('access')
+
+    console.log('FinalCTA: Current URL:', window.location.href);
+    console.log('FinalCTA: Access code:', accessCode);
+
+    if (accessCode === 'blok2025') {
+      console.log('FinalCTA: Redirecting to signup with access code');
+      window.location.href = '/signup?access=blok2025'
+    } else {
+      console.log('FinalCTA: No access, showing alert');
+      // Show coming soon message
+      alert(t.hero?.comingSoon || 'Próximamente disponible / Coming soon')
+    }
+  }
+
   return (
     <section id="contact" className="py-20 sm:py-32 relative overflow-hidden">
       {/* Background gradient */}
@@ -29,7 +47,7 @@ export function FinalCTA() {
           <Button
             size="lg"
             className="bg-foreground text-background hover:bg-foreground/90 text-lg px-12 py-6 h-auto mb-8"
-            onClick={() => window.location.href = '/signup'}
+            onClick={handleSignupClick}
           >
             {t.finalCta.cta}
           </Button>

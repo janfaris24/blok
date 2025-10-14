@@ -1,11 +1,28 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Play } from "lucide-react"
 import { useLandingLanguage as useLanguage } from "@/contexts/landing-language-context"
 
 export function HeroSection() {
   const { t } = useLanguage()
+
+  // Check if signup is enabled via URL parameter
+  const handleSignupClick = () => {
+    const searchParams = new URLSearchParams(window.location.search)
+    const accessCode = searchParams.get('access')
+
+    console.log('Hero: Current URL:', window.location.href);
+    console.log('Hero: Access code:', accessCode);
+
+    if (accessCode === 'blok2025') {
+      console.log('Hero: Redirecting to signup with access code');
+      window.location.href = '/signup?access=blok2025'
+    } else {
+      console.log('Hero: No access, showing alert');
+      // Show coming soon message
+      alert(t.hero.comingSoon || 'Próximamente disponible / Coming soon')
+    }
+  }
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
@@ -37,7 +54,7 @@ export function HeroSection() {
             <Button
               size="lg"
               className="bg-foreground text-background hover:bg-foreground/90 text-base px-8"
-              onClick={() => window.location.href = '/signup'}
+              onClick={handleSignupClick}
             >
               {t.hero.cta}
             </Button>
@@ -51,13 +68,13 @@ export function HeroSection() {
             </Button>
           </div>
 
-          {/* Social Proof */}
-          <p className="text-sm text-muted-foreground">
+          {/* Removed Social Proof */}
+          {/* <p className="text-sm text-muted-foreground">
             {t.hero.socialProof.replace('{count}', '30')}
-          </p>
+          </p> */}
 
-          {/* Mockup placeholder */}
-          <div className="mt-16 relative">
+          {/* Removed Mockup placeholder */}
+          {/* <div className="mt-16 relative">
             <div className="gradient-border p-1 max-w-4xl mx-auto">
               <div className="bg-card rounded-lg p-8 sm:p-12">
                 <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
@@ -70,7 +87,7 @@ export function HeroSection() {
                 </div>
               </div>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
     </section>

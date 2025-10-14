@@ -1,12 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase-client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Lock } from 'lucide-react';
 import { LandingLanguageProvider, useLandingLanguage } from '@/contexts/landing-language-context';
 
 function SignupForm() {
@@ -19,9 +19,24 @@ function SignupForm() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [accessGranted, setAccessGranted] = useState(false);
   const router = useRouter();
   const supabase = createClient();
   const { language, setLanguage } = useLandingLanguage();
+
+  // Check for access code on mount
+  useEffect(() => {
+    // Use window.location.search directly
+    const searchParams = new URLSearchParams(window.location.search);
+    const accessCode = searchParams.get('access');
+    console.log('Access code from URL:', accessCode); // Debug log
+    if (accessCode === 'blok2025') {
+      setAccessGranted(true);
+      console.log('Access granted!'); // Debug log
+    } else {
+      console.log('No access code or wrong code'); // Debug log
+    }
+  }, []);
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,6 +103,82 @@ function SignupForm() {
       setLoading(false);
     }
   };
+
+  // If access not granted, show locked screen
+  if (!accessGranted) {
+    return (
+      <div className="min-h-screen relative overflow-hidden">
+        {/* Grid pattern background */}
+        <div className="absolute inset-0 grid-pattern opacity-50 pointer-events-none" />
+
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-transparent via-background/80 to-background pointer-events-none" />
+
+        {/* Back to home link + Language toggle */}
+        <div className="absolute top-6 left-6 right-6 z-50 flex items-center justify-between">
+          <button
+            onClick={() => router.push('/')}
+            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            {language === 'es' ? 'Volver al inicio' : 'Back to home'}
+          </button>
+
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setLanguage('es')}
+              className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
+                language === 'es'
+                  ? 'bg-foreground text-background'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              ES
+            </button>
+            <button
+              onClick={() => setLanguage('en')}
+              className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
+                language === 'en'
+                  ? 'bg-foreground text-background'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              EN
+            </button>
+          </div>
+        </div>
+
+        {/* Locked Screen */}
+        <div className="relative z-10 min-h-screen flex items-center justify-center p-4">
+          <div className="w-full max-w-md text-center">
+            <div className="gradient-border p-1 mb-6">
+              <div className="bg-card rounded-lg p-12">
+                <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Lock size={32} className="text-muted-foreground" />
+                </div>
+                <h2 className="text-2xl font-bold mb-3">
+                  {language === 'es' ? 'Próximamente' : 'Coming Soon'}
+                </h2>
+                <p className="text-muted-foreground mb-6">
+                  {language === 'es'
+                    ? 'El registro de nuevas cuentas estará disponible próximamente. Por favor, vuelve más tarde.'
+                    : 'New account registration will be available soon. Please check back later.'
+                  }
+                </p>
+                <Button
+                  variant="outline"
+                  onClick={() => router.push('/')}
+                  className="w-full"
+                >
+                  {language === 'es' ? 'Volver al inicio' : 'Back to home'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen relative overflow-hidden">

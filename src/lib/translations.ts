@@ -580,6 +580,7 @@ Si es sobre reglas del edificio, envíalo a todos.`,
       cta: 'Comenzar Gratis',
       login: 'Iniciar Sesión',
       socialProof: 'Confiado por más de {count} condominios en Puerto Rico',
+      comingSoon: 'Próximamente disponible',
     },
 
     problem: {
@@ -1387,6 +1388,7 @@ If it's about building rules, send it to everyone.`,
       cta: 'Get Started Free',
       login: 'Log In',
       socialProof: 'Trusted by over {count} condos in Puerto Rico',
+      comingSoon: 'Coming soon',
     },
 
     problem: {
