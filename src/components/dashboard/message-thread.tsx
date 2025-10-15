@@ -5,9 +5,10 @@ import { createClient } from '@/lib/supabase-client';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { formatDate } from '@/lib/utils';
-import { Send, User, Bot, UserCircle, MessageCircle, MessageSquare, Mail, Image as ImageIcon, Video, FileText } from 'lucide-react';
+import { Send, User, Bot, UserCircle, MessageCircle, MessageSquare, Mail, FileText } from 'lucide-react';
 import { LaserFlow } from '@/components/ui/laser-flow';
 import { useLanguage } from '@/contexts/language-context';
+import { useNotificationSound } from '@/hooks/use-notification-sound';
 
 interface Message {
   id: string;
@@ -41,6 +42,7 @@ interface MessageThreadProps {
 
 export function MessageThread({ conversation, buildingId }: MessageThreadProps) {
   const { t } = useLanguage();
+  const { playSound } = useNotificationSound();
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [sending, setSending] = useState(false);
@@ -71,7 +73,13 @@ export function MessageThread({ conversation, buildingId }: MessageThreadProps) 
           filter: `conversation_id=eq.${conversation.id}`,
         },
         (payload) => {
-          setMessages((prev) => [...prev, payload.new as Message]);
+          const newMsg = payload.new as Message;
+          setMessages((prev) => [...prev, newMsg]);
+
+          // Play sound notification for resident messages only
+          if (newMsg.sender_type === 'resident') {
+            playSound();
+          }
         }
       )
       .subscribe();
@@ -79,7 +87,8 @@ export function MessageThread({ conversation, buildingId }: MessageThreadProps) 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [conversation.id, supabase]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conversation.id]);
 
   // Auto-scroll to bottom only on initial load or new messages
   useEffect(() => {

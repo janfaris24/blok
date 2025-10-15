@@ -248,25 +248,8 @@ export async function POST(request: NextRequest) {
       console.log('[WhatsApp] ⚠️ Skipping auto-response - requires human review');
     }
 
-    // 9. Create notification for admin for all new messages
-    console.log('[WhatsApp] Creating notification for admin...');
-
-    const notificationTitle = analysis.requiresHumanReview
-      ? `Mensaje requiere revisión (${analysis.priority})`
-      : 'Nuevo Mensaje';
-
-    await supabase
-      .from('notifications')
-      .insert({
-        building_id: building.id,
-        type: 'new_message',
-        title: notificationTitle,
-        message: `${resident.first_name} ${resident.last_name}: ${payload.Body.substring(0, 100)}`,
-        link: `/dashboard/conversations?conversation=${conversation.id}`,
-        read: false,
-      });
-
-    console.log('[WhatsApp] ✅ Admin notification created');
+    // 9. Notification is automatically created by database trigger
+    console.log('[WhatsApp] Notification will be created automatically by trigger');
 
     console.log('[WhatsApp] ✅ Message processed successfully');
 
@@ -287,7 +270,7 @@ export async function POST(request: NextRequest) {
 /**
  * GET endpoint for webhook verification (Twilio requirement)
  */
-export async function GET(request: NextRequest) {
+export async function GET() {
   console.log('[WhatsApp] GET request received');
   return NextResponse.json({ status: 'ok' }, { status: 200 });
 }

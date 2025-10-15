@@ -14,9 +14,10 @@ function LoginForm() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [magicLinkSent, setMagicLinkSent] = useState(false);
   const router = useRouter();
   const supabase = createClient();
-  const { t, language, setLanguage } = useLandingLanguage();
+  const { language, setLanguage } = useLandingLanguage();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,6 +38,35 @@ function LoginForm() {
       }
     } catch (err) {
       setError('Error al iniciar sesión');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleMagicLink = async () => {
+    if (!email) {
+      setError(language === 'es' ? 'Por favor ingresa tu correo electrónico' : 'Please enter your email');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+
+      if (error) {
+        setError(error.message);
+      } else {
+        setMagicLinkSent(true);
+      }
+    } catch (err) {
+      setError(language === 'es' ? 'Error al enviar el enlace' : 'Error sending magic link');
     } finally {
       setLoading(false);
     }
@@ -117,9 +147,18 @@ function LoginForm() {
                 </div>
 
                 <div className="space-y-1">
-                  <Label htmlFor="password" className="text-xs">
-                    {language === 'es' ? 'Contraseña' : 'Password'}
-                  </Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="password" className="text-xs">
+                      {language === 'es' ? 'Contraseña' : 'Password'}
+                    </Label>
+                    <button
+                      type="button"
+                      onClick={() => router.push('/forgot-password')}
+                      className="text-xs text-primary hover:underline"
+                    >
+                      {language === 'es' ? '¿Olvidaste tu contraseña?' : 'Forgot password?'}
+                    </button>
+                  </div>
                   <Input
                     id="password"
                     type="password"
@@ -148,6 +187,37 @@ function LoginForm() {
                   }
                 </Button>
               </form>
+
+              {/* Magic Link Section */}
+              {magicLinkSent ? (
+                <div className="mt-4 p-3 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
+                  <p className="text-xs text-green-800 dark:text-green-200 text-center">
+                    {language === 'es'
+                      ? '¡Enlace enviado! Revisa tu correo electrónico.'
+                      : 'Link sent! Check your email.'}
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <div className="mt-4 flex items-center gap-2">
+                    <div className="flex-1 h-px bg-border" />
+                    <span className="text-xs text-muted-foreground">
+                      {language === 'es' ? 'O' : 'OR'}
+                    </span>
+                    <div className="flex-1 h-px bg-border" />
+                  </div>
+
+                  <Button
+                    type="button"
+                    onClick={handleMagicLink}
+                    variant="outline"
+                    className="w-full h-10 mt-4"
+                    disabled={loading}
+                  >
+                    {language === 'es' ? 'Enviar enlace mágico' : 'Send magic link'}
+                  </Button>
+                </>
+              )}
 
               {/* Signup link */}
               <div className="mt-4 pt-4 border-t border-border text-center">

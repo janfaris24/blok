@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase-server';
 import { DashboardNav } from '@/components/dashboard/dashboard-nav';
 import { RealtimeNotifications } from '@/components/dashboard/real-time-notifications';
+import { SupportChatWidget } from '@/components/dashboard/support-chat-widget';
 import { Toaster } from 'sonner';
 import { LanguageProvider } from '@/contexts/language-context';
 import { Language } from '@/lib/translations';
@@ -42,6 +43,7 @@ export default async function DashboardLayout({
           </div>
         </main>
         <RealtimeNotifications buildingId={building?.id || ''} />
+        <SupportChatWidget language={language} />
         <Toaster position="top-right" richColors closeButton />
       </div>
     </LanguageProvider>
