@@ -213,9 +213,9 @@ RESPONSE FORMAT (JSON only, no markdown):
 `;
 
   try {
-    console.log('[AI] Starting Claude API call...');
+    console.log('[AI] Starting Claude Haiku 4.5 API call...');
     const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-5-20250929',
+      model: 'claude-haiku-4-5',
       max_tokens: 2000,
       temperature: 0.3,
       messages: [

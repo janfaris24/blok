@@ -52,17 +52,43 @@ export async function POST(request: NextRequest) {
       updateData.preferred_language = preferred_language;
     }
 
+    console.log('[Settings Update] Updating building:', building.id, 'with data:', updateData);
+
     const { error: updateError } = await supabase
       .from('buildings')
       .update(updateData)
       .eq('id', building.id);
 
     if (updateError) {
-      console.error('Update error:', updateError);
+      console.error('[Settings Update] Building update error:', updateError);
       return NextResponse.json(
         { error: 'Error al actualizar configuración', details: updateError.message },
         { status: 500 }
       );
+    }
+
+    console.log('[Settings Update] ✅ Building updated successfully');
+
+    // Update user profile language preference
+    if (preferred_language) {
+      console.log('[Settings Update] Updating user_profiles:', user.id, 'language:', preferred_language);
+
+      const { error: profileError } = await supabase
+        .from('user_profiles')
+        .upsert({
+          id: user.id,
+          language: preferred_language,
+          updated_at: new Date().toISOString(),
+        }, {
+          onConflict: 'id'
+        });
+
+      if (profileError) {
+        console.error('[Settings Update] User profile update error:', profileError);
+        // Don't fail the whole request if profile update fails
+      } else {
+        console.log('[Settings Update] ✅ User profile updated successfully');
+      }
     }
 
     // Update user metadata for admin name

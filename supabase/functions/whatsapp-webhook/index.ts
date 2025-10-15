@@ -175,15 +175,15 @@ Deno.serve(async (req: Request) => {
       console.log('✅ Using existing conversation');
     }
 
-    // 4. ⚡ INSTANT ACKNOWLEDGMENT - Send immediately for better UX
-    const isSpanish = (resident.preferred_language || 'es') === 'es';
-    const quickAck = isSpanish
-      ? '⏳ Un momento, estoy buscando esa información...'
-      : '⏳ One moment, looking that up for you...';
+    // 4. ⚡ INSTANT ACKNOWLEDGMENT - COMMENTED OUT TO TEST HAIKU 4.5 SPEED
+    // const isSpanish = (resident.preferred_language || 'es') === 'es';
+    // const quickAck = isSpanish
+    //   ? '⏳ Un momento, estoy buscando esa información...'
+    //   : '⏳ One moment, looking that up for you...';
 
-    console.log(`⚡ [${Date.now() - startTime}ms] Sending instant acknowledgment...`);
-    await sendWhatsAppMessage(phoneNumber, buildingNumber, quickAck);
-    console.log(`✅ [${Date.now() - startTime}ms] Instant ack sent`);
+    // console.log(`⚡ [${Date.now() - startTime}ms] Sending instant acknowledgment...`);
+    // await sendWhatsAppMessage(phoneNumber, buildingNumber, quickAck);
+    // console.log(`✅ [${Date.now() - startTime}ms] Instant ack sent`);
 
     // 4.5. 📸 MEDIA PROCESSING - Download and store media if present
     let storedMediaUrl: string | null = null;
@@ -660,14 +660,13 @@ ${idx + 1}. Pregunta: ${entry.question}
     console.log('[AI Analysis] ⚠️ Skipping knowledge base search (buildingId or supabase missing)');
   }
 
-  // 🚀 SMART MODEL SELECTION - Use fast Haiku for simple KB queries, Sonnet for complex analysis
-  const useHaiku = knowledgeEntries.length > 0;
-  const selectedModel = useHaiku
-    ? 'claude-haiku-4-5'                // Fast: ~160-375ms (4-5x faster, simple Q&A with KB context)
-    : 'claude-sonnet-4-5-20250929';     // Accurate: ~3-8s (complex analysis, maintenance, routing)
+  // 🚀 HAIKU 4.5 - Fast, cost-effective, similar quality to Sonnet for structured tasks
+  // Performance: ~160-375ms (4-5x faster than Sonnet), 1/3 the cost
+  // Perfect for real-time WhatsApp chat with structured JSON output
+  const selectedModel = 'claude-haiku-4-5';
 
-  console.log(`[AI Analysis] 🎯 Model selection: ${useHaiku ? '⚡ HAIKU (fast path)' : '🧠 SONNET 4.5 (quality path)'}`);
-  console.log(`[AI Analysis] 💡 Reason: ${useHaiku ? 'Knowledge base has relevant info' : 'Complex analysis needed'}`);
+  console.log('[AI Analysis] ⚡ Using Claude Haiku 4.5 for instant response');
+  console.log(`[AI Analysis] 💡 KB entries found: ${knowledgeEntries.length}`);
 
   const prompt = buildAIPrompt(message, residentType, language, buildingContext, knowledgeContext);
 

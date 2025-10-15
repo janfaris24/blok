@@ -153,7 +153,7 @@ export function RealtimeNotifications({ buildingId }: RealtimeNotificationsProps
 function playNotificationSound() {
   if (typeof Audio !== 'undefined') {
     try {
-      const audio = new Audio('/notification.mp3');
+      const audio = new Audio('/sounds/notification.mp3');
       audio.volume = 0.5;
       audio.play().catch(() => {
         // Silently fail if audio playback is blocked

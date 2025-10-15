@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase-server';
 import { DashboardNav } from '@/components/dashboard/dashboard-nav';
+import { DashboardMainWrapper } from '@/components/dashboard/dashboard-main-wrapper';
 import { RealtimeNotifications } from '@/components/dashboard/real-time-notifications';
 import { SupportChatWidget } from '@/components/dashboard/support-chat-widget';
 import { Toaster } from 'sonner';
@@ -37,11 +38,9 @@ export default async function DashboardLayout({
           userName={user.user_metadata?.full_name || ''}
           buildingId={building?.id || ''}
         />
-        <main className="lg:pl-64 pt-14 lg:pt-16 pb-16 lg:pb-0">
-          <div className="p-4 lg:p-6 max-w-[1800px] mx-auto">
-            {children}
-          </div>
-        </main>
+        <DashboardMainWrapper>
+          {children}
+        </DashboardMainWrapper>
         <RealtimeNotifications buildingId={building?.id || ''} />
         <SupportChatWidget language={language} />
         <Toaster position="top-right" richColors closeButton />

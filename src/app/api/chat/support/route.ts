@@ -419,7 +419,7 @@ Instrucciones:
       async start(controller) {
         try {
           const messageStream = await anthropic.messages.stream({
-            model: 'claude-sonnet-4-5-20250929',
+            model: 'claude-haiku-4-5',
             max_tokens: 1024,
             temperature: 0.3,
             system: systemPrompt,
@@ -455,7 +455,7 @@ Instrucciones:
             role: 'assistant',
             content: fullResponse,
             metadata: {
-              model: 'claude-sonnet-4-5',
+              model: 'claude-haiku-4-5',
               support_type: 'platform_help',
             },
           });

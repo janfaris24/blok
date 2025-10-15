@@ -92,11 +92,18 @@ export function SettingsManager({ building, userEmail, userName, usageStats }: S
       });
 
       if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Settings update failed:', errorData);
         throw new Error(t.messages.error);
       }
 
+      const result = await response.json();
+      console.log('Settings updated successfully:', result);
+
       toast.success(t.messages.saved);
-      router.refresh();
+
+      // Force a hard refresh to reload the layout with new language
+      window.location.reload();
     } catch (error) {
       console.error('Error saving settings:', error);
       toast.error(t.messages.error);

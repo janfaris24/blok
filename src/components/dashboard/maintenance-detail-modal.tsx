@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createClient } from '@/lib/supabase-client';
+import { useRouter } from 'next/navigation';
 import {
   Dialog,
   DialogContent,
@@ -28,6 +29,8 @@ import {
   UserCircle,
   Send,
   UserCheck,
+  ExternalLink,
+  ChevronUp,
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/language-context';
 
@@ -87,14 +90,21 @@ export function MaintenanceDetailModal({
   onStatusChange,
 }: MaintenanceDetailModalProps) {
   const { t } = useLanguage();
+  const router = useRouter();
   const [messages, setMessages] = useState<Message[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
+  const [hasMoreMessages, setHasMoreMessages] = useState(false);
+  const [messageOffset, setMessageOffset] = useState(0);
   const [comments, setComments] = useState<Comment[]>([]);
   const [loadingComments, setLoadingComments] = useState(false);
   const [newComment, setNewComment] = useState('');
   const [sendToResident, setSendToResident] = useState(false);
   const [addingComment, setAddingComment] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const supabase = createClient();
+
+  const MESSAGES_PER_PAGE = 50;
 
   const priorityConfig = {
     emergency: {
@@ -129,26 +139,56 @@ export function MaintenanceDetailModal({
 
   useEffect(() => {
     if (isOpen && request?.conversation_id) {
-      loadConversationMessages();
+      setMessages([]);
+      setMessageOffset(0);
+      loadConversationMessages(true);
     }
     if (isOpen && request?.id) {
       loadComments();
     }
   }, [isOpen, request?.conversation_id, request?.id]);
 
-  async function loadConversationMessages() {
+  // Auto-scroll to bottom when messages load
+  useEffect(() => {
+    if (messages.length > 0 && messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages]);
+
+  async function loadConversationMessages(reset = false) {
     if (!request?.conversation_id) return;
 
     setLoadingMessages(true);
     try {
+      // Get total count first
+      const { count } = await supabase
+        .from('messages')
+        .select('*', { count: 'exact', head: true })
+        .eq('conversation_id', request.conversation_id);
+
+      const offset = reset ? 0 : messageOffset;
+
+      // Fetch latest messages (ordered DESC to get latest first, then reverse)
       const { data, error } = await supabase
         .from('messages')
         .select('*')
         .eq('conversation_id', request.conversation_id)
-        .order('created_at', { ascending: true });
+        .order('created_at', { ascending: false })
+        .range(offset, offset + MESSAGES_PER_PAGE - 1);
 
       if (!error && data) {
-        setMessages(data);
+        // Reverse to show oldest to newest
+        const reversedData = data.reverse();
+
+        if (reset) {
+          setMessages(reversedData);
+        } else {
+          // Prepend older messages
+          setMessages((prev) => [...reversedData, ...prev]);
+        }
+
+        setMessageOffset(offset + data.length);
+        setHasMoreMessages((count || 0) > offset + data.length);
       }
     } catch (error) {
       console.error('Error loading messages:', error);
@@ -209,6 +249,13 @@ export function MaintenanceDetailModal({
   function handleStatusChange(newStatus: string) {
     if (request && onStatusChange) {
       onStatusChange(request.id, newStatus);
+      onClose();
+    }
+  }
+
+  function handleViewFullConversation() {
+    if (request?.conversation_id) {
+      router.push(`/dashboard/conversations?conversation=${request.conversation_id}`);
       onClose();
     }
   }
@@ -340,91 +387,123 @@ export function MaintenanceDetailModal({
           {/* Conversation History */}
           {request.conversation_id && (
             <div className="space-y-2">
-              <h4 className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
-                <MessageSquare className="w-4 h-4" />
-                Historial de Conversación
-              </h4>
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
+                  <MessageSquare className="w-4 h-4" />
+                  Historial de Conversación
+                </h4>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleViewFullConversation}
+                  className="gap-1.5 text-xs h-7"
+                >
+                  <ExternalLink className="w-3 h-3" />
+                  Ver chat completo
+                </Button>
+              </div>
 
-              {loadingMessages ? (
+              {loadingMessages && messages.length === 0 ? (
                 <div className="text-sm text-muted-foreground py-4 text-center">
                   Cargando mensajes...
                 </div>
               ) : messages.length > 0 ? (
-                <div className="border border-border/40 rounded-lg p-3 max-h-64 overflow-y-auto space-y-2">
-                  {messages.map((message) => {
-                    const isResident = message.sender_type === 'resident';
-                    const isAI = message.sender_type === 'ai';
-
-                    return (
-                      <div
-                        key={message.id}
-                        className={`flex gap-2 ${isResident ? 'justify-start' : 'justify-end'}`}
+                <div className="border border-border/40 rounded-lg overflow-hidden">
+                  {/* Load More Button */}
+                  {hasMoreMessages && (
+                    <div className="border-b border-border/40 bg-muted/30 p-2 flex justify-center">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => loadConversationMessages(false)}
+                        disabled={loadingMessages}
+                        className="gap-1.5 text-xs h-7"
                       >
-                        {isResident && (
-                          <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-                            <User className="w-3.5 h-3.5 text-muted-foreground" />
-                          </div>
-                        )}
+                        <ChevronUp className="w-3 h-3" />
+                        {loadingMessages ? 'Cargando...' : 'Cargar mensajes anteriores'}
+                      </Button>
+                    </div>
+                  )}
 
-                        <div className="flex flex-col gap-1 max-w-[75%]">
-                          <div
-                            className={`rounded-lg px-3 py-2 text-sm ${
-                              isResident
-                                ? 'bg-muted'
-                                : isAI
-                                ? 'bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-900/50'
-                                : 'bg-primary text-primary-foreground'
-                            }`}
-                          >
-                            {message.content && (
-                              <p className="text-xs leading-relaxed whitespace-pre-wrap">
-                                {message.content}
+                  {/* Messages Container */}
+                  <div ref={messagesContainerRef} className="p-3 max-h-64 overflow-y-auto space-y-2">
+                    {messages.map((message) => {
+                      const isResident = message.sender_type === 'resident';
+                      const isAI = message.sender_type === 'ai';
+
+                      return (
+                        <div
+                          key={message.id}
+                          className={`flex gap-2 ${isResident ? 'justify-start' : 'justify-end'}`}
+                        >
+                          {isResident && (
+                            <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                              <User className="w-3.5 h-3.5 text-muted-foreground" />
+                            </div>
+                          )}
+
+                          <div className="flex flex-col gap-1 max-w-[75%]">
+                            <div
+                              className={`rounded-lg px-3 py-2 text-sm ${
+                                isResident
+                                  ? 'bg-muted'
+                                  : isAI
+                                  ? 'bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-900/50'
+                                  : 'bg-primary text-primary-foreground'
+                              }`}
+                            >
+                              {message.content && (
+                                <p className="text-xs leading-relaxed whitespace-pre-wrap">
+                                  {message.content}
+                                </p>
+                              )}
+                              {message.media_url && message.media_type?.startsWith('image') && (
+                                <div className="mt-1">
+                                  <a href={message.media_url} target="_blank" rel="noopener noreferrer">
+                                    <img
+                                      src={message.media_url}
+                                      alt="Media"
+                                      className="max-w-[200px] rounded cursor-pointer hover:opacity-90"
+                                    />
+                                  </a>
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-1.5 px-1">
+                              <p className="text-[10px] text-muted-foreground">
+                                {formatDate(message.created_at)}
                               </p>
-                            )}
-                            {message.media_url && message.media_type?.startsWith('image') && (
-                              <div className="mt-1">
-                                <a href={message.media_url} target="_blank" rel="noopener noreferrer">
-                                  <img
-                                    src={message.media_url}
-                                    alt="Media"
-                                    className="max-w-[200px] rounded cursor-pointer hover:opacity-90"
-                                  />
-                                </a>
-                              </div>
-                            )}
+                              {isAI && (
+                                <span className="text-[10px] flex items-center gap-0.5 text-purple-600 dark:text-purple-400">
+                                  <Bot className="w-2.5 h-2.5" />
+                                  AI
+                                </span>
+                              )}
+                            </div>
                           </div>
-                          <div className="flex items-center gap-1.5 px-1">
-                            <p className="text-[10px] text-muted-foreground">
-                              {formatDate(message.created_at)}
-                            </p>
-                            {isAI && (
-                              <span className="text-[10px] flex items-center gap-0.5 text-purple-600 dark:text-purple-400">
-                                <Bot className="w-2.5 h-2.5" />
-                                AI
-                              </span>
-                            )}
-                          </div>
-                        </div>
 
-                        {!isResident && (
-                          <div
-                            className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${
-                              isAI ? 'bg-purple-100 dark:bg-purple-900/30' : 'bg-primary'
-                            }`}
-                          >
-                            {isAI ? (
-                              <Bot className="w-3.5 h-3.5 text-purple-600 dark:text-purple-300" />
-                            ) : (
-                              <UserCircle className="w-3.5 h-3.5 text-primary-foreground" />
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
+                          {!isResident && (
+                            <div
+                              className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${
+                                isAI ? 'bg-purple-100 dark:bg-purple-900/30' : 'bg-primary'
+                              }`}
+                            >
+                              {isAI ? (
+                                <Bot className="w-3.5 h-3.5 text-purple-600 dark:text-purple-300" />
+                              ) : (
+                                <UserCircle className="w-3.5 h-3.5 text-primary-foreground" />
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                    {/* Auto-scroll anchor */}
+                    <div ref={messagesEndRef} />
+                  </div>
                 </div>
               ) : (
-                <div className="text-sm text-muted-foreground py-4 text-center">
+                <div className="text-sm text-muted-foreground py-4 text-center border border-border/40 rounded-lg">
                   No hay mensajes en la conversación
                 </div>
               )}

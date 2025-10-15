@@ -16,7 +16,9 @@ import {
   User,
   HelpCircle,
   BookOpen,
-  UserCog
+  UserCog,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -46,6 +48,25 @@ export function DashboardNav({ buildingName, buildingId, userEmail, userName }: 
   const [unreadCount, setUnreadCount] = useState(0);
   const [isDesktopOpen, setIsDesktopOpen] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  // Load sidebar collapsed state from localStorage
+  useEffect(() => {
+    const savedState = localStorage.getItem('sidebarCollapsed');
+    if (savedState) {
+      setSidebarCollapsed(savedState === 'true');
+    }
+  }, []);
+
+  // Toggle sidebar and save to localStorage
+  const toggleSidebar = () => {
+    const newState = !sidebarCollapsed;
+    setSidebarCollapsed(newState);
+    localStorage.setItem('sidebarCollapsed', String(newState));
+
+    // Dispatch custom event for layout to listen to
+    window.dispatchEvent(new CustomEvent('sidebar-toggle', { detail: { collapsed: newState } }));
+  };
 
   const navSections: Array<{ label: string; items: Array<{ title: string; href: string; icon: any }> }> = [
     {
@@ -149,7 +170,12 @@ export function DashboardNav({ buildingName, buildingId, userEmail, userName }: 
   return (
     <>
       {/* Top Navigation Bar - Desktop (Minimal Nexus Style) */}
-      <div className="hidden lg:block fixed top-0 left-64 right-0 h-16 bg-background border-b border-border/40 z-40">
+      <div
+        className={cn(
+          "hidden lg:block fixed top-0 right-0 h-16 bg-background border-b border-border/40 z-40 transition-all duration-300",
+          sidebarCollapsed ? "left-16" : "left-64"
+        )}
+      >
         <div className="h-full flex items-center justify-end px-6">
           {/* Right Actions */}
           <div className="flex items-center gap-1">
@@ -237,26 +263,49 @@ export function DashboardNav({ buildingName, buildingId, userEmail, userName }: 
       </div>
 
       {/* Sidebar */}
-      <aside className="fixed top-0 left-0 bottom-0 w-64 bg-background border-r border-border/40 hidden lg:flex flex-col z-50">
+      <aside
+        className={cn(
+          "fixed top-0 left-0 bottom-0 bg-background border-r border-border/40 hidden lg:flex flex-col z-50 transition-all duration-300",
+          sidebarCollapsed ? "w-16" : "w-64"
+        )}
+      >
         {/* Logo Header */}
-        <div className="h-16 flex items-center px-5 border-b border-border/40">
-          <div className="flex items-center gap-3">
+        <div className="h-16 flex items-center justify-between px-3 border-b border-border/40">
+          <div className="flex items-center gap-3 overflow-hidden">
             <img
               src="/favicon.svg"
               alt="Blok"
-              className="w-10 h-10"
+              className="w-10 h-10 flex-shrink-0"
             />
-            <span className="font-bold text-base">Blok</span>
+            {!sidebarCollapsed && (
+              <span className="font-bold text-base whitespace-nowrap">Blok</span>
+            )}
           </div>
+          <button
+            onClick={toggleSidebar}
+            className={cn(
+              "flex-shrink-0 w-6 h-6 rounded hover:bg-accent transition-colors flex items-center justify-center",
+              sidebarCollapsed && "mx-auto"
+            )}
+            title={sidebarCollapsed ? t.nav.expand : t.nav.collapse}
+          >
+            {sidebarCollapsed ? (
+              <ChevronRight className="w-4 h-4" />
+            ) : (
+              <ChevronLeft className="w-4 h-4" />
+            )}
+          </button>
         </div>
 
         {/* Navigation */}
         <nav className="flex-1 px-3 py-5 overflow-y-auto">
           {navSections.map((section, sectionIdx) => (
             <div key={section.label} className={sectionIdx > 0 ? 'mt-6' : ''}>
-              <p className="px-3 mb-2 text-[11px] font-semibold text-muted-foreground/60 tracking-wider">
-                {section.label}
-              </p>
+              {!sidebarCollapsed && (
+                <p className="px-3 mb-2 text-[11px] font-semibold text-muted-foreground/60 tracking-wider">
+                  {section.label}
+                </p>
+              )}
               <div className="space-y-0.5">
                 {section.items.map((item) => {
                   const isActive = pathname === item.href ||
@@ -266,15 +315,17 @@ export function DashboardNav({ buildingName, buildingId, userEmail, userName }: 
                     <Link
                       key={item.href}
                       href={item.href}
+                      title={sidebarCollapsed ? item.title : undefined}
                       className={cn(
-                        'flex items-center gap-3 px-3 h-9 rounded-lg text-sm font-medium transition-all',
+                        'flex items-center h-9 rounded-lg text-sm font-medium transition-all',
+                        sidebarCollapsed ? 'justify-center px-2' : 'gap-3 px-3',
                         isActive
                           ? 'bg-muted text-foreground'
                           : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
                       )}
                     >
-                      <item.icon className="w-[18px] h-[18px]" />
-                      <span>{item.title}</span>
+                      <item.icon className="w-[18px] h-[18px] flex-shrink-0" />
+                      {!sidebarCollapsed && <span>{item.title}</span>}
                     </Link>
                   );
                 })}
@@ -284,33 +335,39 @@ export function DashboardNav({ buildingName, buildingId, userEmail, userName }: 
 
           {/* SUPPORT Section */}
           <div className="mt-6">
-            <p className="px-3 mb-2 text-[11px] font-semibold text-muted-foreground/60 tracking-wider">
-              {t.nav.support}
-            </p>
+            {!sidebarCollapsed && (
+              <p className="px-3 mb-2 text-[11px] font-semibold text-muted-foreground/60 tracking-wider">
+                {t.nav.support}
+              </p>
+            )}
             <div className="space-y-0.5">
               <Link
                 href="/dashboard/settings"
+                title={sidebarCollapsed ? t.nav.settings : undefined}
                 className={cn(
-                  'w-full flex items-center gap-3 px-3 h-9 rounded-lg text-sm font-medium transition-all',
+                  'w-full flex items-center h-9 rounded-lg text-sm font-medium transition-all',
+                  sidebarCollapsed ? 'justify-center px-2' : 'gap-3 px-3',
                   pathname === '/dashboard/settings'
                     ? 'bg-muted text-foreground'
                     : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
                 )}
               >
-                <Settings className="w-[18px] h-[18px]" />
-                <span>{t.nav.settings}</span>
+                <Settings className="w-[18px] h-[18px] flex-shrink-0" />
+                {!sidebarCollapsed && <span>{t.nav.settings}</span>}
               </Link>
               <Link
                 href="/dashboard/help"
+                title={sidebarCollapsed ? t.nav.help : undefined}
                 className={cn(
-                  'w-full flex items-center gap-3 px-3 h-9 rounded-lg text-sm font-medium transition-all',
+                  'w-full flex items-center h-9 rounded-lg text-sm font-medium transition-all',
+                  sidebarCollapsed ? 'justify-center px-2' : 'gap-3 px-3',
                   pathname === '/dashboard/help'
                     ? 'bg-muted text-foreground'
                     : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
                 )}
               >
-                <HelpCircle className="w-[18px] h-[18px]" />
-                <span>{t.nav.help}</span>
+                <HelpCircle className="w-[18px] h-[18px] flex-shrink-0" />
+                {!sidebarCollapsed && <span>{t.nav.help}</span>}
               </Link>
             </div>
           </div>
@@ -319,22 +376,31 @@ export function DashboardNav({ buildingName, buildingId, userEmail, userName }: 
         {/* Footer */}
         <div className="p-3 border-t border-border/40 space-y-3">
           {/* Building Info */}
-          <div className="w-full p-3 rounded-lg bg-secondary/10">
-            <div className="flex-1 text-left min-w-0">
-              <p className="font-medium text-[11px] truncate">{buildingName}</p>
-              <p className="text-[10px] text-muted-foreground">{t.nav.administration}</p>
+          {!sidebarCollapsed && (
+            <div className="w-full p-3 rounded-lg bg-secondary/10">
+              <div className="flex-1 text-left min-w-0">
+                <p className="font-medium text-[11px] truncate">{buildingName}</p>
+                <p className="text-[10px] text-muted-foreground">{t.nav.administration}</p>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Theme Toggle & Logout */}
-          <div className="flex items-center gap-2">
+          <div className={cn(
+            "flex items-center gap-2",
+            sidebarCollapsed && "flex-col"
+          )}>
             <ThemeToggle />
             <button
               onClick={handleLogout}
-              className="flex-1 flex items-center justify-center gap-2 h-9 px-3 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-all"
+              title={sidebarCollapsed ? t.nav.logout : undefined}
+              className={cn(
+                "flex items-center justify-center h-9 rounded-lg text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-all",
+                sidebarCollapsed ? "w-9" : "flex-1 gap-2 px-3"
+              )}
             >
               <LogOut className="w-[18px] h-[18px]" />
-              <span className="text-xs">{t.nav.logout}</span>
+              {!sidebarCollapsed && <span className="text-xs">{t.nav.logout}</span>}
             </button>
           </div>
         </div>
