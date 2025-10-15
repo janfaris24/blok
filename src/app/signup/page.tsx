@@ -223,6 +223,13 @@ function SignupForm() {
         <div className="w-full max-w-md">
           {/* Logo */}
           <div className="text-center mb-6">
+            <div className="flex justify-center mb-5">
+              <img
+                src="/favicon.svg"
+                alt="Blok"
+                className="w-20 h-20"
+              />
+            </div>
             <h1 className="text-2xl font-bold text-foreground mb-1">
               {language === 'es' ? 'Únete a Blok' : 'Join Blok'}
             </h1>

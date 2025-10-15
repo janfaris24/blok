@@ -12,10 +12,8 @@ import {
   LogOut,
   Building2,
   Bell,
-  Search,
   Settings,
   User,
-  Command,
   HelpCircle,
   BookOpen,
   UserCog
@@ -152,22 +150,7 @@ export function DashboardNav({ buildingName, buildingId, userEmail, userName }: 
     <>
       {/* Top Navigation Bar - Desktop (Minimal Nexus Style) */}
       <div className="hidden lg:block fixed top-0 left-64 right-0 h-16 bg-background border-b border-border/40 z-40">
-        <div className="h-full flex items-center justify-between px-6">
-          {/* Search Bar */}
-          <div className="flex-1 max-w-md">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <input
-                type="text"
-                placeholder={t.common.search}
-                className="w-full h-9 pl-10 pr-16 rounded-lg bg-muted/50 border border-transparent text-sm placeholder:text-muted-foreground focus:outline-none focus:bg-background focus:border-border transition-all"
-              />
-              <kbd className="absolute right-3 top-1/2 -translate-y-1/2 px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground bg-background border border-border/60 rounded">
-                ⌘ + F
-              </kbd>
-            </div>
-          </div>
-
+        <div className="h-full flex items-center justify-end px-6">
           {/* Right Actions */}
           <div className="flex items-center gap-1">
             <Link
@@ -225,10 +208,12 @@ export function DashboardNav({ buildingName, buildingId, userEmail, userName }: 
 
       {/* Mobile header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 h-14 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border/40 z-50 flex items-center justify-between px-4">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 bg-gradient-to-br from-primary to-secondary rounded-lg flex items-center justify-center">
-            <Building2 className="w-4 h-4 text-white" />
-          </div>
+        <div className="flex items-center gap-3">
+          <img
+            src="/favicon.svg"
+            alt="Blok"
+            className="w-9 h-9"
+          />
           <div>
             <p className="font-semibold text-sm">Blok</p>
           </div>
@@ -254,16 +239,15 @@ export function DashboardNav({ buildingName, buildingId, userEmail, userName }: 
       {/* Sidebar */}
       <aside className="fixed top-0 left-0 bottom-0 w-64 bg-background border-r border-border/40 hidden lg:flex flex-col z-50">
         {/* Logo Header */}
-        <div className="h-16 flex items-center justify-between px-5 border-b border-border/40">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 bg-gradient-to-br from-primary to-secondary rounded-lg flex items-center justify-center">
-              <Building2 className="w-4 h-4 text-white" />
-            </div>
+        <div className="h-16 flex items-center px-5 border-b border-border/40">
+          <div className="flex items-center gap-3">
+            <img
+              src="/favicon.svg"
+              alt="Blok"
+              className="w-10 h-10"
+            />
             <span className="font-bold text-base">Blok</span>
           </div>
-          <kbd className="px-1.5 py-1 text-[10px] font-semibold text-muted-foreground bg-muted rounded border border-border/60">
-            ⌘
-          </kbd>
         </div>
 
         {/* Navigation */}
@@ -334,17 +318,13 @@ export function DashboardNav({ buildingName, buildingId, userEmail, userName }: 
 
         {/* Footer */}
         <div className="p-3 border-t border-border/40 space-y-3">
-          {/* Building/Team Switcher */}
-          <button className="w-full flex items-center gap-2.5 p-2 rounded-lg bg-secondary/10 hover:bg-secondary/20 transition-colors group">
-            <div className="w-9 h-9 bg-gradient-to-br from-secondary to-primary rounded-lg flex items-center justify-center flex-shrink-0">
-              <Building2 className="w-4 h-4 text-white" />
-            </div>
+          {/* Building Info */}
+          <div className="w-full p-3 rounded-lg bg-secondary/10">
             <div className="flex-1 text-left min-w-0">
-              <p className="font-semibold text-xs truncate">{buildingName}</p>
+              <p className="font-medium text-[11px] truncate">{buildingName}</p>
               <p className="text-[10px] text-muted-foreground">{t.nav.administration}</p>
             </div>
-            <Command className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
-          </button>
+          </div>
 
           {/* Theme Toggle & Logout */}
           <div className="flex items-center gap-2">

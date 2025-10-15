@@ -215,8 +215,8 @@ function HelpContentInner() {
         <CardContent className="space-y-3">
           <div className="flex items-center gap-3 text-sm">
             <Mail className="w-4 h-4 text-muted-foreground" />
-            <a href="mailto:soporte@blok.app" className="text-primary hover:underline">
-              soporte@blok.app
+            <a href="mailto:janfaris@blokpr.co" className="text-primary hover:underline">
+              janfaris@blokpr.co
             </a>
           </div>
           <div className="flex items-center gap-3 text-sm">

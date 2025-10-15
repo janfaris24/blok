@@ -53,8 +53,13 @@ export function Navigation() {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 sm:h-20">
           {/* Logo */}
-          <a href="#" className="text-2xl font-bold text-foreground">
-            Blok
+          <a href="#" className="flex items-center gap-3">
+            <img
+              src="/favicon.svg"
+              alt="Blok"
+              className="w-10 h-10 sm:w-11 sm:h-11"
+            />
+            <span className="text-2xl font-bold text-foreground">Blok</span>
           </a>
 
           {/* Desktop Navigation */}
