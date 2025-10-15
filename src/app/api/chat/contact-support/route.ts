@@ -54,9 +54,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Send email to support
-    await resend.emails.send({
+    // For testing: use personal email to avoid Google Workspace same-domain blocking
+    const supportEmail = process.env.SUPPORT_EMAIL || 'janfaris@blokpr.co';
+
+    const result = await resend.emails.send({
       from: 'Blok Support <support@blokpr.co>',
-      to: 'janfaris@blokpr.co',
+      to: supportEmail,
       replyTo: user.email || undefined,
       subject: `🆘 Support Request - ${building.name}`,
       text: `Support request from Blok chatbot:
@@ -73,9 +76,20 @@ ${conversationContext ? `Recent Conversation:\n\n${conversationContext}` : 'No c
 This email was sent from the Blok support chatbot.`,
     });
 
-    console.log('[Contact Support] Email sent successfully');
+    console.log('[Contact Support] Email sent successfully. Resend ID:', result.data?.id);
 
-    return NextResponse.json({ success: true });
+    if (result.error) {
+      console.error('[Contact Support] Resend error:', result.error);
+      return NextResponse.json(
+        { error: 'Failed to send email', details: result.error },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      emailId: result.data?.id
+    });
   } catch (error) {
     console.error('[Contact Support] Error:', error);
     return NextResponse.json(

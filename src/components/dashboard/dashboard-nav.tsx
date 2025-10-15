@@ -230,7 +230,7 @@ export function DashboardNav({ buildingName, buildingId, userEmail, userName }: 
             <Building2 className="w-4 h-4 text-white" />
           </div>
           <div>
-            <p className="font-semibold text-sm">CondoSync</p>
+            <p className="font-semibold text-sm">Blok</p>
           </div>
         </div>
         <div className="flex items-center gap-1">
