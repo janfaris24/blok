@@ -663,8 +663,8 @@ ${idx + 1}. Pregunta: ${entry.question}
   // 🚀 SMART MODEL SELECTION - Use fast Haiku for simple KB queries, Sonnet for complex analysis
   const useHaiku = knowledgeEntries.length > 0;
   const selectedModel = useHaiku
-    ? 'claude-3-5-haiku-20241022'      // Fast: ~800-1500ms (simple Q&A with KB context)
-    : 'claude-sonnet-4-5-20250929';    // Accurate: ~3-8s (complex analysis, maintenance, routing)
+    ? 'claude-haiku-4-5'                // Fast: ~160-375ms (4-5x faster, simple Q&A with KB context)
+    : 'claude-sonnet-4-5-20250929';     // Accurate: ~3-8s (complex analysis, maintenance, routing)
 
   console.log(`[AI Analysis] 🎯 Model selection: ${useHaiku ? '⚡ HAIKU (fast path)' : '🧠 SONNET 4.5 (quality path)'}`);
   console.log(`[AI Analysis] 💡 Reason: ${useHaiku ? 'Knowledge base has relevant info' : 'Complex analysis needed'}`);

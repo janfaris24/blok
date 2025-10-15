@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase-server';
 import { analyzeMessage } from '@/lib/blok-ai';
 import { sendWhatsAppMessage } from '@/lib/whatsapp-client';
 import { routeMessage } from '@/lib/message-router';
+import { Resend } from 'resend';
 import type { WhatsAppWebhookPayload } from '@/types/blok';
 
 /**
@@ -203,6 +204,137 @@ export async function POST(request: NextRequest) {
         console.error('[WhatsApp] Failed to create maintenance request:', maintenanceError);
       } else {
         console.log('[WhatsApp] ✅ Maintenance request created');
+
+        // Send email notification to all building admins
+        try {
+          // Get all admins for this building
+          const { data: buildingAdmins } = await supabase
+            .from('building_admins')
+            .select('user_id')
+            .eq('building_id', building.id);
+
+          if (buildingAdmins && buildingAdmins.length > 0) {
+            // Get email addresses and preferences for all admins
+            const { data: adminProfiles } = await supabase
+              .from('user_profiles')
+              .select('id, notification_email, notification_preferences')
+              .in('id', buildingAdmins.map(admin => admin.user_id));
+
+            if (adminProfiles && adminProfiles.length > 0) {
+              // Filter admins who have email notifications enabled for maintenance
+              const emailRecipients = adminProfiles
+                .filter(profile => {
+                  // Check if maintenance notifications are enabled (defaults to true)
+                  const prefs = profile.notification_preferences || {};
+                  const maintenanceEnabled = prefs.maintenance !== false;
+                  return profile.notification_email && maintenanceEnabled;
+                })
+                .map(profile => profile.notification_email)
+                .filter(Boolean);
+
+              // Add SUPPORT_EMAIL for testing if set
+              if (process.env.SUPPORT_EMAIL && !emailRecipients.includes(process.env.SUPPORT_EMAIL)) {
+                emailRecipients.push(process.env.SUPPORT_EMAIL);
+              }
+
+              if (emailRecipients.length > 0) {
+                const resend = new Resend(process.env.RESEND_API_KEY);
+
+                // Priority emoji
+                const priorityEmoji = {
+                  low: '🔵',
+                  medium: '🟡',
+                  high: '🟠',
+                  emergency: '🔴'
+                }[analysis.priority] || '⚪';
+
+                // Send to all recipients
+                await resend.emails.send({
+                  from: 'Blok Support <support@blokpr.co>',
+                  to: emailRecipients[0], // Primary recipient
+                  bcc: emailRecipients.slice(1), // Rest as BCC for privacy
+                  subject: `${priorityEmoji} Nueva Solicitud de Mantenimiento - ${building.name}`,
+              html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; margin: 0; padding: 20px; }
+    .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .header { background: linear-gradient(135deg, #000 0%, #333 100%); padding: 30px; text-align: center; }
+    .header h1 { color: white; margin: 0; font-size: 24px; }
+    .content { padding: 30px; }
+    .priority-badge { display: inline-block; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; margin-bottom: 20px; }
+    .priority-low { background: #dbeafe; color: #1e40af; }
+    .priority-medium { background: #fef3c7; color: #92400e; }
+    .priority-high { background: #fed7aa; color: #9a3412; }
+    .priority-emergency { background: #fee2e2; color: #991b1b; }
+    .detail-row { margin: 15px 0; padding: 15px; background: #f9fafb; border-radius: 8px; }
+    .detail-label { font-size: 12px; color: #6b7280; font-weight: 600; text-transform: uppercase; margin-bottom: 5px; }
+    .detail-value { font-size: 14px; color: #111827; }
+    .description { background: #f9fafb; padding: 20px; border-radius: 8px; border-left: 4px solid #000; margin: 20px 0; }
+    .footer { text-align: center; padding: 20px; color: #6b7280; font-size: 12px; border-top: 1px solid #e5e7eb; }
+    .button { display: inline-block; background: #000; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🔧 Nueva Solicitud de Mantenimiento</h1>
+    </div>
+    <div class="content">
+      <span class="priority-badge priority-${analysis.priority}">${priorityEmoji} Prioridad: ${analysis.priority.toUpperCase()}</span>
+
+      <div class="detail-row">
+        <div class="detail-label">Edificio</div>
+        <div class="detail-value">${building.name}</div>
+      </div>
+
+      <div class="detail-row">
+        <div class="detail-label">Residente</div>
+        <div class="detail-value">${resident.name} ${resident.units?.unit_number ? `- Unidad ${resident.units.unit_number}` : ''}</div>
+      </div>
+
+      <div class="detail-row">
+        <div class="detail-label">Categoría</div>
+        <div class="detail-value">${analysis.extractedData?.maintenanceCategory || 'General'}</div>
+      </div>
+
+      ${analysis.extractedData?.location ? `
+      <div class="detail-row">
+        <div class="detail-label">Ubicación</div>
+        <div class="detail-value">${analysis.extractedData.location}</div>
+      </div>
+      ` : ''}
+
+      <div class="description">
+        <div class="detail-label">Descripción</div>
+        <div class="detail-value" style="margin-top: 10px;">${payload.Body}</div>
+      </div>
+
+      <div style="text-align: center;">
+        <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://blokpr.co'}/dashboard/maintenance" class="button">Ver en Dashboard</a>
+      </div>
+    </div>
+    <div class="footer">
+      <p>Este correo fue generado automáticamente por Blok.</p>
+      <p style="margin-top: 10px;">© 2025 Blok. Gestión inteligente de condominios.</p>
+    </div>
+  </div>
+</body>
+</html>
+              `,
+                });
+
+                console.log('[WhatsApp] ✅ Email notification sent to', emailRecipients.length, 'admin(s)');
+              }
+            }
+          }
+        } catch (emailError) {
+          console.error('[WhatsApp] Failed to send email notification:', emailError);
+          // Don't fail the whole request if email fails
+        }
       }
     }
 
