@@ -13,7 +13,7 @@ import {
 function isDevelopment(): boolean {
   return process.env.NODE_ENV === 'development' ||
          process.env.VERCEL_ENV === 'preview' ||
-         process.env.NEXT_PUBLIC_APP_URL?.includes('localhost');
+         (process.env.NEXT_PUBLIC_APP_URL?.includes('localhost') ?? false);
 }
 
 /**
