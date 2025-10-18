@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase-client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Download, Filter, Star, TrendingUp, Users, Building2 } from "lucide-react";
+import { Download, Star, TrendingUp, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 interface Feedback {
