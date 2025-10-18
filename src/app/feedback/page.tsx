@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, ArrowLeft } from "lucide-react";
 
 export default function FeedbackPage() {
   const [submitted, setSubmitted] = useState(false);
@@ -55,25 +55,80 @@ export default function FeedbackPage() {
 
   if (submitted) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-gradient-to-br from-blue-50 to-indigo-50">
-        <Card className="max-w-md w-full border-0 sm:border shadow-lg">
-          <CardContent className="pt-8 sm:pt-10 pb-8 px-6 sm:px-8 text-center">
-            <CheckCircle2 className="w-20 h-20 sm:w-24 sm:h-24 text-green-500 mx-auto mb-6" />
-            <h2 className="text-2xl sm:text-3xl font-bold mb-3">¡Gracias por tu feedback!</h2>
-            <p className="text-base sm:text-lg text-muted-foreground mb-8 leading-relaxed">
-              Tu opinión es muy valiosa para nosotros. Estaremos en contacto pronto.
-            </p>
-            <Button onClick={() => window.location.href = "/"} className="w-full h-12 sm:h-14 text-base sm:text-lg font-semibold">
-              Volver al Inicio
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+      <>
+        {/* Navigation Bar */}
+        <nav className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between h-16">
+              <a href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+                <img
+                  src="/favicon.svg"
+                  alt="Blok"
+                  className="w-9 h-9 sm:w-10 sm:h-10"
+                />
+                <span className="text-xl sm:text-2xl font-bold text-foreground">Blok</span>
+              </a>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => window.location.href = "/"}
+                className="gap-2 text-sm"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span className="hidden sm:inline">Volver a Inicio</span>
+                <span className="sm:hidden">Inicio</span>
+              </Button>
+            </div>
+          </div>
+        </nav>
+
+        <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800 pt-24">
+          <Card className="max-w-md w-full border-0 sm:border shadow-lg">
+            <CardContent className="pt-8 sm:pt-10 pb-8 px-6 sm:px-8 text-center">
+              <CheckCircle2 className="w-20 h-20 sm:w-24 sm:h-24 text-green-500 mx-auto mb-6" />
+              <h2 className="text-2xl sm:text-3xl font-bold mb-3">¡Gracias por tu feedback!</h2>
+              <p className="text-base sm:text-lg text-muted-foreground mb-8 leading-relaxed">
+                Tu opinión es muy valiosa para nosotros. Estaremos en contacto pronto.
+              </p>
+              <Button onClick={() => window.location.href = "/"} className="w-full h-12 sm:h-14 text-base sm:text-lg font-semibold">
+                Volver al Inicio
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </>
     );
   }
 
   return (
-    <div className="min-h-screen py-6 sm:py-12 px-3 sm:px-4 bg-gradient-to-br from-blue-50 to-indigo-50">
+    <>
+      {/* Navigation Bar */}
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <a href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+              <img
+                src="/favicon.svg"
+                alt="Blok"
+                className="w-9 h-9 sm:w-10 sm:h-10"
+              />
+              <span className="text-xl sm:text-2xl font-bold text-foreground">Blok</span>
+            </a>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => window.location.href = "/"}
+              className="gap-2 text-sm"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span className="hidden sm:inline">Volver a Inicio</span>
+              <span className="sm:hidden">Inicio</span>
+            </Button>
+          </div>
+        </div>
+      </nav>
+
+      <div className="min-h-screen py-6 sm:py-12 px-3 sm:px-4 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800 pt-24">
       <div className="max-w-3xl mx-auto">
         <Card className="border-0 sm:border shadow-lg">
           <CardHeader className="space-y-3 pb-4 sm:pb-6">
@@ -277,5 +332,6 @@ export default function FeedbackPage() {
         </Card>
       </div>
     </div>
+    </>
   );
 }
