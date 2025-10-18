@@ -22,7 +22,6 @@ export async function POST(req: NextRequest) {
         unit: data.unit,
         clarity_rating: parseInt(data.clarity),
         usefulness_rating: parseInt(data.usefulness),
-        pricing_feedback: data.pricing,
         nps_score: parseInt(data.likelihood),
         concerns: data.concerns,
         suggestions: data.suggestions,

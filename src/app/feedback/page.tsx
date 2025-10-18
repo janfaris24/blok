@@ -19,7 +19,6 @@ export default function FeedbackPage() {
     unit: "",
     clarity: "",
     usefulness: "",
-    pricing: "",
     likelihood: "",
     concerns: "",
     suggestions: "",
@@ -55,15 +54,15 @@ export default function FeedbackPage() {
 
   if (submitted) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-blue-50 to-indigo-50">
-        <Card className="max-w-md w-full">
-          <CardContent className="pt-6 text-center">
-            <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold mb-2">¡Gracias por tu feedback!</h2>
-            <p className="text-muted-foreground mb-6">
+      <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-gradient-to-br from-blue-50 to-indigo-50">
+        <Card className="max-w-md w-full border-0 sm:border shadow-lg">
+          <CardContent className="pt-8 sm:pt-10 pb-8 px-6 sm:px-8 text-center">
+            <CheckCircle2 className="w-20 h-20 sm:w-24 sm:h-24 text-green-500 mx-auto mb-6" />
+            <h2 className="text-2xl sm:text-3xl font-bold mb-3">¡Gracias por tu feedback!</h2>
+            <p className="text-base sm:text-lg text-muted-foreground mb-8 leading-relaxed">
               Tu opinión es muy valiosa para nosotros. Estaremos en contacto pronto.
             </p>
-            <Button onClick={() => window.location.href = "/"} className="w-full">
+            <Button onClick={() => window.location.href = "/"} className="w-full h-12 sm:h-14 text-base sm:text-lg font-semibold">
               Volver al Inicio
             </Button>
           </CardContent>
@@ -73,93 +72,96 @@ export default function FeedbackPage() {
   }
 
   return (
-    <div className="min-h-screen py-12 px-4 bg-gradient-to-br from-blue-50 to-indigo-50">
+    <div className="min-h-screen py-6 sm:py-12 px-3 sm:px-4 bg-gradient-to-br from-blue-50 to-indigo-50">
       <div className="max-w-3xl mx-auto">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-3xl">Feedback - Blok</CardTitle>
-            <CardDescription className="text-base">
+        <Card className="border-0 sm:border shadow-lg">
+          <CardHeader className="space-y-3 pb-4 sm:pb-6">
+            <CardTitle className="text-2xl sm:text-3xl leading-tight">Feedback - Blok</CardTitle>
+            <CardDescription className="text-sm sm:text-base leading-relaxed">
               Ayúdanos a mejorar Blok con tu opinión. Todas tus respuestas son confidenciales y nos ayudarán a crear un mejor producto para nuestra comunidad.
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
+          <CardContent className="px-4 sm:px-6">
+            <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
               {/* Personal Info */}
-              <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
-                <h3 className="font-semibold text-lg">Información Personal</h3>
+              <div className="space-y-4 p-4 sm:p-5 bg-gray-50 rounded-xl">
+                <h3 className="font-semibold text-base sm:text-lg">Información Personal</h3>
 
-                <div>
-                  <Label htmlFor="name">Nombre *</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="name" className="text-sm font-medium">Nombre *</Label>
                   <Input
                     id="name"
                     required
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     placeholder="Tu nombre completo"
+                    className="h-12 text-base"
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      placeholder="tu@email.com"
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="phone">Teléfono *</Label>
-                    <Input
-                      id="phone"
-                      required
-                      value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      placeholder="787-123-4567"
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-sm font-medium">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    placeholder="tu@email.com"
+                    className="h-12 text-base"
+                  />
                 </div>
 
-                <div>
-                  <Label htmlFor="role">Eres: *</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="phone" className="text-sm font-medium">Teléfono *</Label>
+                  <Input
+                    id="phone"
+                    required
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    placeholder="787-123-4567"
+                    className="h-12 text-base"
+                    type="tel"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="role" className="text-sm font-medium">Eres: *</Label>
                   <select
                     id="role"
                     required
                     value={formData.role}
                     onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full h-12 px-4 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                   >
                     <option value="propietario">Propietario</option>
                     <option value="inquilino">Inquilino</option>
                   </select>
                 </div>
 
-                <div>
-                  <Label htmlFor="unit">Número de Apartamento</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="unit" className="text-sm font-medium">Número de Apartamento</Label>
                   <Input
                     id="unit"
                     value={formData.unit}
                     onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
                     placeholder="Ej: 504"
+                    className="h-12 text-base"
                   />
                 </div>
               </div>
 
               {/* Feedback Questions */}
-              <div className="space-y-6">
-                <h3 className="font-semibold text-lg">Sobre la Página Web</h3>
+              <div className="space-y-5 sm:space-y-6">
+                <h3 className="font-semibold text-base sm:text-lg pt-2">Sobre la Página Web</h3>
 
                 <div className="space-y-2">
-                  <Label htmlFor="clarity">¿Qué tan clara es la explicación de Blok? *</Label>
+                  <Label htmlFor="clarity" className="text-sm font-medium leading-relaxed">¿Qué tan clara es la explicación de Blok? *</Label>
                   <select
                     id="clarity"
                     required
                     value={formData.clarity}
                     onChange={(e) => setFormData({ ...formData, clarity: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full h-12 px-4 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                   >
                     <option value="">Selecciona una opción</option>
                     <option value="5">⭐⭐⭐⭐⭐ Muy clara</option>
@@ -171,13 +173,13 @@ export default function FeedbackPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="usefulness">¿Qué tan útil sería Blok para nuestro condominio? *</Label>
+                  <Label htmlFor="usefulness" className="text-sm font-medium leading-relaxed">¿Qué tan útil sería Blok para nuestro condominio? *</Label>
                   <select
                     id="usefulness"
                     required
                     value={formData.usefulness}
                     onChange={(e) => setFormData({ ...formData, usefulness: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full h-12 px-4 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                   >
                     <option value="">Selecciona una opción</option>
                     <option value="5">⭐⭐⭐⭐⭐ Extremadamente útil</option>
@@ -189,30 +191,13 @@ export default function FeedbackPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="pricing">¿Qué opinas del precio ($19-99/mes según tamaño)? *</Label>
-                  <select
-                    id="pricing"
-                    required
-                    value={formData.pricing}
-                    onChange={(e) => setFormData({ ...formData, pricing: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Selecciona una opción</option>
-                    <option value="cheap">💰 Económico / Buen valor</option>
-                    <option value="fair">✅ Precio justo</option>
-                    <option value="expensive">💸 Algo caro</option>
-                    <option value="too-expensive">🚫 Demasiado caro</option>
-                  </select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="likelihood">¿Qué probabilidad hay de que recomiendes Blok a la junta? *</Label>
+                  <Label htmlFor="likelihood" className="text-sm font-medium leading-relaxed">¿Qué probabilidad hay de que recomiendes Blok a la junta? *</Label>
                   <select
                     id="likelihood"
                     required
                     value={formData.likelihood}
                     onChange={(e) => setFormData({ ...formData, likelihood: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full h-12 px-4 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                   >
                     <option value="">Selecciona una opción (0-10)</option>
                     <option value="10">10 - Muy probable</option>
@@ -229,38 +214,38 @@ export default function FeedbackPage() {
                   </select>
                 </div>
 
-                <div>
-                  <Label htmlFor="concerns">¿Tienes alguna preocupación o duda sobre Blok?</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="concerns" className="text-sm font-medium">¿Tienes alguna preocupación o duda sobre Blok?</Label>
                   <Textarea
                     id="concerns"
                     value={formData.concerns}
                     onChange={(e) => setFormData({ ...formData, concerns: e.target.value })}
                     placeholder="Comparte cualquier preocupación..."
-                    rows={3}
-                    className="mt-1"
+                    rows={4}
+                    className="text-base resize-none"
                   />
                 </div>
 
-                <div>
-                  <Label htmlFor="suggestions">¿Qué mejorarías o añadirías?</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="suggestions" className="text-sm font-medium">¿Qué mejorarías o añadirías?</Label>
                   <Textarea
                     id="suggestions"
                     value={formData.suggestions}
                     onChange={(e) => setFormData({ ...formData, suggestions: e.target.value })}
                     placeholder="Tus sugerencias son importantes..."
-                    rows={3}
-                    className="mt-1"
+                    rows={4}
+                    className="text-base resize-none"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="interested">¿Estarías interesado en probar Blok gratis por 30 días? *</Label>
+                  <Label htmlFor="interested" className="text-sm font-medium leading-relaxed">¿Estarías interesado en probar Blok gratis por 30 días? *</Label>
                   <select
                     id="interested"
                     required
                     value={formData.interested}
                     onChange={(e) => setFormData({ ...formData, interested: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full h-12 px-4 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                   >
                     <option value="">Selecciona una opción</option>
                     <option value="yes">✅ Sí, me interesa</option>
@@ -270,7 +255,7 @@ export default function FeedbackPage() {
                 </div>
               </div>
 
-              <Button type="submit" size="lg" className="w-full" disabled={loading}>
+              <Button type="submit" size="lg" className="w-full h-12 sm:h-14 text-base sm:text-lg font-semibold" disabled={loading}>
                 {loading ? "Enviando..." : "Enviar Feedback"}
               </Button>
             </form>
