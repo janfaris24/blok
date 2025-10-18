@@ -8,6 +8,15 @@ import {
 } from './subscription';
 
 /**
+ * Check if running in development environment
+ */
+function isDevelopment(): boolean {
+  return process.env.NODE_ENV === 'development' ||
+         process.env.VERCEL_ENV === 'preview' ||
+         process.env.NEXT_PUBLIC_APP_URL?.includes('localhost');
+}
+
+/**
  * Get subscription data for the current authenticated user
  */
 export async function getSubscription(): Promise<SubscriptionData | null> {
@@ -36,8 +45,21 @@ export async function getSubscription(): Promise<SubscriptionData | null> {
 /**
  * Require active subscription - use in API routes
  * Throws error if no active subscription
+ * DEV MODE: Bypasses subscription check in development/preview environments
  */
 export async function requireSubscription(): Promise<SubscriptionData> {
+  // DEV MODE: Skip subscription check in development/preview
+  if (isDevelopment()) {
+    console.log('[DEV MODE] Bypassing subscription check');
+    return {
+      stripe_subscription_id: 'dev_subscription',
+      stripe_price_id: process.env.NEXT_PUBLIC_STRIPE_ENTERPRISE_PRICE_ID || null,
+      subscription_status: 'active',
+      current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      cancel_at_period_end: false,
+    };
+  }
+
   const subscription = await getSubscription();
 
   if (!subscription) {
