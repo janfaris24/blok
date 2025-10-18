@@ -16,6 +16,7 @@ export default function FeedbackPage() {
     email: "",
     phone: "",
     role: "propietario",
+    building: "Condominio Puerta Real",
     unit: "",
     clarity: "",
     usefulness: "",
@@ -84,54 +85,54 @@ export default function FeedbackPage() {
           <CardContent className="px-4 sm:px-6">
             <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
               {/* Personal Info */}
-              <div className="space-y-4 p-4 sm:p-5 bg-gray-50 rounded-xl">
-                <h3 className="font-semibold text-base sm:text-lg">Información Personal</h3>
+              <div className="space-y-4 p-4 sm:p-5 bg-gray-50 dark:bg-gray-900 rounded-xl">
+                <h3 className="font-semibold text-base sm:text-lg text-gray-900 dark:text-gray-100">Información Personal</h3>
 
                 <div className="space-y-2">
-                  <Label htmlFor="name" className="text-sm font-medium">Nombre *</Label>
+                  <Label htmlFor="name" className="text-sm font-medium text-gray-700 dark:text-gray-300">Nombre *</Label>
                   <Input
                     id="name"
                     required
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     placeholder="Tu nombre completo"
-                    className="h-12 text-base"
+                    className="h-12 text-base bg-white dark:bg-gray-800 dark:text-white dark:border-gray-700"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-sm font-medium">Email</Label>
+                  <Label htmlFor="email" className="text-sm font-medium text-gray-700 dark:text-gray-300">Email</Label>
                   <Input
                     id="email"
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     placeholder="tu@email.com"
-                    className="h-12 text-base"
+                    className="h-12 text-base bg-white dark:bg-gray-800 dark:text-white dark:border-gray-700"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="phone" className="text-sm font-medium">Teléfono *</Label>
+                  <Label htmlFor="phone" className="text-sm font-medium text-gray-700 dark:text-gray-300">Teléfono *</Label>
                   <Input
                     id="phone"
                     required
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     placeholder="787-123-4567"
-                    className="h-12 text-base"
+                    className="h-12 text-base bg-white dark:bg-gray-800 dark:text-white dark:border-gray-700"
                     type="tel"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="role" className="text-sm font-medium">Eres: *</Label>
+                  <Label htmlFor="role" className="text-sm font-medium text-gray-700 dark:text-gray-300">Eres: *</Label>
                   <select
                     id="role"
                     required
                     value={formData.role}
                     onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                    className="w-full h-12 px-4 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                    className="w-full h-12 px-4 text-base text-gray-900 dark:text-white border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800"
                   >
                     <option value="propietario">Propietario</option>
                     <option value="inquilino">Inquilino</option>
@@ -139,29 +140,42 @@ export default function FeedbackPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="unit" className="text-sm font-medium">Número de Apartamento</Label>
+                  <Label htmlFor="building" className="text-sm font-medium text-gray-700 dark:text-gray-300">Condominio *</Label>
+                  <select
+                    id="building"
+                    required
+                    value={formData.building}
+                    onChange={(e) => setFormData({ ...formData, building: e.target.value })}
+                    className="w-full h-12 px-4 text-base text-gray-900 dark:text-white border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800"
+                  >
+                    <option value="Condominio Puerta Real">Condominio Puerta Real</option>
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="unit" className="text-sm font-medium text-gray-700 dark:text-gray-300">Número de Apartamento</Label>
                   <Input
                     id="unit"
                     value={formData.unit}
                     onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
-                    placeholder="Ej: 504"
-                    className="h-12 text-base"
+                    placeholder="Ej: 500"
+                    className="h-12 text-base bg-white dark:bg-gray-800 dark:text-white dark:border-gray-700"
                   />
                 </div>
               </div>
 
               {/* Feedback Questions */}
               <div className="space-y-5 sm:space-y-6">
-                <h3 className="font-semibold text-base sm:text-lg pt-2">Sobre la Página Web</h3>
+                <h3 className="font-semibold text-base sm:text-lg pt-2 text-gray-900 dark:text-gray-100">Sobre la Página Web</h3>
 
                 <div className="space-y-2">
-                  <Label htmlFor="clarity" className="text-sm font-medium leading-relaxed">¿Qué tan clara es la explicación de Blok? *</Label>
+                  <Label htmlFor="clarity" className="text-sm font-medium leading-relaxed text-gray-700 dark:text-gray-300">¿Qué tan clara es la explicación de Blok? *</Label>
                   <select
                     id="clarity"
                     required
                     value={formData.clarity}
                     onChange={(e) => setFormData({ ...formData, clarity: e.target.value })}
-                    className="w-full h-12 px-4 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                    className="w-full h-12 px-4 text-base text-gray-900 dark:text-white border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800"
                   >
                     <option value="">Selecciona una opción</option>
                     <option value="5">⭐⭐⭐⭐⭐ Muy clara</option>
@@ -173,13 +187,13 @@ export default function FeedbackPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="usefulness" className="text-sm font-medium leading-relaxed">¿Qué tan útil sería Blok para nuestro condominio? *</Label>
+                  <Label htmlFor="usefulness" className="text-sm font-medium leading-relaxed text-gray-700 dark:text-gray-300">¿Qué tan útil sería Blok para nuestro condominio? *</Label>
                   <select
                     id="usefulness"
                     required
                     value={formData.usefulness}
                     onChange={(e) => setFormData({ ...formData, usefulness: e.target.value })}
-                    className="w-full h-12 px-4 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                    className="w-full h-12 px-4 text-base text-gray-900 dark:text-white border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800"
                   >
                     <option value="">Selecciona una opción</option>
                     <option value="5">⭐⭐⭐⭐⭐ Extremadamente útil</option>
@@ -191,13 +205,13 @@ export default function FeedbackPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="likelihood" className="text-sm font-medium leading-relaxed">¿Qué probabilidad hay de que recomiendes Blok a la junta? *</Label>
+                  <Label htmlFor="likelihood" className="text-sm font-medium leading-relaxed text-gray-700 dark:text-gray-300">¿Qué probabilidad hay de que recomiendes Blok a la junta? *</Label>
                   <select
                     id="likelihood"
                     required
                     value={formData.likelihood}
                     onChange={(e) => setFormData({ ...formData, likelihood: e.target.value })}
-                    className="w-full h-12 px-4 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                    className="w-full h-12 px-4 text-base text-gray-900 dark:text-white border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800"
                   >
                     <option value="">Selecciona una opción (0-10)</option>
                     <option value="10">10 - Muy probable</option>
@@ -215,37 +229,37 @@ export default function FeedbackPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="concerns" className="text-sm font-medium">¿Tienes alguna preocupación o duda sobre Blok?</Label>
+                  <Label htmlFor="concerns" className="text-sm font-medium text-gray-700 dark:text-gray-300">¿Tienes alguna preocupación o duda sobre Blok?</Label>
                   <Textarea
                     id="concerns"
                     value={formData.concerns}
                     onChange={(e) => setFormData({ ...formData, concerns: e.target.value })}
                     placeholder="Comparte cualquier preocupación..."
                     rows={4}
-                    className="text-base resize-none"
+                    className="text-base resize-none bg-white dark:bg-gray-800 dark:text-white dark:border-gray-700"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="suggestions" className="text-sm font-medium">¿Qué mejorarías o añadirías?</Label>
+                  <Label htmlFor="suggestions" className="text-sm font-medium text-gray-700 dark:text-gray-300">¿Qué mejorarías o añadirías?</Label>
                   <Textarea
                     id="suggestions"
                     value={formData.suggestions}
                     onChange={(e) => setFormData({ ...formData, suggestions: e.target.value })}
                     placeholder="Tus sugerencias son importantes..."
                     rows={4}
-                    className="text-base resize-none"
+                    className="text-base resize-none bg-white dark:bg-gray-800 dark:text-white dark:border-gray-700"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="interested" className="text-sm font-medium leading-relaxed">¿Estarías interesado en probar Blok gratis por 30 días? *</Label>
+                  <Label htmlFor="interested" className="text-sm font-medium leading-relaxed text-gray-700 dark:text-gray-300">¿Estarías interesado en probar Blok gratis por 30 días? *</Label>
                   <select
                     id="interested"
                     required
                     value={formData.interested}
                     onChange={(e) => setFormData({ ...formData, interested: e.target.value })}
-                    className="w-full h-12 px-4 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                    className="w-full h-12 px-4 text-base text-gray-900 dark:text-white border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800"
                   >
                     <option value="">Selecciona una opción</option>
                     <option value="yes">✅ Sí, me interesa</option>

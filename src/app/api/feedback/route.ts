@@ -19,6 +19,7 @@ export async function POST(req: NextRequest) {
         email: data.email,
         phone: data.phone,
         role: data.role,
+        building: data.building,
         unit: data.unit,
         clarity_rating: parseInt(data.clarity),
         usefulness_rating: parseInt(data.usefulness),

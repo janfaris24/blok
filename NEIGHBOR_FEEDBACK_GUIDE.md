@@ -18,7 +18,7 @@ Como vecinos, su feedback es super valioso. Les pido 5 minutos para:
 1️⃣ Ver la página web: https://blokpr.co
 2️⃣ Llenar este formulario corto: https://blokpr.co/feedback
 
-*Es anónimo y confidencial.* Solo quiero saber si les parece útil y qué mejorarías.
+*Es confidencial.* Solo quiero saber si les parece útil, qué mejorarías, y si lo usarían.
 
 💡 *¿Por qué?*
 Quiero crear algo que realmente nos ayude a todos. Su opinión me ayudará a hacerlo mejor antes de lanzarlo oficialmente.
@@ -181,8 +181,8 @@ Puedes crear una página en `/dashboard/feedback` para ver las respuestas.
 
 ## ❓ Preguntas Frecuentes que Puedan Tener
 
-**Q: ¿Es gratis?**
-A: Todavía no está a la venta. Estoy validando si les sería útil.
+**Q: ¿Cuánto cuesta?**
+A: Eso lo decide la junta. Primero quiero saber si les parece útil como residentes.
 
 **Q: ¿Cuándo estaría disponible?**
 A: Depende del feedback. Si les interesa, podría estar en 2-4 semanas.
