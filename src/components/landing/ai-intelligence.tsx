@@ -64,7 +64,7 @@ export function AIIntelligence() {
                 <div>
                   <div className="text-sm text-muted-foreground mb-2">{t.ai.demo.input}</div>
                   <div className="bg-muted rounded-lg p-4 font-mono text-sm text-foreground">
-                    "El aire acondicionado de mi apartamento no está enfriando. Es urgente porque hace mucho calor."
+                    "{t.ai.demo.exampleMessage}"
                   </div>
                 </div>
 
@@ -74,17 +74,17 @@ export function AIIntelligence() {
                   <div className="bg-muted rounded-lg p-4 font-mono text-xs space-y-2">
                     <div>
                       <span className="text-secondary">intent:</span>{" "}
-                      <span className="text-foreground">"maintenance_request"</span>
+                      <span className="text-foreground">"{t.ai.demo.exampleIntent}"</span>
                     </div>
                     <div>
-                      <span className="text-secondary">category:</span> <span className="text-foreground">"hvac"</span>
+                      <span className="text-secondary">category:</span> <span className="text-foreground">"{t.ai.demo.exampleCategory}"</span>
                     </div>
                     <div>
-                      <span className="text-secondary">priority:</span> <span className="text-primary">"high"</span>
+                      <span className="text-secondary">priority:</span> <span className="text-primary">"{t.ai.demo.examplePriority}"</span>
                     </div>
                     <div>
                       <span className="text-secondary">action:</span>{" "}
-                      <span className="text-foreground">"create_ticket"</span>
+                      <span className="text-foreground">"{t.ai.demo.exampleAction}"</span>
                     </div>
                   </div>
                 </div>
