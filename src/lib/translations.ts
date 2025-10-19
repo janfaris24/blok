@@ -733,12 +733,12 @@ Si es sobre reglas del edificio, envíalo a todos.`,
         step1: {
           title: 'Residente Escribe',
           subtitle: 'Mensaje enviado por WhatsApp al número del condominio',
-          example: '"El aire no funciona"',
+          example: '"La planta eléctrica no prendió"',
         },
         step2: {
           title: 'IA Analiza',
           subtitle: 'Detecta intención, urgencia y categoría automáticamente',
-          example: 'intent: maintenance',
+          example: 'priority: emergency',
         },
         step3: {
           title: 'Acción Inmediata',
@@ -1671,12 +1671,12 @@ If it's about building rules, send it to everyone.`,
         step1: {
           title: 'Resident Writes',
           subtitle: 'Message sent via WhatsApp to condo number',
-          example: '"AC not working"',
+          example: '"The generator didn\'t turn on"',
         },
         step2: {
           title: 'AI Analyzes',
           subtitle: 'Detects intent, urgency, and category automatically',
-          example: 'intent: maintenance',
+          example: 'priority: emergency',
         },
         step3: {
           title: 'Immediate Action',
