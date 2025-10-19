@@ -107,6 +107,7 @@ export function HeroSection() {
                     loop
                     muted
                     playsInline
+                    controls
                     className={`w-full h-full object-cover transition-opacity duration-500 ${
                       videoLoaded ? 'opacity-100' : 'opacity-0'
                     }`}
@@ -117,7 +118,7 @@ export function HeroSection() {
                       setVideoLoaded(true);
                     }}
                   >
-                    <source src="/videos/demo-hq.mp4" type="video/mp4" />
+                    <source src="/videos/BLOK-DEMO.mp4" type="video/mp4" />
                     Your browser does not support the video tag.
                   </video>
 
