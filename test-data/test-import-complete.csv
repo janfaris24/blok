@@ -1,0 +1,6 @@
+Apt,Nombre,Apellido,Email,Teléfono,Tipo
+101,Juan,Pérez,juan.perez@gmail.com,7875551234,dueño
+102,María,García,maria.garcia@hotmail.com,7875555678,inquilino
+103,José,Rodríguez,jose.rodriguez@yahoo.com,7875551111,owner
+104,Ana,Martínez,ana.martinez@outlook.com,7875552222,renter
+105,Carlos,López,carlos.lopez@gmail.com,7875553333,propietario

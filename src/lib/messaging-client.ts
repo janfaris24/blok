@@ -1,13 +1,22 @@
 import twilio from 'twilio';
+import { Resend } from 'resend';
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
+const resendApiKey = process.env.RESEND_API_KEY;
 
 // Initialize Twilio client only if credentials are available
 let client: ReturnType<typeof twilio> | null = null;
 
 if (accountSid && authToken) {
   client = twilio(accountSid, authToken);
+}
+
+// Initialize Resend client only if API key is available
+let resend: Resend | null = null;
+
+if (resendApiKey) {
+  resend = new Resend(resendApiKey);
 }
 
 export type MessageChannel = 'whatsapp' | 'sms' | 'email';
@@ -214,6 +223,90 @@ export async function sendBulkMultiChannel(
 }
 
 /**
+ * Sends an email via Resend
+ *
+ * @param to - Recipient email address
+ * @param from - Sender email address (must be verified domain)
+ * @param subject - Email subject
+ * @param html - HTML email body
+ * @param replyTo - Optional reply-to address
+ * @param tags - Optional tags for tracking (e.g., broadcast_id)
+ * @returns Resend email ID
+ */
+export async function sendEmail(
+  to: string,
+  from: string,
+  subject: string,
+  html: string,
+  replyTo?: string,
+  tags?: { name: string; value: string }[]
+): Promise<string> {
+  if (!resend) {
+    console.error('[Email] Resend client not initialized - missing API key');
+    throw new Error('Resend client not configured');
+  }
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from,
+      to,
+      subject,
+      html,
+      replyTo,
+      tags,
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    console.log(`[Email] ✅ Email sent to ${to}: ${data?.id}`);
+    return data?.id || '';
+  } catch (error) {
+    console.error('[Email] ❌ Send error:', error);
+    throw new Error(`Failed to send email: ${error}`);
+  }
+}
+
+/**
+ * Sends emails to multiple recipients (broadcast)
+ *
+ * @param recipients - Array of recipient objects with email, subject, and html
+ * @param from - Sender email address (must be verified domain)
+ * @param replyTo - Optional reply-to address
+ * @param tags - Optional tags for tracking (e.g., broadcast_id)
+ * @returns Object with success and failed counts
+ */
+export async function sendBulkEmail(
+  recipients: Array<{ email: string; subject: string; html: string }>,
+  from: string,
+  replyTo?: string,
+  tags?: { name: string; value: string }[]
+): Promise<{ success: number; failed: number; errors: string[] }> {
+  let success = 0;
+  let failed = 0;
+  const errors: string[] = [];
+
+  for (const recipient of recipients) {
+    try {
+      await sendEmail(recipient.email, from, recipient.subject, recipient.html, replyTo, tags);
+      success++;
+    } catch (error) {
+      console.error(`[Email] Failed to send to ${recipient.email}:`, error);
+      failed++;
+      errors.push(`${recipient.email}: ${error}`);
+    }
+
+    // Rate limiting: Resend has generous limits but add small delay to be safe
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+
+  console.log(`[Email] Bulk send complete: ${success} success, ${failed} failed`);
+
+  return { success, failed, errors };
+}
+
+/**
  * Validates if a phone number is in the correct format
  *
  * @param phone - Phone number to validate
@@ -224,6 +317,17 @@ export function isValidPhoneNumber(phone: string): boolean {
   // Puerto Rico: +1787 or +1939
   const phoneRegex = /^\+1(787|939)\d{7}$/;
   return phoneRegex.test(phone);
+}
+
+/**
+ * Validates if an email is in the correct format
+ *
+ * @param email - Email address to validate
+ * @returns True if valid format
+ */
+export function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
 }
 
 /**

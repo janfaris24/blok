@@ -1,52 +1,110 @@
-import { createClient } from '@/lib/supabase-server';
+'use client';
+
+import { useState, useEffect } from 'react';
+import { createClient } from '@/lib/supabase-client';
 import { BroadcastComposer } from '@/components/dashboard/broadcast-composer';
 import { BroadcastsList } from '@/components/dashboard/broadcasts-list';
 import { BroadcastUsageCard } from '@/components/dashboard/broadcast-usage-card';
-import { getSubscription } from '@/lib/subscription-server';
-import { checkFeatureAccess } from '@/lib/subscription';
 import { UpgradePrompt } from '@/components/upgrade-prompt';
-import { getBroadcastCount } from '@/lib/usage-tracking';
+import { CardSkeleton } from '@/components/ui/skeleton';
+import type { Broadcast } from '@/types/blok';
 
-export const dynamic = 'force-dynamic';
+export default function BroadcastsPage() {
+  const [building, setBuilding] = useState<any>(null);
+  const [units, setUnits] = useState<any[]>([]);
+  const [broadcasts, setBroadcasts] = useState<Broadcast[]>([]);
+  const [broadcastCount, setBroadcastCount] = useState(0);
+  const [hasAccess, setHasAccess] = useState(true);
+  const [loading, setLoading] = useState(true);
 
-export default async function BroadcastsPage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  // Fetch broadcasts from server
+  const fetchBroadcasts = async (buildingId: string) => {
+    const supabase = createClient();
+    const { data } = await supabase
+      .from('broadcasts')
+      .select('*')
+      .eq('building_id', buildingId)
+      .order('created_at', { ascending: false })
+      .limit(20);
 
-  // Get building
-  const { data: building } = await supabase
-    .from('buildings')
-    .select('*')
-    .eq('admin_user_id', user!.id)
-    .single();
+    if (data) {
+      setBroadcasts(data);
+    }
+  };
+
+  // Initial load
+  useEffect(() => {
+    const supabase = createClient();
+
+    const loadData = async () => {
+      setLoading(true);
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+
+      // Get building
+      const { data: buildingData } = await supabase
+        .from('buildings')
+        .select('*')
+        .eq('admin_user_id', user.id)
+        .single();
+
+      if (!buildingData) {
+        setLoading(false);
+        return;
+      }
+
+      setBuilding(buildingData);
+
+      // Get units
+      const { data: unitsData } = await supabase
+        .from('units')
+        .select('id, unit_number')
+        .eq('building_id', buildingData.id)
+        .order('unit_number', { ascending: true });
+
+      if (unitsData) {
+        setUnits(unitsData);
+      }
+
+      // Get broadcasts
+      await fetchBroadcasts(buildingData.id);
+
+      setLoading(false);
+    };
+
+    loadData();
+  }, []);
+
+  // Handler for when broadcast is sent
+  const handleBroadcastSent = async () => {
+    if (building?.id) {
+      await fetchBroadcasts(building.id);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="space-y-6 pb-24 lg:pb-8">
+        <div>
+          <h1 className="text-2xl font-bold mb-1">Anuncios</h1>
+          <p className="text-sm text-muted-foreground">
+            Envía mensajes masivos a tus residentes
+          </p>
+        </div>
+        <CardSkeleton />
+        <CardSkeleton />
+        <CardSkeleton />
+      </div>
+    );
+  }
 
   if (!building) {
     return <div>No se encontró el edificio</div>;
   }
-
-  // Check subscription access for broadcasts
-  const subscription = await getSubscription();
-  const broadcastAccess = subscription
-    ? checkFeatureAccess(subscription, 'broadcasts')
-    : { hasAccess: false, currentPlan: null, requiredPlan: 'PROFESSIONAL' as const, reason: 'No subscription' };
-
-  // Get all units for specific unit selection
-  const { data: units } = await supabase
-    .from('units')
-    .select('id, unit_number')
-    .eq('building_id', building.id)
-    .order('unit_number', { ascending: true });
-
-  // Get broadcasts
-  const { data: broadcasts } = await supabase
-    .from('broadcasts')
-    .select('*')
-    .eq('building_id', building.id)
-    .order('created_at', { ascending: false })
-    .limit(20);
-
-  // Get broadcast count for current month
-  const broadcastCount = broadcastAccess.hasAccess ? await getBroadcastCount(building.id) : 0;
 
   return (
     <div className="space-y-6 pb-24 lg:pb-8">
@@ -59,10 +117,10 @@ export default async function BroadcastsPage() {
       </div>
 
       {/* Feature Gate: Check if user has access to broadcasts */}
-      {!broadcastAccess.hasAccess ? (
+      {!hasAccess ? (
         <UpgradePrompt
-          currentPlan={broadcastAccess.currentPlan}
-          requiredPlan={broadcastAccess.requiredPlan!}
+          currentPlan={null}
+          requiredPlan="PROFESSIONAL"
           feature="Anuncios"
           description="Envía mensajes masivos a todos tus residentes, propietarios, o inquilinos con el plan Professional."
         />
@@ -74,11 +132,12 @@ export default async function BroadcastsPage() {
           {/* Broadcast Composer */}
           <BroadcastComposer
             buildingId={building.id}
-            units={units || []}
+            units={units}
+            onBroadcastSent={handleBroadcastSent}
           />
 
           {/* Recent Broadcasts */}
-          <BroadcastsList initialBroadcasts={broadcasts || []} buildingId={building.id} />
+          <BroadcastsList initialBroadcasts={broadcasts} buildingId={building.id} />
         </>
       )}
     </div>

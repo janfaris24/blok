@@ -1,0 +1,11 @@
+Unit Number,First Name,Last Name,Email,Phone,Type
+901,Alejandro,Moreno,alejandro.moreno@gmail.com,7875551234,owner
+902,Natalia,Jimenez,natalia.jimenez@hotmail.com,,renter
+903,Esteban,Pacheco,,7875551111,owner
+904,Lorena,Salazar,lorena.salazar@yahoo.com,7875552222,
+905,Rodrigo,Ponce,rodrigo.ponce@gmail.com,invalid-phone,owner
+906,Yolanda,Estrada,bademail,7875553333,renter
+907,Alfredo,Luna,alfredo.luna@outlook.com,7875554444,inquilino
+908,Silvia,Cabrera,,,,
+909,Ignacio,Bonilla,ignacio.bonilla@gmail.com,7875555555,propietario
+910,Teresa,Velasco,teresa.velasco@hotmail.com,939-555-6666,tenant

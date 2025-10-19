@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
-import { sendBulkWhatsApp, sendBulkSMS } from '@/lib/messaging-client';
+import { sendBulkWhatsApp, sendBulkSMS, sendBulkEmail } from '@/lib/messaging-client';
 
 /**
  * Send a broadcast to recipients
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
     // Get recipients based on target audience
     let query = supabase
       .from('residents')
-      .select('id, first_name, last_name, phone, whatsapp_number, opted_in_whatsapp, opted_in_email, opted_in_sms')
+      .select('id, first_name, last_name, email, phone, whatsapp_number, opted_in_whatsapp, opted_in_email, opted_in_sms')
       .eq('building_id', broadcast.building_id);
 
     if (broadcast.target_audience === 'owners') {
@@ -137,10 +137,60 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Send via Email (if implemented)
+    // Send via Email
     if (broadcast.send_via_email) {
-      // TODO: Implement email sending
-      console.log('[Broadcast] ⚠️ Email sending not yet implemented');
+      const emailRecipients = residents
+        .filter((r) => {
+          // Must be opted in and have email
+          if (!r.opted_in_email || !r.email) return false;
+
+          // Validate email format
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          if (!emailRegex.test(r.email)) {
+            console.log(`[Broadcast] ⚠️ Skipping invalid email: ${r.email} for ${r.first_name} ${r.last_name}`);
+            return false;
+          }
+
+          return true;
+        })
+        .map((r) => ({
+          email: r.email!,
+          subject: `📢 ${broadcast.subject}`,
+          html: `
+            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #333;">${broadcast.subject}</h2>
+              <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <p style="white-space: pre-wrap; color: #666; line-height: 1.6;">${broadcast.message}</p>
+              </div>
+              <p style="color: #999; font-size: 12px; margin-top: 20px;">
+                ${building.name}
+              </p>
+            </div>
+          `,
+        }));
+
+      console.log('[Broadcast] 📧 Email recipients:', emailRecipients.length);
+
+      if (emailRecipients.length > 0) {
+        try {
+          const result = await sendBulkEmail(
+            emailRecipients,
+            process.env.RESEND_FROM_EMAIL || 'anuncios@blokpr.co',
+            process.env.RESEND_REPLY_TO_EMAIL,
+            [{ name: 'broadcast_id', value: broadcastId }]
+          );
+
+          totalSent += result.success;
+          totalFailed += result.failed;
+          errors.push(...result.errors);
+
+          console.log('[Broadcast] ✅ Email sent:', result.success, 'failed:', result.failed);
+        } catch (error) {
+          console.error('[Broadcast] Email send error:', error);
+          totalFailed += emailRecipients.length;
+          errors.push(`Email bulk send failed: ${error}`);
+        }
+      }
     }
 
     // Send via SMS

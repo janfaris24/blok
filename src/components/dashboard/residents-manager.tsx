@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { createClient } from '@/lib/supabase-client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Users, Home, Key, Phone, Mail, Plus, Pencil, Trash2, X } from 'lucide-react';
+import { Users, Home, Key, Phone, Mail, Plus, Pencil, Trash2, X, Upload } from 'lucide-react';
+import { BulkImportResidents } from './bulk-import-residents';
 
 interface Resident {
   id: string;
@@ -37,6 +38,7 @@ interface ResidentsManagerProps {
 export function ResidentsManager({ initialResidents, units, buildingId }: ResidentsManagerProps) {
   const [residents, setResidents] = useState(initialResidents);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
   const [editingResident, setEditingResident] = useState<Resident | null>(null);
   const [formData, setFormData] = useState({
     first_name: '',
@@ -109,6 +111,34 @@ export function ResidentsManager({ initialResidents, units, buildingId }: Reside
 
         if (error) throw error;
 
+        // Clear this resident from their old unit (if they had one)
+        if (editingResident.unit_id) {
+          await supabase
+            .from('units')
+            .update({ owner_id: null })
+            .eq('owner_id', editingResident.id);
+
+          await supabase
+            .from('units')
+            .update({ current_renter_id: null })
+            .eq('current_renter_id', editingResident.id);
+        }
+
+        // Update unit ownership/renter status for new unit
+        if (formData.unit_id) {
+          if (formData.type === 'owner') {
+            await supabase
+              .from('units')
+              .update({ owner_id: editingResident.id })
+              .eq('id', formData.unit_id);
+          } else if (formData.type === 'renter') {
+            await supabase
+              .from('units')
+              .update({ current_renter_id: editingResident.id })
+              .eq('id', formData.unit_id);
+          }
+        }
+
         setResidents(prev =>
           prev.map(r => r.id === editingResident.id ? { ...r, ...residentData } : r)
         );
@@ -121,6 +151,21 @@ export function ResidentsManager({ initialResidents, units, buildingId }: Reside
           .single();
 
         if (error) throw error;
+
+        // Update unit ownership/renter status if unit is assigned
+        if (formData.unit_id && data) {
+          if (formData.type === 'owner') {
+            await supabase
+              .from('units')
+              .update({ owner_id: data.id })
+              .eq('id', formData.unit_id);
+          } else if (formData.type === 'renter') {
+            await supabase
+              .from('units')
+              .update({ current_renter_id: data.id })
+              .eq('id', formData.unit_id);
+          }
+        }
 
         setResidents(prev => [data, ...prev]);
       }
@@ -174,6 +219,19 @@ export function ResidentsManager({ initialResidents, units, buildingId }: Reside
     return unit?.unit_number || 'N/A';
   };
 
+  const handleBulkImportSuccess = async () => {
+    // Refresh residents list after successful import
+    const { data } = await supabase
+      .from('residents')
+      .select('*')
+      .eq('building_id', buildingId)
+      .order('created_at', { ascending: false });
+
+    if (data) {
+      setResidents(data);
+    }
+  };
+
   return (
     <>
       <div className="space-y-6">
@@ -185,10 +243,16 @@ export function ResidentsManager({ initialResidents, units, buildingId }: Reside
               Gestiona la información de tus residentes
             </p>
           </div>
-          <Button onClick={openAddModal} className="gap-2">
-            <Plus className="w-4 h-4" />
-            Agregar Residente
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button onClick={() => setIsBulkImportOpen(true)} variant="outline" className="gap-2">
+              <Upload className="w-4 h-4" />
+              Importar en Masa
+            </Button>
+            <Button onClick={openAddModal} className="gap-2">
+              <Plus className="w-4 h-4" />
+              Agregar Residente
+            </Button>
+          </div>
         </div>
 
         {/* Stats */}
@@ -491,6 +555,14 @@ export function ResidentsManager({ initialResidents, units, buildingId }: Reside
           </Card>
         </div>
       )}
+
+      {/* Bulk Import Dialog */}
+      <BulkImportResidents
+        buildingId={buildingId}
+        open={isBulkImportOpen}
+        onClose={() => setIsBulkImportOpen(false)}
+        onSuccess={handleBulkImportSuccess}
+      />
     </>
   );
 }

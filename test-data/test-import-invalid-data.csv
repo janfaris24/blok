@@ -1,0 +1,6 @@
+Unit,First Name,Last Name,Email,Phone,Type
+601,Antonio,Reyes,antonio.reyes@gmail.com,7875551234,owner
+602,Monica,Santos,bademailemail,7875555678,renter
+603,Pablo,Cortés,pablo.cortes@gmail.com,123,owner
+604,Daniela,Acosta,notanemail,abc123,renter
+605,Raul,Medina,,invalid-phone,owner

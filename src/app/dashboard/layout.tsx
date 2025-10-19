@@ -4,6 +4,7 @@ import { DashboardNav } from '@/components/dashboard/dashboard-nav';
 import { DashboardMainWrapper } from '@/components/dashboard/dashboard-main-wrapper';
 import { RealtimeNotifications } from '@/components/dashboard/real-time-notifications';
 import { SupportChatWidget } from '@/components/dashboard/support-chat-widget';
+import { NavigationProgress } from '@/components/navigation-progress';
 import { Toaster } from 'sonner';
 import { LanguageProvider } from '@/contexts/language-context';
 import { Language } from '@/lib/translations';
@@ -31,6 +32,7 @@ export default async function DashboardLayout({
 
   return (
     <LanguageProvider language={language}>
+      <NavigationProgress />
       <div className="min-h-screen bg-background">
         <DashboardNav
           buildingName={building?.name || 'Mi Edificio'}
