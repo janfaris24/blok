@@ -17,6 +17,7 @@ const testFiles = [
   'test-import-mixed-columns',
   'test-import-missing-required',
   'test-import-mixed-scenarios',
+  'test-import-with-duplicates',
 ];
 
 console.log('🚀 Generating Excel test files...\n');

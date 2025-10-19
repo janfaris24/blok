@@ -4,14 +4,15 @@ import { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
-import { TableSkeleton } from '@/components/ui/skeleton';
-import { Upload, Download, FileSpreadsheet, AlertCircle, CheckCircle2, X, HelpCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import { Upload, Download, FileSpreadsheet, AlertCircle, CheckCircle2, HelpCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { toast } from 'sonner';
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
+import { useTranslations } from '@/lib/use-translations';
 
 interface ResidentRow {
   unit_number: string; // Required
+  floor?: number; // Optional - floor number for the unit
   first_name: string; // Required
   last_name: string; // Required
   email: string; // Optional but recommended (needed for email communications)
@@ -38,12 +39,13 @@ interface BulkImportProps {
 }
 
 export function BulkImportResidents({ buildingId, open, onClose, onSuccess }: BulkImportProps) {
+  const { t } = useTranslations();
   const [file, setFile] = useState<File | null>(null);
   const [data, setData] = useState<ResidentRow[]>([]);
   const [errors, setErrors] = useState<ValidationError[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
-  const [importResults, setImportResults] = useState<{ success: number; failed: number } | null>(null);
+  const [importResults, setImportResults] = useState<{ success: number; failed: number; duplicates?: number; unitsCreated?: number } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
 
@@ -55,8 +57,8 @@ export function BulkImportResidents({ buildingId, open, onClose, onSuccess }: Bu
     ];
 
     if (!validTypes.includes(file.type) && !file.name.endsWith('.csv') && !file.name.endsWith('.xlsx')) {
-      toast.error('Formato inválido', {
-        description: 'Por favor sube un archivo CSV o Excel (.xlsx)',
+      toast.error(t('residents.invalidFormat'), {
+        description: t('residents.invalidFormatDesc'),
       });
       return;
     }
@@ -81,7 +83,7 @@ export function BulkImportResidents({ buildingId, open, onClose, onSuccess }: Bu
             processData(results.data as any[]);
           },
           error: (error) => {
-            toast.error('Error al leer CSV', { description: error.message });
+            toast.error(t('residents.errorReadingCSV'), { description: error.message });
             setIsProcessing(false);
           },
         });
@@ -138,6 +140,14 @@ export function BulkImportResidents({ buildingId, open, onClose, onSuccess }: Bu
                      normalizedRow.unit || normalizedRow.apartamento || normalizedRow.apto ||
                      normalizedRow.apt_number || normalizedRow.número || normalizedRow.numero ||
                      normalizedRow.no || normalizedRow['#'] || normalizedRow.apt_num || '',
+
+        // Floor: piso, floor, nivel
+        floor: (() => {
+          const floorValue = normalizedRow.floor || normalizedRow.piso || normalizedRow.nivel || '';
+          if (!floorValue) return undefined;
+          const parsed = parseInt(String(floorValue), 10);
+          return isNaN(parsed) ? undefined : parsed;
+        })(),
 
         // First name: nombre, primer_nombre, name
         first_name: normalizedRow.first_name || normalizedRow.nombre ||
@@ -257,10 +267,22 @@ export function BulkImportResidents({ buildingId, open, onClose, onSuccess }: Bu
         throw new Error(result.error || 'Failed to import residents');
       }
 
-      setImportResults({ success: result.success, failed: result.failed });
+      setImportResults({
+        success: result.success,
+        failed: result.failed,
+        duplicates: result.duplicates,
+        unitsCreated: result.unitsCreated
+      });
+
+      const successMsg = [
+        `${result.success} residentes importados`,
+        result.unitsCreated > 0 ? `${result.unitsCreated} unidades creadas` : null,
+        result.duplicates > 0 ? `${result.duplicates} duplicados omitidos` : null,
+        result.failed > 0 ? `${result.failed} fallidos` : null,
+      ].filter(Boolean).join(', ');
 
       toast.success('Importación completa', {
-        description: `${result.success} residentes importados exitosamente${result.failed > 0 ? `, ${result.failed} fallidos` : ''}`,
+        description: successMsg,
         duration: 5000,
       });
 
@@ -292,6 +314,7 @@ export function BulkImportResidents({ buildingId, open, onClose, onSuccess }: Bu
     const template = [
       {
         unit_number: '101',
+        floor: 1,
         first_name: 'Juan',
         last_name: 'Pérez',
         email: 'juan.perez@example.com',
@@ -304,6 +327,7 @@ export function BulkImportResidents({ buildingId, open, onClose, onSuccess }: Bu
       },
       {
         unit_number: '102',
+        floor: 1,
         first_name: 'María',
         last_name: 'González',
         email: 'maria.gonzalez@example.com',
@@ -330,9 +354,9 @@ export function BulkImportResidents({ buildingId, open, onClose, onSuccess }: Bu
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Importar Residentes en Masa</DialogTitle>
+          <DialogTitle>{t('residents.bulkImportTitle')}</DialogTitle>
           <DialogDescription>
-            Sube un archivo Excel o CSV con la información de múltiples residentes
+            {t('residents.uploadDescription')}
           </DialogDescription>
         </DialogHeader>
 
@@ -375,6 +399,11 @@ export function BulkImportResidents({ buildingId, open, onClose, onSuccess }: Bu
                   <div className="p-2 bg-muted/30 rounded">
                     <p className="font-medium text-xs mb-1">📍 Unidad/Apartamento</p>
                     <p className="text-xs text-muted-foreground">apt, apartamento, unit, número, #apt, apto</p>
+                  </div>
+
+                  <div className="p-2 bg-muted/30 rounded">
+                    <p className="font-medium text-xs mb-1">🏢 Piso (opcional)</p>
+                    <p className="text-xs text-muted-foreground">floor, piso, nivel</p>
                   </div>
 
                   <div className="p-2 bg-muted/30 rounded">

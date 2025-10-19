@@ -113,13 +113,25 @@ export function BuildingManager({ building, initialUnits }: BuildingManagerProps
     setLoading(true);
 
     try {
-      // First, clear unit references from residents
+      // Step 1: Clear unit references from residents table
       await supabase
         .from('residents')
         .update({ unit_id: null })
         .eq('building_id', building.id);
 
-      // Now delete all units
+      // Step 2: Clear unit references from maintenance_requests table
+      await supabase
+        .from('maintenance_requests')
+        .update({ unit_id: null })
+        .eq('building_id', building.id);
+
+      // Step 3: Clear resident references from units table
+      await supabase
+        .from('units')
+        .update({ owner_id: null, current_renter_id: null })
+        .eq('building_id', building.id);
+
+      // Step 4: Now delete all units
       const { error } = await supabase
         .from('units')
         .delete()
@@ -169,17 +181,15 @@ export function BuildingManager({ building, initialUnits }: BuildingManagerProps
     }
   };
 
-  const groupedUnits: { [floor: number]: Unit[] } = {};
-  units.forEach(unit => {
-    if (!groupedUnits[unit.floor]) {
-      groupedUnits[unit.floor] = [];
-    }
-    groupedUnits[unit.floor].push(unit);
+  // Sort units by unit_number
+  const sortedUnits = [...units].sort((a, b) => {
+    // Extract numeric part from unit_number for proper sorting
+    const getNumber = (str: string) => {
+      const num = parseInt(str.replace(/\D/g, ''), 10);
+      return isNaN(num) ? 0 : num;
+    };
+    return getNumber(a.unit_number) - getNumber(b.unit_number);
   });
-
-  const floors = Object.keys(groupedUnits)
-    .map(Number)
-    .sort((a, b) => b - a); // Descending order
 
   return (
     <>
@@ -234,7 +244,7 @@ export function BuildingManager({ building, initialUnits }: BuildingManagerProps
         </Card>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Card className="border-border/40">
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -244,18 +254,6 @@ export function BuildingManager({ building, initialUnits }: BuildingManagerProps
             </CardHeader>
             <CardContent>
               <p className="text-3xl font-bold">{units.length}</p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-border/40">
-            <CardHeader className="pb-3">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Building2 className="w-4 h-4" />
-                {t.building.floors}
-              </div>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold">{floors.length}</p>
             </CardContent>
           </Card>
 
@@ -296,57 +294,52 @@ export function BuildingManager({ building, initialUnits }: BuildingManagerProps
           )}
         </div>
 
-        {/* Units by Floor */}
-        {floors.length > 0 ? (
-          <div className="space-y-4">
-            <h2 className="text-base font-bold">{t.building.unitsByFloor}</h2>
-            {floors.map(floor => (
-              <Card key={floor} className="border-border/40">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm">{t.building.floor} {floor}</CardTitle>
-                  <p className="text-xs text-muted-foreground">
-                    {groupedUnits[floor].length} {t.building.units}
-                  </p>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
-                    {groupedUnits[floor].map(unit => {
-                      const hasOwner = !!unit.owner;
-                      const hasRenter = !!unit.renter;
+        {/* All Units */}
+        {sortedUnits.length > 0 ? (
+          <Card className="border-border/40">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm">{t.building.totalUnits}</CardTitle>
+              <p className="text-xs text-muted-foreground">
+                {sortedUnits.length} {t.building.units}
+              </p>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                {sortedUnits.map(unit => {
+                  const hasOwner = !!unit.owner;
+                  const hasRenter = !!unit.renter;
 
-                      return (
-                        <div
-                          key={unit.id}
-                          className={`p-3 rounded-lg border-2 transition-all ${
-                            hasRenter
-                              ? 'border-purple-500 bg-purple-50 dark:bg-purple-950/20'
-                              : hasOwner
-                              ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/20'
-                              : 'border-gray-300 dark:border-gray-700'
-                          }`}
-                        >
-                          <p className="font-bold text-sm mb-1">{unit.unit_number}</p>
-                          {hasOwner && (
-                            <p className="text-xs text-muted-foreground truncate">
-                              👤 {unit.owner!.first_name} {unit.owner!.last_name}
-                            </p>
-                          )}
-                          {hasRenter && (
-                            <p className="text-xs text-muted-foreground truncate">
-                              🔑 {unit.renter!.first_name} {unit.renter!.last_name}
-                            </p>
-                          )}
-                          {!hasOwner && !hasRenter && (
-                            <p className="text-xs text-muted-foreground">{t.building.available}</p>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                  return (
+                    <div
+                      key={unit.id}
+                      className={`p-3 rounded-lg border-2 transition-all ${
+                        hasRenter
+                          ? 'border-purple-500 bg-purple-50 dark:bg-purple-950/20'
+                          : hasOwner
+                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/20'
+                          : 'border-gray-300 dark:border-gray-700'
+                      }`}
+                    >
+                      <p className="font-bold text-sm mb-1">{unit.unit_number}</p>
+                      {hasOwner && (
+                        <p className="text-xs text-muted-foreground truncate">
+                          👤 {unit.owner!.first_name} {unit.owner!.last_name}
+                        </p>
+                      )}
+                      {hasRenter && (
+                        <p className="text-xs text-muted-foreground truncate">
+                          🔑 {unit.renter!.first_name} {unit.renter!.last_name}
+                        </p>
+                      )}
+                      {!hasOwner && !hasRenter && (
+                        <p className="text-xs text-muted-foreground">{t.building.available}</p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
         ) : (
           <Card className="border-border/40">
             <CardContent className="py-8 text-center">
