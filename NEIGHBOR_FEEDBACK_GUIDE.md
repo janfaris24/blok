@@ -1,5 +1,33 @@
 # Guía para Recopilar Feedback de Vecinos
 
+## 🎯 Estrategia de Posicionamiento
+
+**Clave:** Posiciona Blok como un producto general para condominios en PR que estás validando, NO como una solución específica para tu edificio.
+
+**Por qué esto importa:**
+- El admin no se sentirá criticado o excluido
+- Los vecinos entienden que es market research, no un proyecto interno
+- Puedes obtener feedback honesto sin crear expectativas
+- Evitas implicar que hay problemas de comunicación en tu edificio
+
+---
+
+## 💬 (Opcional) Mensaje Previo al Admin
+
+Si quieres ser extra cuidadoso, envíale un DM al admin ANTES de publicar en el grupo:
+
+```
+Hey [Nombre]! 👋
+
+Te aviso que voy a pedir feedback a los vecinos sobre un proyecto que estoy validando - una plataforma de comunicación para condos en PR. Es research de mercado, nada específico a nuestro edificio.
+
+Solo para que no te tome por sorpresa el mensaje en el grupo. ¿Todo bien?
+```
+
+Esto demuestra respeto y evita sorpresas. Pero es OPCIONAL - el mensaje público ya está diseñado para no causar conflicto.
+
+---
+
 ## 📱 Mensaje para WhatsApp
 
 Copia y pega este mensaje en tu grupo de WhatsApp del edificio:
@@ -7,25 +35,25 @@ Copia y pega este mensaje en tu grupo de WhatsApp del edificio:
 ```
 ¡Hola vecinos! 👋
 
-Les quiero compartir algo en lo que he estado trabajando: *Blok* - una plataforma para mejorar la comunicación en nuestro condominio.
+Les quiero compartir un proyecto en el que estoy trabajando y necesito su feedback como residentes de condominio.
 
 🏢 *¿Qué es Blok?*
-Una app que conecta a la junta con todos nosotros vía WhatsApp. Permite reportar mantenimientos, recibir avisos importantes, y comunicarnos mejor - todo desde WhatsApp.
+Es una plataforma de comunicación diseñada para condominios en Puerto Rico. Conecta administración con residentes vía WhatsApp - permite reportar mantenimientos, recibir avisos, votar en asuntos, etc. Todo automatizado con IA.
 
-📊 *Necesito su opinión*
-Como vecinos, su feedback es super valioso. Les pido 5 minutos para:
+📊 *¿Por qué les pido su opinión?*
+Estoy en fase de validación de mercado y como residentes de condo, ustedes son el público ideal. Su feedback me ayudará a entender si esto resuelve un problema real o no.
 
-1️⃣ Ver la página web: https://blokpr.co
-2️⃣ Llenar este formulario corto: https://blokpr.co/feedback
+1️⃣ Ver la demo: https://blokpr.co
+2️⃣ Feedback (5 min): https://blokpr.co/feedback
 
-*Es confidencial.* Solo quiero saber si les parece útil, qué mejorarías, y si lo usarían.
+*Es confidencial.* Solo quiero saber: ¿Les parece útil? ¿Lo usarían? ¿Qué cambiarían?
 
-💡 *¿Por qué?*
-Quiero crear algo que realmente nos ayude a todos. Su opinión me ayudará a hacerlo mejor antes de lanzarlo oficialmente.
+💡 *Contexto*
+Estoy validando si hay mercado para esto en PR antes de invertir más tiempo. Su opinión honesta es invaluable - incluso si piensan que no serviría.
 
 ¿Preguntas? Escríbanme directo.
 
-¡Gracias! 🙏
+¡Gracias de antemano! 🙏
 
 Jan
 ```
@@ -37,44 +65,44 @@ Jan
 ```
 Vecinos! 👋
 
-Estoy creando *Blok* - una app para mejorar la comunicación de nuestro condominio vía WhatsApp.
+Estoy validando una plataforma de comunicación para condos en PR (*Blok*) y necesito feedback de residentes.
 
-🌐 Web: https://blokpr.co
-📝 Feedback (5 min): https://blokpr.co/feedback
+🌐 Demo: https://blokpr.co
+📝 Feedback: https://blokpr.co/feedback (5 min)
 
-Necesito su opinión antes de lanzar. ¿Me ayudan?
+Como residentes, su opinión me ayuda a saber si esto tiene sentido o no.
 
-Gracias! 🙏 - Jan
+¿Me ayudan? Gracias! 🙏 - Jan
 ```
 
 ---
 
 ## 📧 Mensaje para Email (alternativo):
 
-**Asunto:** Feedback sobre Blok - Nueva app para nuestro condominio
+**Asunto:** Validando un proyecto para condos en PR - Necesito tu feedback
 
 ```
 Hola vecinos,
 
-Espero estén bien. Les escribo porque he estado trabajando en un proyecto que podría beneficiarnos a todos: Blok.
+Espero estén bien. Les escribo porque estoy trabajando en un proyecto de software para condominios en Puerto Rico y necesito validar si resuelve un problema real.
 
 ¿Qué es Blok?
-Blok es una plataforma diseñada específicamente para condominios en Puerto Rico que facilita la comunicación entre la junta y residentes a través de WhatsApp.
+Es una plataforma de comunicación diseñada para administraciones de condominios. Conecta la junta con residentes vía WhatsApp, automatiza reportes de mantenimiento, envío de avisos, votaciones, etc.
 
 Características principales:
-• Reportar mantenimientos desde WhatsApp
-• Recibir notificaciones importantes
-• Comunicación directa con la administración
+• Residentes reportan por WhatsApp (sin apps que instalar)
+• IA analiza y prioriza solicitudes automáticamente
+• Dashboard centralizado para la administración
 • Todo en español, diseñado para Puerto Rico
 
-¿Por qué les pido feedback?
-Como vecinos, ustedes son los expertos en lo que funciona y lo que no en nuestro edificio. Su opinión me ayudará a hacer Blok mejor antes del lanzamiento oficial.
+¿Por qué necesito su opinión?
+Estoy en fase de validación de mercado. Como residentes de condominio, ustedes conocen de primera mano qué funciona y qué no en comunicación con la junta. Su feedback me ayudará a determinar si esto tiene sentido o no.
 
 ¿Cómo pueden ayudar?
-1. Visiten: https://blokpr.co (toma 2 minutos ver la demo)
-2. Llenen el formulario: https://blokpr.co/feedback (5 minutos máximo)
+1. Ver la demo: https://blokpr.co (2 minutos)
+2. Llenar formulario: https://blokpr.co/feedback (5 minutos)
 
-Todo es confidencial y sus respuestas serán muy valiosas.
+Todo es confidencial. Su opinión honesta es lo que necesito - incluso si piensan que no serviría.
 
 Si tienen preguntas, con gusto las contesto.
 
@@ -155,12 +183,13 @@ Puedes crear una página en `/dashboard/feedback` para ver las respuestas.
 
 ## 💡 Tips para Maximizar Respuestas
 
-1. **Sé personal**: No copies y pegues sin contexto
-2. **Explica por qué**: "Estoy creando esto PARA nosotros"
-3. **Hazlo fácil**: Links directos, formulario corto
-4. **Seguimiento suave**: Un recordatorio amable 3-5 días después
-5. **Agradece públicamente**: "Gracias a los X vecinos que ya respondieron!"
-6. **Incentivo (opcional)**: "Los primeros 20 en responder entran en un sorteo de..."
+1. **Sé personal**: No copies y pegues sin contexto - añade 1-2 líneas tuyas
+2. **Posiciónalo como research**: "Necesito validar si esto tiene sentido en PR"
+3. **No impliques problemas**: No digas "para mejorar NUESTRA comunicación"
+4. **Hazlo fácil**: Links directos, formulario corto, toma 5 minutos
+5. **Seguimiento suave**: Un recordatorio amable 3-5 días después sin presión
+6. **Agradece públicamente**: "Gracias a los X vecinos que ya respondieron!"
+7. **Incluye al admin**: El mensaje no debe hacer que el admin se sienta excluido o criticado
 
 ---
 
@@ -181,17 +210,23 @@ Puedes crear una página en `/dashboard/feedback` para ver las respuestas.
 
 ## ❓ Preguntas Frecuentes que Puedan Tener
 
+**Q: ¿Esto es para nuestro edificio?**
+A: Es un producto general para condominios en PR. Solo estoy validando si hay mercado con residentes reales. Ustedes son parte de mi research.
+
 **Q: ¿Cuánto cuesta?**
-A: Eso lo decide la junta. Primero quiero saber si les parece útil como residentes.
+A: Aún no he definido pricing. Primero necesito saber si esto resuelve un problema real para residentes y administraciones.
+
+**Q: ¿Estás diciendo que nuestro edificio tiene problemas de comunicación?**
+A: Para nada. Solo estoy investigando si herramientas como esta tienen valor en general para condos en PR. Su feedback me ayuda a entender eso.
 
 **Q: ¿Cuándo estaría disponible?**
-A: Depende del feedback. Si les interesa, podría estar en 2-4 semanas.
+A: Depende totalmente del feedback que reciba. Si veo que hay interés real, seguiré desarrollándolo. Si no, pivot.
 
 **Q: ¿La junta ya sabe de esto?**
-A: Estoy recopilando feedback de vecinos primero. Si hay interés, se lo presentaré a la junta.
+A: Estoy en fase de market research con residentes. Si valido que hay demanda, lo presentaré formalmente a administraciones.
 
-**Q: ¿Funciona con nuestro sistema actual?**
-A: Blok es independiente - solo necesita WhatsApp. No reemplaza nada, solo añade mejor comunicación.
+**Q: ¿Necesitas que usemos esto en nuestro edificio?**
+A: No. Solo necesito que vean la demo y me den su opinión honesta como residentes de condo. Eso es todo.
 
 ---
 
