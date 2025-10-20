@@ -119,7 +119,6 @@ export async function POST(request: NextRequest) {
                     <ul style="padding-left: 20px;">
                       <li>Serás de los primeros en enterarte cuando lancemos</li>
                       <li>Recibirás acceso anticipado a la plataforma</li>
-                      <li>Tendrás descuentos especiales por ser early adopter</li>
                     </ul>
                   </div>
 
@@ -181,7 +180,6 @@ export async function POST(request: NextRequest) {
                     <ul style="padding-left: 20px;">
                       <li>You'll be among the first to know when we launch</li>
                       <li>You'll receive early access to the platform</li>
-                      <li>You'll get special discounts for being an early adopter</li>
                     </ul>
                   </div>
 

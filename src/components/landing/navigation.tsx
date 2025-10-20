@@ -32,10 +32,15 @@ export function Navigation() {
     setWaitlistOpen(true)
   }
 
-  const navLinks = [
-    { label: t.nav.features, href: "#features" },
-    { label: t.nav.pricing, href: "#pricing" },
-    { label: "FAQ", href: "#faq" },
+  // Detect if we're on a non-home page to fix anchor links
+  const isHomePage = typeof window !== 'undefined' && window.location.pathname === '/'
+  const prefix = isHomePage ? '' : '/'
+
+  const navLinks: Array<{ label: string; href: string; badge?: boolean }> = [
+    { label: t.nav.features, href: `${prefix}#features` },
+    { label: t.nav.pricing, href: `${prefix}#pricing` },
+    { label: "FAQ", href: `${prefix}#faq` },
+    { label: t.nav.feedback, href: "/feedback", badge: true },
   ]
 
   return (
@@ -49,7 +54,7 @@ export function Navigation() {
       >
         <div className="flex items-center justify-between h-14 sm:h-16 px-4 sm:px-6">
           {/* Logo */}
-          <a href="#" className="flex items-center gap-3">
+          <a href="/" className="flex items-center gap-3">
             <img
               src="/favicon.svg"
               alt="Blok"
@@ -64,9 +69,14 @@ export function Navigation() {
               <a
                 key={link.href}
                 href={link.href}
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                className={`text-sm transition-colors ${
+                  link.badge
+                    ? "text-primary font-medium hover:text-primary/80"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
               >
                 {link.label}
+                {link.badge && <span className="ml-1.5 text-xs">✨</span>}
               </a>
             ))}
           </div>
@@ -138,10 +148,15 @@ export function Navigation() {
                 <a
                   key={link.href}
                   href={link.href}
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  className={`text-sm transition-colors ${
+                    link.badge
+                      ? "text-primary font-medium hover:text-primary/80"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   {link.label}
+                  {link.badge && <span className="ml-1.5 text-xs">✨</span>}
                 </a>
               ))}
               <div className="flex items-center gap-2 pt-2">

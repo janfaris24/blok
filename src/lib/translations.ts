@@ -23,6 +23,7 @@ export const translations = {
       // Landing page
       features: 'Características',
       pricing: 'Precios',
+      feedback: 'Feedback',
       login: 'Iniciar sesión',
       signup: 'Comenzar ahora',
       waitlist: 'Lista de Espera',
@@ -964,6 +965,7 @@ Si es sobre reglas del edificio, envíalo a todos.`,
       // Landing page
       features: 'Features',
       pricing: 'Pricing',
+      feedback: 'Feedback',
       login: 'Log in',
       signup: 'Get started',
       waitlist: 'Waitlist',
