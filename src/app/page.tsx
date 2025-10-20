@@ -3,7 +3,6 @@
 import { LandingLanguageProvider } from "@/contexts/landing-language-context";
 import { Navigation } from "@/components/landing/navigation";
 import { HeroSection } from "@/components/landing/hero-section";
-import { DemoSection } from "@/components/landing/demo-section";
 import { ProblemSection } from "@/components/landing/problem-section";
 import { SolutionSection } from "@/components/landing/solution-section";
 import { FeaturesSection } from "@/components/landing/features-section";
@@ -21,7 +20,6 @@ export default function Home() {
         <Navigation />
         <main>
           <HeroSection />
-          <DemoSection />
           <ProblemSection />
           <SolutionSection />
           <FeaturesSection />

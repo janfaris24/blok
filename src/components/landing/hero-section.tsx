@@ -35,7 +35,7 @@ export function HeroSection() {
   }
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-24 sm:pt-28">
       {/* Grid pattern background */}
       <div className="absolute inset-0 grid-pattern opacity-50" />
 

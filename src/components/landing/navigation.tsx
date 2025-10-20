@@ -45,13 +45,15 @@ export function Navigation() {
   ]
 
   return (
-    <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled ? "bg-background/95 border-b border-border" : "bg-transparent"
-      }`}
-    >
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 sm:h-20">
+    <nav className="fixed top-0 left-0 right-0 z-50 px-4 sm:px-6 lg:px-8 pt-4">
+      <div
+        className={`container mx-auto transition-all duration-300 ${
+          isScrolled
+            ? "bg-background/80 backdrop-blur-lg border border-border/40 shadow-lg shadow-black/5"
+            : "bg-background/60 backdrop-blur-md border border-border/20"
+        } rounded-full`}
+      >
+        <div className="flex items-center justify-between h-14 sm:h-16 px-4 sm:px-6">
           {/* Logo */}
           <a href="#" className="flex items-center gap-3">
             <img
@@ -136,7 +138,7 @@ export function Navigation() {
 
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
-          <div className="md:hidden py-4 border-t border-border">
+          <div className="md:hidden py-4 px-4 border-t border-border/20">
             <div className="flex flex-col gap-4">
               {navLinks.map((link) => (
                 <a
