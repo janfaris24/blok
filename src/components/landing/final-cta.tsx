@@ -1,26 +1,21 @@
 "use client"
 
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Check } from "lucide-react"
 import { useLandingLanguage as useLanguage } from "@/contexts/landing-language-context"
+import { WaitlistModal } from "./waitlist-modal"
 
 export function FinalCTA() {
   const { t } = useLanguage()
+  const [waitlistOpen, setWaitlistOpen] = useState(false)
 
   // Parse the trial string to get individual trust signals
   const trustSignals = t.finalCta.trial.split(' • ')
 
-  // Check if signup is enabled via URL parameter
-  const handleSignupClick = () => {
-    const searchParams = new URLSearchParams(window.location.search)
-    const accessCode = searchParams.get('access')
-
-    if (accessCode === 'blok2025') {
-      window.location.href = '/signup?access=blok2025'
-    } else {
-      // Show coming soon message
-      alert(t.hero?.comingSoon || 'Próximamente disponible / Coming soon')
-    }
+  // Open waitlist modal
+  const handleWaitlistClick = () => {
+    setWaitlistOpen(true)
   }
 
   return (
@@ -42,9 +37,9 @@ export function FinalCTA() {
           <Button
             size="lg"
             className="bg-foreground text-background hover:bg-foreground/90 text-lg px-12 py-6 h-auto mb-8"
-            onClick={handleSignupClick}
+            onClick={handleWaitlistClick}
           >
-            {t.finalCta.cta}
+            {t.finalCta.waitlist}
           </Button>
 
           {/* Trust Signals */}
@@ -58,6 +53,9 @@ export function FinalCTA() {
           </div>
         </div>
       </div>
+
+      {/* Waitlist Modal */}
+      <WaitlistModal open={waitlistOpen} onOpenChange={setWaitlistOpen} />
     </section>
   )
 }

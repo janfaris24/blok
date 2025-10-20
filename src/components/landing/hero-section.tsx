@@ -4,11 +4,13 @@ import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Loader2 } from "lucide-react"
 import { useLandingLanguage as useLanguage } from "@/contexts/landing-language-context"
+import { WaitlistModal } from "./waitlist-modal"
 
 export function HeroSection() {
   const { t, language } = useLanguage()
   const [videoLoaded, setVideoLoaded] = useState(false)
   const [videoError, setVideoError] = useState(false)
+  const [waitlistOpen, setWaitlistOpen] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
 
   useEffect(() => {
@@ -21,17 +23,9 @@ export function HeroSection() {
     }
   }, [])
 
-  // Check if signup is enabled via URL parameter
-  const handleSignupClick = () => {
-    const searchParams = new URLSearchParams(window.location.search)
-    const accessCode = searchParams.get('access')
-
-    if (accessCode === 'blok2025') {
-      window.location.href = '/signup?access=blok2025'
-    } else {
-      // Show coming soon message
-      alert(t.hero.comingSoon || 'Próximamente disponible / Coming soon')
-    }
+  // Open waitlist modal
+  const handleWaitlistClick = () => {
+    setWaitlistOpen(true)
   }
 
   return (
@@ -64,9 +58,9 @@ export function HeroSection() {
             <Button
               size="lg"
               className="bg-foreground text-background hover:bg-foreground/90 text-base px-8"
-              onClick={handleSignupClick}
+              onClick={handleWaitlistClick}
             >
-              {t.hero.cta}
+              {t.hero.waitlist}
             </Button>
             <Button
               size="lg"
@@ -139,6 +133,9 @@ export function HeroSection() {
           </div>
         </div>
       </div>
+
+      {/* Waitlist Modal */}
+      <WaitlistModal open={waitlistOpen} onOpenChange={setWaitlistOpen} />
     </section>
   )
 }

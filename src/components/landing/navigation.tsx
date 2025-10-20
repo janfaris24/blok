@@ -5,10 +5,12 @@ import { Button } from "@/components/ui/button"
 import { Menu, X, Moon, Sun } from "lucide-react"
 import { useTheme } from "next-themes"
 import { useLandingLanguage } from "@/contexts/landing-language-context"
+import { WaitlistModal } from "./waitlist-modal"
 
 export function Navigation() {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [waitlistOpen, setWaitlistOpen] = useState(false)
   const { language, setLanguage, t } = useLandingLanguage()
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
@@ -25,17 +27,9 @@ export function Navigation() {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
-  // Check if signup is enabled via URL parameter
-  const handleSignupClick = () => {
-    const searchParams = new URLSearchParams(window.location.search)
-    const accessCode = searchParams.get('access')
-
-    if (accessCode === 'blok2025') {
-      window.location.href = '/signup?access=blok2025'
-    } else {
-      // Show coming soon message
-      alert(t.hero?.comingSoon || 'Próximamente disponible / Coming soon')
-    }
+  // Open waitlist modal
+  const handleWaitlistClick = () => {
+    setWaitlistOpen(true)
   }
 
   const navLinks = [
@@ -124,9 +118,9 @@ export function Navigation() {
             <Button
               size="sm"
               className="bg-foreground text-background hover:bg-foreground/90"
-              onClick={handleSignupClick}
+              onClick={handleWaitlistClick}
             >
-              {t.nav.signup}
+              {t.nav.waitlist}
             </Button>
           </div>
 
@@ -191,14 +185,17 @@ export function Navigation() {
               </Button>
               <Button
                 className="bg-foreground text-background hover:bg-foreground/90 w-full"
-                onClick={handleSignupClick}
+                onClick={handleWaitlistClick}
               >
-                {t.nav.signup}
+                {t.nav.waitlist}
               </Button>
             </div>
           </div>
         )}
       </div>
+
+      {/* Waitlist Modal */}
+      <WaitlistModal open={waitlistOpen} onOpenChange={setWaitlistOpen} />
     </nav>
   )
 }
