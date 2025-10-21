@@ -18,19 +18,18 @@ import { Resend } from 'resend';
  */
 export async function POST(request: NextRequest) {
   try {
-    // Verify webhook secret to ensure it's from Supabase
-    const authHeader = request.headers.get('authorization');
+    // Verify webhook secret (using custom header due to Supabase bug #39248)
+    const webhookSecret = request.headers.get('x-webhook-secret');
     const expectedSecret = process.env.SUPABASE_WEBHOOK_SECRET;
 
     // DEBUG: Log what we're receiving
-    console.log('[Feedback Webhook] Auth header received:', authHeader);
+    console.log('[Feedback Webhook] X-Webhook-Secret received:', webhookSecret?.substring(0, 10) + '...');
     console.log('[Feedback Webhook] Expected secret exists:', !!expectedSecret);
-    console.log('[Feedback Webhook] Expected format:', `Bearer ${expectedSecret?.substring(0, 10)}...`);
 
-    if (expectedSecret && authHeader !== `Bearer ${expectedSecret}`) {
-      console.error('[Feedback Webhook] Unauthorized - header mismatch');
-      console.error('[Feedback Webhook] Received:', authHeader);
-      console.error('[Feedback Webhook] Expected:', `Bearer ${expectedSecret}`);
+    if (expectedSecret && webhookSecret !== expectedSecret) {
+      console.error('[Feedback Webhook] Unauthorized - secret mismatch');
+      console.error('[Feedback Webhook] Received:', webhookSecret);
+      console.error('[Feedback Webhook] Expected:', expectedSecret);
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
