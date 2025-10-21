@@ -22,8 +22,15 @@ export async function POST(request: NextRequest) {
     const authHeader = request.headers.get('authorization');
     const expectedSecret = process.env.SUPABASE_WEBHOOK_SECRET;
 
+    // DEBUG: Log what we're receiving
+    console.log('[Feedback Webhook] Auth header received:', authHeader);
+    console.log('[Feedback Webhook] Expected secret exists:', !!expectedSecret);
+    console.log('[Feedback Webhook] Expected format:', `Bearer ${expectedSecret?.substring(0, 10)}...`);
+
     if (expectedSecret && authHeader !== `Bearer ${expectedSecret}`) {
-      console.error('[Feedback Webhook] Unauthorized webhook attempt');
+      console.error('[Feedback Webhook] Unauthorized - header mismatch');
+      console.error('[Feedback Webhook] Received:', authHeader);
+      console.error('[Feedback Webhook] Expected:', `Bearer ${expectedSecret}`);
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
