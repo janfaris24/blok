@@ -11,7 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Loader2, CheckCircle2, Mail } from "lucide-react"
+import { Loader2, CheckCircle2 } from "lucide-react"
 import { useLandingLanguage } from "@/contexts/landing-language-context"
 
 interface WaitlistModalProps {
@@ -150,24 +150,25 @@ export function WaitlistModal({ open, onOpenChange }: WaitlistModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[540px] mx-6 sm:mx-0 p-6 sm:p-8 max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[440px] mx-4 sm:mx-0 p-0 max-h-[95vh] overflow-y-auto">
         {!isSuccess ? (
           <>
-            <DialogHeader className="space-y-3">
-              <DialogTitle className="flex items-center gap-2 text-2xl">
-                <Mail className="h-6 w-6 text-primary" />
-                {t.title}
-              </DialogTitle>
-              <DialogDescription className="text-base leading-relaxed">
-                {t.description}
-              </DialogDescription>
-            </DialogHeader>
+            <div className="p-6 sm:p-7 pb-0">
+              <DialogHeader className="space-y-2">
+                <DialogTitle className="text-2xl font-bold">
+                  {t.title}
+                </DialogTitle>
+                <DialogDescription className="text-sm leading-relaxed text-muted-foreground">
+                  {t.description}
+                </DialogDescription>
+              </DialogHeader>
+            </div>
 
-            <form onSubmit={handleSubmit} className="space-y-5 pt-6">
-              {/* Email (Required) */}
-              <div className="space-y-2.5">
-                <Label htmlFor="email" className="text-sm font-medium">
-                  {t.emailLabel} <span className="text-red-500">*</span>
+            <form onSubmit={handleSubmit} className="p-6 sm:p-7 pt-5 space-y-6">
+              {/* Email - Primary Field */}
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-sm font-semibold text-foreground">
+                  {t.emailLabel} <span className="text-destructive">*</span>
                 </Label>
                 <Input
                   id="email"
@@ -176,76 +177,93 @@ export function WaitlistModal({ open, onOpenChange }: WaitlistModalProps) {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={isLoading}
-                  className="h-12 text-base px-4"
+                  className="h-14 text-base px-4 border-2 focus:border-primary"
                   required
+                  autoFocus
                 />
               </div>
 
-              {/* Name (Optional) */}
-              <div className="space-y-2.5">
-                <Label htmlFor="name" className="text-sm font-medium">
-                  {t.nameLabel}
-                </Label>
-                <Input
-                  id="name"
-                  type="text"
-                  placeholder={t.namePlaceholder}
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  disabled={isLoading}
-                  className="h-12 text-base px-4"
-                />
+              {/* Optional Details Divider */}
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-border"></div>
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-3 text-muted-foreground font-medium">
+                    {language === 'es' ? 'Opcional' : 'Optional'}
+                  </span>
+                </div>
               </div>
 
-              {/* Phone (Optional) */}
-              <div className="space-y-2.5">
-                <Label htmlFor="phone" className="text-sm font-medium">
-                  {t.phoneLabel}
-                </Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  placeholder={t.phonePlaceholder}
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  disabled={isLoading}
-                  className="h-12 text-base px-4"
-                />
-              </div>
+              {/* Optional Fields - Compact Grid */}
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  {/* Name */}
+                  <div className="col-span-2 space-y-1.5">
+                    <Label htmlFor="name" className="text-xs font-medium text-muted-foreground">
+                      {t.nameLabel}
+                    </Label>
+                    <Input
+                      id="name"
+                      type="text"
+                      placeholder={t.namePlaceholder}
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      disabled={isLoading}
+                      className="h-11 text-sm"
+                    />
+                  </div>
 
-              {/* Building (Optional) */}
-              <div className="space-y-2.5">
-                <Label htmlFor="building" className="text-sm font-medium">
-                  {t.buildingLabel}
-                </Label>
-                <Input
-                  id="building"
-                  type="text"
-                  placeholder={t.buildingPlaceholder}
-                  value={building}
-                  onChange={(e) => setBuilding(e.target.value)}
-                  disabled={isLoading}
-                  className="h-12 text-base px-4"
-                />
-              </div>
+                  {/* Phone & Role in same row */}
+                  <div className="space-y-1.5">
+                    <Label htmlFor="role" className="text-xs font-medium text-muted-foreground">
+                      {t.roleLabel}
+                    </Label>
+                    <select
+                      id="role"
+                      value={role}
+                      onChange={(e) => setRole(e.target.value)}
+                      disabled={isLoading}
+                      className="w-full h-11 px-3 text-sm border border-input rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                    >
+                      <option value="">{language === 'es' ? 'Rol' : 'Role'}</option>
+                      <option value="owner">{language === 'es' ? 'Dueño' : 'Owner'}</option>
+                      <option value="renter">{language === 'es' ? 'Inquilino' : 'Renter'}</option>
+                      <option value="admin">{language === 'es' ? 'Admin' : 'Admin'}</option>
+                    </select>
+                  </div>
 
-              {/* Role (Optional) */}
-              <div className="space-y-2.5">
-                <Label htmlFor="role" className="text-sm font-medium">
-                  {t.roleLabel}
-                </Label>
-                <select
-                  id="role"
-                  value={role}
-                  onChange={(e) => setRole(e.target.value)}
-                  disabled={isLoading}
-                  className="w-full h-12 px-4 text-base border border-input rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-                >
-                  <option value="">{t.rolePlaceholder}</option>
-                  <option value="owner">{t.roleOwner}</option>
-                  <option value="renter">{t.roleRenter}</option>
-                  <option value="admin">{t.roleAdmin}</option>
-                </select>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="phone" className="text-xs font-medium text-muted-foreground">
+                      {t.phoneLabel}
+                    </Label>
+                    <Input
+                      id="phone"
+                      type="tel"
+                      placeholder="787-555-1234"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      disabled={isLoading}
+                      className="h-11 text-sm"
+                    />
+                  </div>
+
+                  {/* Building */}
+                  <div className="col-span-2 space-y-1.5">
+                    <Label htmlFor="building" className="text-xs font-medium text-muted-foreground">
+                      {t.buildingLabel}
+                    </Label>
+                    <Input
+                      id="building"
+                      type="text"
+                      placeholder={t.buildingPlaceholder}
+                      value={building}
+                      onChange={(e) => setBuilding(e.target.value)}
+                      disabled={isLoading}
+                      className="h-11 text-sm"
+                    />
+                  </div>
+                </div>
               </div>
 
               {/* Error Message */}
