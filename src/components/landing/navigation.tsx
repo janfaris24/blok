@@ -11,14 +11,12 @@ export function Navigation() {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [waitlistOpen, setWaitlistOpen] = useState(false)
-  const [isHomePage, setIsHomePage] = useState(true)
   const { language, setLanguage, t } = useLandingLanguage()
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
     setMounted(true)
-    setIsHomePage(window.location.pathname === '/')
   }, [])
 
   useEffect(() => {
@@ -34,13 +32,9 @@ export function Navigation() {
     setWaitlistOpen(true)
   }
 
-  // Fix anchor links based on current page
-  const prefix = isHomePage ? '' : '/'
-
   const navLinks: Array<{ label: string; href: string; badge?: boolean }> = [
-    { label: t.nav.features, href: `${prefix}#features` },
-    { label: t.nav.pricing, href: `${prefix}#pricing` },
-    { label: "FAQ", href: `${prefix}#faq` },
+    { label: t.nav.pricing, href: "/pricing" },
+    { label: "FAQ", href: "/faq" },
     { label: t.nav.feedback, href: "/feedback", badge: true },
   ]
 

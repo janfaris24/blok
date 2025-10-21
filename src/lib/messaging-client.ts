@@ -27,12 +27,14 @@ export type MessageChannel = 'whatsapp' | 'sms' | 'email';
  * @param to - Recipient phone number (format: +1787XXXXXXX)
  * @param from - Sender WhatsApp business number (format: +1787XXXXXXX)
  * @param body - Message content
+ * @param mediaUrls - Optional array of media URLs to send with message (max 10)
  * @returns Twilio message SID
  */
 export async function sendWhatsAppMessage(
   to: string,
   from: string,
-  body: string
+  body: string,
+  mediaUrls?: string[]
 ): Promise<string> {
   if (!client) {
     console.error('[WhatsApp] Twilio client not initialized - missing credentials');
@@ -44,9 +46,10 @@ export async function sendWhatsAppMessage(
       from: `whatsapp:${from}`,
       to: `whatsapp:${to}`,
       body,
+      ...(mediaUrls && mediaUrls.length > 0 && { mediaUrl: mediaUrls }),
     });
 
-    console.log(`[WhatsApp] ✅ Message sent to ${to}: ${message.sid}`);
+    console.log(`[WhatsApp] ✅ Message sent to ${to}: ${message.sid}${mediaUrls?.length ? ` (${mediaUrls.length} media)` : ''}`);
     return message.sid;
   } catch (error) {
     console.error('[WhatsApp] ❌ Send error:', error);
@@ -114,11 +117,13 @@ export async function sendMessage(
  *
  * @param recipients - Array of recipient objects with phone and message
  * @param from - Sender WhatsApp business number
+ * @param mediaUrls - Optional array of media URLs to send with all messages
  * @returns Object with success and failed counts
  */
 export async function sendBulkWhatsApp(
   recipients: Array<{ phone: string; message: string }>,
-  from: string
+  from: string,
+  mediaUrls?: string[]
 ): Promise<{ success: number; failed: number; errors: string[] }> {
   let success = 0;
   let failed = 0;
@@ -126,7 +131,7 @@ export async function sendBulkWhatsApp(
 
   for (const recipient of recipients) {
     try {
-      await sendWhatsAppMessage(recipient.phone, from, recipient.message);
+      await sendWhatsAppMessage(recipient.phone, from, recipient.message, mediaUrls);
       success++;
     } catch (error) {
       console.error(`[WhatsApp] Failed to send to ${recipient.phone}:`, error);
@@ -231,6 +236,7 @@ export async function sendBulkMultiChannel(
  * @param html - HTML email body
  * @param replyTo - Optional reply-to address
  * @param tags - Optional tags for tracking (e.g., broadcast_id)
+ * @param attachments - Optional file attachments
  * @returns Resend email ID
  */
 export async function sendEmail(
@@ -239,7 +245,8 @@ export async function sendEmail(
   subject: string,
   html: string,
   replyTo?: string,
-  tags?: { name: string; value: string }[]
+  tags?: { name: string; value: string }[],
+  attachments?: { filename: string; content: Buffer; contentType: string }[]
 ): Promise<string> {
   if (!resend) {
     console.error('[Email] Resend client not initialized - missing API key');
@@ -254,6 +261,7 @@ export async function sendEmail(
       html,
       replyTo,
       tags,
+      ...(attachments && attachments.length > 0 && { attachments }),
     });
 
     if (error) {
@@ -275,13 +283,15 @@ export async function sendEmail(
  * @param from - Sender email address (must be verified domain)
  * @param replyTo - Optional reply-to address
  * @param tags - Optional tags for tracking (e.g., broadcast_id)
+ * @param attachments - Optional file attachments for all emails
  * @returns Object with success and failed counts
  */
 export async function sendBulkEmail(
   recipients: Array<{ email: string; subject: string; html: string }>,
   from: string,
   replyTo?: string,
-  tags?: { name: string; value: string }[]
+  tags?: { name: string; value: string }[],
+  attachments?: { filename: string; content: Buffer; contentType: string }[]
 ): Promise<{ success: number; failed: number; errors: string[] }> {
   let success = 0;
   let failed = 0;
@@ -289,7 +299,7 @@ export async function sendBulkEmail(
 
   for (const recipient of recipients) {
     try {
-      await sendEmail(recipient.email, from, recipient.subject, recipient.html, replyTo, tags);
+      await sendEmail(recipient.email, from, recipient.subject, recipient.html, replyTo, tags, attachments);
       success++;
     } catch (error) {
       console.error(`[Email] Failed to send to ${recipient.email}:`, error);

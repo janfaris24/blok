@@ -29,16 +29,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const {
-      subject,
-      message,
-      targetAudience,
-      specificUnitIds = null,
-      sendViaWhatsApp = true,
-      sendViaEmail = false,
-      sendViaSMS = false,
-      scheduledFor = null,
-    } = await request.json();
+    // Parse FormData (to support image uploads)
+    const formData = await request.formData();
+
+    const subject = formData.get('subject') as string;
+    const message = formData.get('message') as string;
+    const targetAudience = formData.get('targetAudience') as string;
+    const specificUnitIds = formData.get('specificUnitIds')
+      ? JSON.parse(formData.get('specificUnitIds') as string)
+      : null;
+    const sendViaWhatsApp = formData.get('sendViaWhatsApp') === 'true';
+    const sendViaEmail = formData.get('sendViaEmail') === 'true';
+    const sendViaSMS = formData.get('sendViaSMS') === 'true';
+    const scheduledFor = formData.get('scheduledFor') as string || null;
+
+    // Get uploaded images
+    const images = formData.getAll('images') as File[];
 
     // Validate input
     if (!subject || !message || !targetAudience) {
@@ -106,7 +112,7 @@ export async function POST(request: NextRequest) {
       recipientCount = count || 0;
     }
 
-    // Create broadcast record
+    // Create broadcast record (without media URLs first)
     const { data: broadcast, error: broadcastError } = await supabase
       .from('broadcasts')
       .insert({
@@ -123,6 +129,7 @@ export async function POST(request: NextRequest) {
         send_via_email: sendViaEmail,
         send_via_sms: sendViaSMS,
         scheduled_for: scheduledFor,
+        has_media: images.length > 0,
       })
       .select()
       .single();
@@ -137,9 +144,71 @@ export async function POST(request: NextRequest) {
 
     console.log('[Broadcast] ✅ Created:', broadcast.id);
 
+    // Upload images to Supabase Storage if any
+    const mediaUrls: string[] = [];
+
+    if (images.length > 0) {
+      console.log(`[Broadcast] Uploading ${images.length} images...`);
+
+      for (let i = 0; i < images.length; i++) {
+        const image = images[i];
+        const fileExt = image.name.split('.').pop();
+        const fileName = `${Date.now()}_${i}.${fileExt}`;
+        const filePath = `${building.id}/broadcasts/${broadcast.id}/${fileName}`;
+
+        try {
+          // Convert File to ArrayBuffer
+          const arrayBuffer = await image.arrayBuffer();
+          const buffer = new Uint8Array(arrayBuffer);
+
+          // Upload to Supabase Storage
+          const { error: uploadError } = await supabase.storage
+            .from('blok-media')
+            .upload(filePath, buffer, {
+              contentType: image.type,
+              upsert: false,
+            });
+
+          if (uploadError) {
+            console.error(`[Broadcast] Image upload error (${fileName}):`, uploadError);
+            continue; // Skip this image but continue with others
+          }
+
+          // Get public URL
+          const { data: publicUrlData } = supabase.storage
+            .from('blok-media')
+            .getPublicUrl(filePath);
+
+          mediaUrls.push(publicUrlData.publicUrl);
+          console.log(`[Broadcast] ✅ Uploaded image ${i + 1}/${images.length}`);
+
+        } catch (error) {
+          console.error(`[Broadcast] Error processing image ${i + 1}:`, error);
+          continue;
+        }
+      }
+
+      // Update broadcast with media URLs
+      if (mediaUrls.length > 0) {
+        const { error: updateError } = await supabase
+          .from('broadcasts')
+          .update({ media_urls: mediaUrls })
+          .eq('id', broadcast.id);
+
+        if (updateError) {
+          console.error('[Broadcast] Failed to update media URLs:', updateError);
+        } else {
+          console.log(`[Broadcast] ✅ Saved ${mediaUrls.length} media URLs`);
+        }
+      }
+    }
+
     return NextResponse.json({
       success: true,
-      broadcast,
+      broadcast: {
+        ...broadcast,
+        media_urls: mediaUrls,
+      },
     });
 
   } catch (error) {

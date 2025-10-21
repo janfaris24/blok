@@ -142,7 +142,52 @@ Deno.serve(async (req: Request) => {
 
     console.log(`✅ [${Date.now() - startTime}ms] Resident found: ${resident.first_name} ${resident.last_name} (${resident.type})`);
 
-    // 3. Find or create conversation
+    // 3. 🛡️ CONTENT MODERATION - Check for offensive content
+    console.log(`🛡️ [${Date.now() - startTime}ms] Moderating content...`);
+
+    // Prepare media URLs for moderation
+    const mediaUrls = messageData.mediaUrl ? [messageData.mediaUrl] : [];
+
+    const moderationResult = await moderateContent(
+      messageData.body || '',
+      mediaUrls.length > 0 ? mediaUrls : undefined
+    );
+
+    if (moderationResult.flagged) {
+      console.warn(`⚠️ [${Date.now() - startTime}ms] Content flagged:`, moderationResult.violatedCategories);
+
+      // Send rejection message to resident
+      const rejectionMessage = getModerationRejectionMessage(
+        moderationResult,
+        resident.preferred_language || 'es'
+      );
+
+      await sendWhatsAppMessage(phoneNumber, buildingNumber, rejectionMessage);
+
+      // Log violation (without storing offensive content)
+      const { error: violationError } = await supabase.from('moderation_violations').insert({
+        building_id: building.id,
+        resident_id: resident.id,
+        violated_categories: moderationResult.violatedCategories,
+        has_text: !!messageData.body,
+        has_media: mediaUrls.length > 0,
+        timestamp: new Date().toISOString(),
+      });
+
+      if (violationError) {
+        console.error('[Moderation] Failed to log violation:', violationError);
+      }
+
+      console.log(`🚫 [${Date.now() - startTime}ms] Message blocked and resident notified`);
+
+      return new Response('<?xml version="1.0" encoding="UTF-8"?><Response></Response>', {
+        headers: { 'Content-Type': 'application/xml' }
+      });
+    }
+
+    console.log(`✅ [${Date.now() - startTime}ms] Content passed moderation`);
+
+    // 4. Find or create conversation
     let { data: conversation } = await supabase
       .from('conversations')
       .select('*')
@@ -175,7 +220,7 @@ Deno.serve(async (req: Request) => {
       console.log('✅ Using existing conversation');
     }
 
-    // 4. ⚡ INSTANT ACKNOWLEDGMENT - COMMENTED OUT TO TEST HAIKU 4.5 SPEED
+    // 5. ⚡ INSTANT ACKNOWLEDGMENT - COMMENTED OUT TO TEST HAIKU 4.5 SPEED
     // const isSpanish = (resident.preferred_language || 'es') === 'es';
     // const quickAck = isSpanish
     //   ? '⏳ Un momento, estoy buscando esa información...'
@@ -185,7 +230,7 @@ Deno.serve(async (req: Request) => {
     // await sendWhatsAppMessage(phoneNumber, buildingNumber, quickAck);
     // console.log(`✅ [${Date.now() - startTime}ms] Instant ack sent`);
 
-    // 4.5. 📸 MEDIA PROCESSING - Download and store media if present
+    // 5.5. 📸 MEDIA PROCESSING - Download and store media if present
     let storedMediaUrl: string | null = null;
     let storedMediaPath: string | null = null;
     let mediaType: string | null = null;
@@ -229,7 +274,7 @@ Deno.serve(async (req: Request) => {
       console.log(`📝 [${Date.now() - startTime}ms] Text-only message (no media)`);
     }
 
-    // 5. Analyze message with AI (with knowledge base lookup)
+    // 6. Analyze message with AI (with knowledge base lookup)
     console.log(`🤖 [${Date.now() - startTime}ms] Analyzing message with Claude AI...`);
     const analysis = await analyzeMessage(
       messageData.body || (storedMediaUrl ? 'Imagen enviada' : ''),
@@ -242,7 +287,7 @@ Deno.serve(async (req: Request) => {
 
     console.log(`✅ [${Date.now() - startTime}ms] AI Analysis complete: intent=${analysis.intent}, priority=${analysis.priority}, routeTo=${analysis.routeTo}`);
 
-    // 5. Save incoming message to database
+    // 7. Save incoming message to database
     await supabase.from('messages').insert({
       conversation_id: conversation.id,
       sender_type: 'resident',
@@ -263,7 +308,7 @@ Deno.serve(async (req: Request) => {
 
     console.log(`✅ Message saved to database${storedMediaUrl ? ' (with media)' : ''}`);
 
-    // 6. Create maintenance request if AI detected one
+    // 8. Create maintenance request if AI detected one
     if (analysis.intent === 'maintenance_request') {
       // Determine initial status based on maintenance model
       const isResidentResponsibility = building.maintenance_model === 'resident_responsibility';
@@ -287,7 +332,7 @@ Deno.serve(async (req: Request) => {
 
       console.log(`✅ Maintenance request created (${building.maintenance_model}, status: ${initialStatus})${storedMediaUrl ? ' with photo attachment' : ''}`);
 
-      // 6.5. Send recommended service providers if Puerto Rico model
+      // 8.5. Send recommended service providers if Puerto Rico model
       if (building.maintenance_model === 'resident_responsibility' && analysis.extractedData?.maintenanceCategory) {
         console.log(`🔧 [${Date.now() - startTime}ms] Fetching recommended providers for category: ${analysis.extractedData.maintenanceCategory}`);
 
@@ -364,7 +409,7 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    // 6.6. Handle status inquiry - fetch and send resident's tickets
+    // 8.6. Handle status inquiry - fetch and send resident's tickets
     if (analysis.intent === 'status_inquiry') {
       console.log(`📋 [${Date.now() - startTime}ms] Status inquiry detected, fetching resident's requests...`);
 
@@ -409,7 +454,7 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // 7. Send actual response to resident
+    // 9. Send actual response to resident
     let responseMessage: string;
 
     if (!analysis.requiresHumanReview && analysis.suggestedResponse) {
@@ -441,7 +486,7 @@ Deno.serve(async (req: Request) => {
 
     console.log(`✅ [${Date.now() - startTime}ms] Response sent to resident`);
 
-    // 8. Route message to owner/admin if needed
+    // 10. Route message to owner/admin if needed
     if (analysis.routeTo === 'owner' && resident.type === 'renter') {
       await routeToOwner(resident, building, messageData.body, supabase);
     }
@@ -1148,6 +1193,112 @@ async function uploadMediaToStorage(
     console.error('[Media] ❌ Storage upload failed:', error);
     throw error;
   }
+}
+
+// Content Moderation using OpenAI
+interface ModerationResult {
+  flagged: boolean;
+  violatedCategories: string[];
+}
+
+async function moderateContent(
+  text: string,
+  imageUrls?: string[]
+): Promise<ModerationResult> {
+  const openaiKey = Deno.env.get('OPENAI_API_KEY');
+
+  if (!openaiKey) {
+    console.warn('[Moderation] OPENAI_API_KEY not set, skipping moderation');
+    return { flagged: false, violatedCategories: [] };
+  }
+
+  if (!text && (!imageUrls || imageUrls.length === 0)) {
+    return { flagged: false, violatedCategories: [] };
+  }
+
+  try {
+    const checks: Promise<any>[] = [];
+
+    // Check text if present
+    if (text && text.trim().length > 0) {
+      checks.push(
+        fetch('https://api.openai.com/v1/moderations', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${openaiKey}`,
+          },
+          body: JSON.stringify({
+            model: 'omni-moderation-latest',
+            input: text,
+          }),
+        }).then(res => res.json())
+      );
+    }
+
+    // Check images if present
+    if (imageUrls && imageUrls.length > 0) {
+      imageUrls.forEach(url => {
+        checks.push(
+          fetch('https://api.openai.com/v1/moderations', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${openaiKey}`,
+            },
+            body: JSON.stringify({
+              model: 'omni-moderation-latest',
+              input: [{ type: 'image_url', image_url: { url } }],
+            }),
+          }).then(res => res.json())
+        );
+      });
+    }
+
+    const results = await Promise.all(checks);
+    const allCategories = new Set<string>();
+    let flagged = false;
+
+    results.forEach((result: any) => {
+      if (result.results?.[0]?.flagged) {
+        flagged = true;
+        const categories = result.results[0].categories || {};
+        Object.keys(categories).forEach(key => {
+          if (categories[key]) {
+            allCategories.add(key);
+          }
+        });
+      }
+    });
+
+    return {
+      flagged,
+      violatedCategories: Array.from(allCategories),
+    };
+  } catch (error) {
+    console.error('[Moderation] Error:', error);
+    // Fail open - allow content if moderation fails
+    return { flagged: false, violatedCategories: [] };
+  }
+}
+
+function getModerationRejectionMessage(
+  result: ModerationResult,
+  language: 'es' | 'en'
+): string {
+  const messages = {
+    es: {
+      prefix: '⚠️ Tu mensaje fue bloqueado porque contiene contenido inapropiado',
+      suffix: 'Por favor, mantén el respeto en tus comunicaciones. Si tienes una emergencia legítima, contacta a la administración directamente.',
+    },
+    en: {
+      prefix: '⚠️ Your message was blocked because it contains inappropriate content',
+      suffix: 'Please keep your communications respectful. If you have a legitimate emergency, contact the administration directly.',
+    },
+  };
+
+  const msg = messages[language];
+  return `${msg.prefix}.\n\n${msg.suffix}`;
 }
 
 // Send WhatsApp message via Twilio

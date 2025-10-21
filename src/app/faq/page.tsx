@@ -2,23 +2,17 @@
 
 import { LandingLanguageProvider } from "@/contexts/landing-language-context";
 import { Navigation } from "@/components/landing/navigation";
-import { HeroSection } from "@/components/landing/hero-section";
-import { FeaturesSection } from "@/components/landing/features-section";
-import { ProductShowcase } from "@/components/landing/product-showcase";
-import { AIIntelligence } from "@/components/landing/ai-intelligence";
+import { FAQSection } from "@/components/landing/faq-section";
 import { FinalCTA } from "@/components/landing/final-cta";
 import { Footer } from "@/components/landing/footer";
 
-export default function Home() {
+export default function FAQPage() {
   return (
     <LandingLanguageProvider>
       <div className="min-h-screen bg-background">
         <Navigation />
-        <main>
-          <HeroSection />
-          <FeaturesSection />
-          <ProductShowcase />
-          <AIIntelligence />
+        <main className="pt-20">
+          <FAQSection />
           <FinalCTA />
         </main>
         <Footer />

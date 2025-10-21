@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { Megaphone, Users, Home, Key, Send, Loader2, Check } from 'lucide-react';
 import { toast } from 'sonner';
+import { ImageUpload } from './image-upload';
 
 interface Unit {
   id: string;
@@ -25,6 +26,7 @@ export function BroadcastComposer({ buildingId, units, onBroadcastSent }: Broadc
   const [selectedUnits, setSelectedUnits] = useState<string[]>([]);
   const [sendViaWhatsApp, setSendViaWhatsApp] = useState(true);
   const [sendViaEmail, setSendViaEmail] = useState(false);
+  const [images, setImages] = useState<File[]>([]);
   const [isCreating, setIsCreating] = useState(false);
   const [isSending, setIsSending] = useState(false);
 
@@ -53,21 +55,30 @@ export function BroadcastComposer({ buildingId, units, onBroadcastSent }: Broadc
     setIsCreating(true);
 
     // Show creating toast
-    const creatingToast = toast.loading('Creando anuncio...');
+    const creatingToast = toast.loading(images.length > 0 ? 'Subiendo imágenes...' : 'Creando anuncio...');
 
     try {
+      // Prepare form data
+      const formData = new FormData();
+      formData.append('subject', subject);
+      formData.append('message', message);
+      formData.append('targetAudience', targetAudience);
+      formData.append('sendViaWhatsApp', sendViaWhatsApp.toString());
+      formData.append('sendViaEmail', sendViaEmail.toString());
+      formData.append('sendViaSMS', 'false');
+
+      if (targetAudience === 'specific_units' && selectedUnits.length > 0) {
+        formData.append('specificUnitIds', JSON.stringify(selectedUnits));
+      }
+
+      // Add images
+      images.forEach((image, index) => {
+        formData.append(`images`, image);
+      });
+
       const response = await fetch('/api/broadcasts/create', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          subject,
-          message,
-          targetAudience,
-          specificUnitIds: targetAudience === 'specific_units' ? selectedUnits : null,
-          sendViaWhatsApp,
-          sendViaEmail,
-          sendViaSMS: false,
-        }),
+        body: formData, // Use FormData instead of JSON
       });
 
       const data = await response.json();
@@ -78,7 +89,9 @@ export function BroadcastComposer({ buildingId, units, onBroadcastSent }: Broadc
 
       toast.dismiss(creatingToast);
       toast.success('Anuncio creado', {
-        description: 'Enviando a destinatarios...',
+        description: images.length > 0
+          ? `${images.length} imagen(es) adjuntada(s). Enviando...`
+          : 'Enviando a destinatarios...',
       });
 
       // Automatically send the broadcast
@@ -134,6 +147,7 @@ export function BroadcastComposer({ buildingId, units, onBroadcastSent }: Broadc
       setSelectedUnits([]);
       setSendViaWhatsApp(true);
       setSendViaEmail(false);
+      setImages([]);
 
       // Callback to refresh broadcast list
       onBroadcastSent?.();
@@ -195,6 +209,18 @@ export function BroadcastComposer({ buildingId, units, onBroadcastSent }: Broadc
           <p className="text-xs text-muted-foreground mt-1">
             {message.length} caracteres
           </p>
+        </div>
+
+        {/* Image Upload */}
+        <div>
+          <label className="block text-sm font-medium mb-2">
+            Imágenes (Opcional)
+          </label>
+          <ImageUpload
+            onImagesChange={setImages}
+            maxImages={5}
+            disabled={isLoading}
+          />
         </div>
 
         {/* Target Audience */}

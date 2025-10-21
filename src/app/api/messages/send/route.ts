@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
-import { sendMessage } from '@/lib/messaging-client';
+import { sendWhatsAppMessage, sendSMSMessage } from '@/lib/messaging-client';
 
 export async function POST(request: NextRequest) {
   try {
-    const { conversationId, residentId, message, buildingId } = await request.json();
+    const { conversationId, residentId, message, buildingId, mediaUrl, mediaType, mediaStoragePath } = await request.json();
 
     // Validate input
     if (!conversationId || !residentId || !message || !buildingId) {
@@ -73,6 +73,9 @@ export async function POST(request: NextRequest) {
         priority: null,
         routing: null,
         requires_human_review: false,
+        media_url: mediaUrl || null,
+        media_type: mediaType || null,
+        media_storage_path: mediaStoragePath || null,
       })
       .select()
       .single();
@@ -98,14 +101,24 @@ export async function POST(request: NextRequest) {
         : (building.sms_number || building.whatsapp_business_number);
 
       try {
-        await sendMessage(
-          recipientNumber,
-          businessNumber,
-          message,
-          channel
-        );
+        // Send via WhatsApp with media support
+        if (channel === 'whatsapp') {
+          await sendWhatsAppMessage(
+            recipientNumber,
+            businessNumber,
+            message,
+            mediaUrl ? [mediaUrl] : undefined
+          );
+        } else {
+          // SMS doesn't support media
+          await sendSMSMessage(
+            recipientNumber,
+            businessNumber,
+            message
+          );
+        }
 
-        console.log(`[Message API] ✅ ${channel.toUpperCase()} message sent to ${recipientNumber}`);
+        console.log(`[Message API] ✅ ${channel.toUpperCase()} message sent to ${recipientNumber}${mediaUrl ? ' (with media)' : ''}`);
       } catch (sendError) {
         console.error(`[Message API] ${channel.toUpperCase()} send error:`, sendError);
         // Don't fail the request - message is saved in DB

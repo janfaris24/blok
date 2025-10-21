@@ -787,6 +787,25 @@ Si es sobre reglas del edificio, envíalo a todos.`,
       },
     },
 
+    showcase: {
+      headline: 'Conoce Blok en Acción',
+      subheadline: 'Una plataforma moderna diseñada para administradores de condominios que valoran su tiempo',
+      items: {
+        dashboard: {
+          title: 'Panel de Control Inteligente',
+          description: 'Visualiza métricas clave, conversaciones activas y solicitudes de mantenimiento en tiempo real. Todo lo que necesitas saber sobre tu condominio, al instante.',
+        },
+        conversations: {
+          title: 'Conversaciones en Tiempo Real',
+          description: 'Chatea con tus residentes a través de WhatsApp directamente desde el dashboard. Respuestas automáticas de IA y enrutamiento inteligente incluidos.',
+        },
+        maintenance: {
+          title: 'Gestión Visual de Mantenimiento',
+          description: 'Organiza solicitudes de mantenimiento con tableros Kanban. Desde reportes hasta proveedores, todo el flujo en un solo lugar.',
+        },
+      },
+    },
+
     ai: {
       headline: 'Inteligencia Artificial que',
       headlineAccent: 'Realmente Entiende',
@@ -1724,6 +1743,25 @@ If it's about building rules, send it to everyone.`,
         realtime: {
           title: 'Real-Time Dashboard',
           description: 'See all communications in one place',
+        },
+      },
+    },
+
+    showcase: {
+      headline: 'See Blok in Action',
+      subheadline: 'A modern platform designed for condo administrators who value their time',
+      items: {
+        dashboard: {
+          title: 'Intelligent Dashboard',
+          description: 'View key metrics, active conversations, and maintenance requests in real-time. Everything you need to know about your condo, instantly.',
+        },
+        conversations: {
+          title: 'Real-Time Conversations',
+          description: 'Chat with your residents via WhatsApp directly from the dashboard. AI auto-responses and smart routing included.',
+        },
+        maintenance: {
+          title: 'Visual Maintenance Management',
+          description: 'Organize maintenance requests with Kanban boards. From reports to providers, the entire workflow in one place.',
         },
       },
     },

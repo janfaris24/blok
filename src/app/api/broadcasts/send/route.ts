@@ -121,14 +121,15 @@ export async function POST(request: NextRequest) {
         try {
           const result = await sendBulkWhatsApp(
             whatsappRecipients.map(r => ({ phone: r.phone, message: r.message })),
-            building.whatsapp_business_number
+            building.whatsapp_business_number,
+            broadcast.media_urls && broadcast.media_urls.length > 0 ? broadcast.media_urls : undefined
           );
 
           totalSent += result.success;
           totalFailed += result.failed;
           errors.push(...result.errors);
 
-          console.log('[Broadcast] ✅ WhatsApp sent:', result.success, 'failed:', result.failed);
+          console.log('[Broadcast] ✅ WhatsApp sent:', result.success, 'failed:', result.failed, broadcast.media_urls?.length ? `(${broadcast.media_urls.length} images)` : '');
         } catch (error) {
           console.error('[Broadcast] WhatsApp send error:', error);
           totalFailed += whatsappRecipients.length;
@@ -153,21 +154,35 @@ export async function POST(request: NextRequest) {
 
           return true;
         })
-        .map((r) => ({
-          email: r.email!,
-          subject: `📢 ${broadcast.subject}`,
-          html: `
-            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-              <h2 style="color: #333;">${broadcast.subject}</h2>
-              <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                <p style="white-space: pre-wrap; color: #666; line-height: 1.6;">${broadcast.message}</p>
+        .map((r) => {
+          // Build image HTML if media exists
+          const imagesHtml = broadcast.media_urls && broadcast.media_urls.length > 0
+            ? `
+              <div style="margin: 20px 0;">
+                ${broadcast.media_urls.map((url: string) => `
+                  <img src="${url}" alt="Imagen del anuncio" style="max-width: 100%; height: auto; border-radius: 8px; margin-bottom: 10px; display: block;" />
+                `).join('')}
               </div>
-              <p style="color: #999; font-size: 12px; margin-top: 20px;">
-                ${building.name}
-              </p>
-            </div>
-          `,
-        }));
+            `
+            : '';
+
+          return {
+            email: r.email!,
+            subject: `📢 ${broadcast.subject}`,
+            html: `
+              <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #333;">${broadcast.subject}</h2>
+                <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                  <p style="white-space: pre-wrap; color: #666; line-height: 1.6;">${broadcast.message}</p>
+                </div>
+                ${imagesHtml}
+                <p style="color: #999; font-size: 12px; margin-top: 20px;">
+                  ${building.name}
+                </p>
+              </div>
+            `,
+          };
+        });
 
       console.log('[Broadcast] 📧 Email recipients:', emailRecipients.length);
 
@@ -184,7 +199,7 @@ export async function POST(request: NextRequest) {
           totalFailed += result.failed;
           errors.push(...result.errors);
 
-          console.log('[Broadcast] ✅ Email sent:', result.success, 'failed:', result.failed);
+          console.log('[Broadcast] ✅ Email sent:', result.success, 'failed:', result.failed, broadcast.media_urls?.length ? `(${broadcast.media_urls.length} images)` : '');
         } catch (error) {
           console.error('[Broadcast] Email send error:', error);
           totalFailed += emailRecipients.length;
@@ -197,12 +212,18 @@ export async function POST(request: NextRequest) {
     if (broadcast.send_via_sms) {
       const smsRecipients = residents
         .filter((r) => r.opted_in_sms && r.phone)
-        .map((r) => ({
-          phone: r.phone,
-          message: `📢 ${broadcast.subject}\n\n${broadcast.message}\n\n${building.name}`,
-          id: r.id,
-          name: `${r.first_name} ${r.last_name}`,
-        }));
+        .map((r) => {
+          // SMS doesn't support images directly, but we can mention them
+          const hasImages = broadcast.media_urls && broadcast.media_urls.length > 0;
+          const imageNote = hasImages ? '\n\n📷 Este anuncio incluye imágenes. Revisa tu email o WhatsApp para verlas.' : '';
+
+          return {
+            phone: r.phone,
+            message: `📢 ${broadcast.subject}\n\n${broadcast.message}${imageNote}\n\n${building.name}`,
+            id: r.id,
+            name: `${r.first_name} ${r.last_name}`,
+          };
+        });
 
       console.log('[Broadcast] 📱 SMS recipients:', smsRecipients.length);
 
@@ -245,6 +266,88 @@ export async function POST(request: NextRequest) {
       failed: totalFailed,
       status: finalStatus,
     });
+
+    // Create message records in conversations for each recipient (BATCH OPTIMIZED)
+    console.log('[Broadcast] 💬 Creating conversation message records...');
+
+    try {
+      // Step 1: Fetch all existing conversations for these residents in ONE query
+      const residentIds = residents.map(r => r.id);
+      const { data: existingConversations } = await supabase
+        .from('conversations')
+        .select('id, resident_id')
+        .eq('building_id', broadcast.building_id)
+        .in('resident_id', residentIds);
+
+      const existingConvMap = new Map(
+        (existingConversations || []).map(c => [c.resident_id, c.id])
+      );
+
+      // Step 2: Identify residents without conversations
+      const residentsWithoutConv = residents.filter(r => !existingConvMap.has(r.id));
+
+      // Step 3: Batch create missing conversations
+      if (residentsWithoutConv.length > 0) {
+        console.log(`[Broadcast] Creating ${residentsWithoutConv.length} missing conversations...`);
+
+        const { data: newConversations, error: convCreateError } = await supabase
+          .from('conversations')
+          .insert(
+            residentsWithoutConv.map(r => ({
+              building_id: broadcast.building_id,
+              resident_id: r.id,
+              channel: 'whatsapp',
+              status: 'active',
+            }))
+          )
+          .select('id, resident_id');
+
+        if (convCreateError) {
+          console.error('[Broadcast] Batch conversation creation error:', convCreateError);
+        } else if (newConversations) {
+          // Add new conversations to map
+          newConversations.forEach(c => existingConvMap.set(c.resident_id, c.id));
+          console.log(`[Broadcast] ✅ Created ${newConversations.length} conversations`);
+        }
+      }
+
+      // Step 4: Batch insert ALL messages in ONE query
+      const messageRecords = residents
+        .filter(r => existingConvMap.has(r.id)) // Only residents with conversations
+        .map(r => ({
+          conversation_id: existingConvMap.get(r.id),
+          sender_type: 'admin',
+          sender_id: user.id,
+          content: `📢 *${broadcast.subject}*\n\n${broadcast.message}`,
+          intent: 'broadcast',
+          channel: 'broadcast', // Special channel type for broadcasts
+          metadata: {
+            broadcast_id: broadcastId,
+            media_urls: broadcast.media_urls || [],
+            sent_via: {
+              whatsapp: broadcast.send_via_whatsapp,
+              email: broadcast.send_via_email,
+              sms: broadcast.send_via_sms,
+            },
+            target_audience: broadcast.target_audience,
+          },
+        }));
+
+      if (messageRecords.length > 0) {
+        const { data: createdMessages, error: messageError } = await supabase
+          .from('messages')
+          .insert(messageRecords)
+          .select('id');
+
+        if (messageError) {
+          console.error('[Broadcast] Batch message creation error:', messageError);
+        } else {
+          console.log(`[Broadcast] ✅ Created ${createdMessages?.length || 0} conversation messages`);
+        }
+      }
+    } catch (error) {
+      console.error('[Broadcast] Error in batch conversation/message creation:', error);
+    }
 
     return NextResponse.json({
       success: true,

@@ -5,10 +5,11 @@ import { createClient } from '@/lib/supabase-client';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { formatDate } from '@/lib/utils';
-import { Send, User, Bot, UserCircle, MessageCircle, MessageSquare, Mail, FileText } from 'lucide-react';
+import { Send, User, Bot, UserCircle, MessageCircle, MessageSquare, Mail, FileText, Megaphone, Paperclip, X, Image as ImageIcon } from 'lucide-react';
 import { LaserFlow } from '@/components/ui/laser-flow';
 import { useLanguage } from '@/contexts/language-context';
 import { useNotificationSound } from '@/hooks/use-notification-sound';
+import { toast } from 'sonner';
 
 interface Message {
   id: string;
@@ -20,11 +21,21 @@ interface Message {
   media_url?: string | null;
   media_type?: string | null;
   media_storage_path?: string | null;
+  metadata?: {
+    broadcast_id?: string;
+    media_urls?: string[];
+    sent_via?: {
+      whatsapp?: boolean;
+      email?: boolean;
+      sms?: boolean;
+    };
+    target_audience?: string;
+  } | null;
 }
 
 interface Conversation {
   id: string;
-  channel: 'whatsapp' | 'sms' | 'email';
+  channel: 'whatsapp' | 'sms' | 'email' | 'broadcast';
   residents: {
     id: string;
     first_name: string;
@@ -49,6 +60,9 @@ export function MessageThread({ conversation, buildingId }: MessageThreadProps) 
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [filePreview, setFilePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const supabase = createClient();
@@ -177,14 +191,95 @@ export function MessageThread({ conversation, buildingId }: MessageThreadProps) 
     }
   }
 
+  // Handle file selection
+  function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type (images and PDFs for WhatsApp)
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf', 'video/mp4'];
+    if (!validTypes.includes(file.type)) {
+      toast.error('Tipo de archivo no permitido', {
+        description: 'Solo se permiten imágenes (JPEG, PNG, GIF, WEBP), PDFs y videos (MP4)',
+      });
+      return;
+    }
+
+    // Validate file size (max 5MB for images, 16MB for videos per Twilio limits)
+    const maxSize = file.type.startsWith('video/') ? 16 * 1024 * 1024 : 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      const maxSizeMB = file.type.startsWith('video/') ? 16 : 5;
+      toast.error('Archivo muy grande', {
+        description: `El archivo excede ${maxSizeMB}MB`,
+      });
+      return;
+    }
+
+    setSelectedFile(file);
+
+    // Create preview for images
+    if (file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFilePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setFilePreview(null);
+    }
+  }
+
+  // Remove selected file
+  function handleRemoveFile() {
+    setSelectedFile(null);
+    setFilePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  }
+
   async function handleSendMessage(e: React.FormEvent) {
     e.preventDefault();
 
-    if (!newMessage.trim() || sending) return;
+    if ((!newMessage.trim() && !selectedFile) || sending) return;
 
     setSending(true);
 
     try {
+      let mediaUrl: string | undefined;
+      let mediaType: string | undefined;
+      let mediaStoragePath: string | undefined;
+
+      // Upload file to Supabase Storage if present
+      if (selectedFile) {
+        const fileExt = selectedFile.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const storagePath = `conversations/${conversation.id}/${fileName}`;
+
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('messages')
+          .upload(storagePath, selectedFile, {
+            cacheControl: '3600',
+            upsert: false,
+          });
+
+        if (uploadError) {
+          console.error('Upload error:', uploadError);
+          toast.error('Error al subir archivo');
+          setSending(false);
+          return;
+        }
+
+        // Get public URL
+        const { data: urlData } = supabase.storage
+          .from('messages')
+          .getPublicUrl(storagePath);
+
+        mediaUrl = urlData.publicUrl;
+        mediaType = selectedFile.type;
+        mediaStoragePath = storagePath;
+      }
+
       // Send message via API
       const response = await fetch('/api/messages/send', {
         method: 'POST',
@@ -192,19 +287,23 @@ export function MessageThread({ conversation, buildingId }: MessageThreadProps) 
         body: JSON.stringify({
           conversationId: conversation.id,
           residentId: conversation.residents.id,
-          message: newMessage,
+          message: newMessage || '📎 Archivo adjunto',
           buildingId,
+          mediaUrl,
+          mediaType,
+          mediaStoragePath,
         }),
       });
 
       if (response.ok) {
         setNewMessage('');
+        handleRemoveFile();
       } else {
-        alert('Error al enviar mensaje');
+        toast.error('Error al enviar mensaje');
       }
     } catch (error) {
       console.error('Error sending message:', error);
-      alert('Error al enviar mensaje');
+      toast.error('Error al enviar mensaje');
     } finally {
       setSending(false);
     }
@@ -212,6 +311,27 @@ export function MessageThread({ conversation, buildingId }: MessageThreadProps) 
 
   // Helper function to render media content
   function renderMedia(message: Message) {
+    // Check for broadcast media_urls in metadata first (multiple images)
+    if (message.metadata?.media_urls && message.metadata.media_urls.length > 0) {
+      return (
+        <div className="mt-2 space-y-2">
+          {message.metadata.media_urls.map((url, index) => (
+            <div key={index} className="rounded-lg overflow-hidden max-w-sm">
+              <a href={url} target="_blank" rel="noopener noreferrer">
+                <img
+                  src={url}
+                  alt={`Imagen ${index + 1}`}
+                  className="w-full h-auto cursor-pointer hover:opacity-90 transition-opacity"
+                  loading="lazy"
+                />
+              </a>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    // Fall back to single media_url for regular messages
     if (!message.media_url || !message.media_type) return null;
 
     const mediaType = message.media_type.split('/')[0];
@@ -288,6 +408,8 @@ export function MessageThread({ conversation, buildingId }: MessageThreadProps) 
               ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400'
               : conversation.channel === 'sms'
               ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400'
+              : conversation.channel === 'broadcast'
+              ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/20 dark:text-orange-400'
               : 'bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400'
           }`}>
             {conversation.channel === 'whatsapp' ? (
@@ -299,6 +421,11 @@ export function MessageThread({ conversation, buildingId }: MessageThreadProps) 
               <>
                 <MessageSquare className="w-3.5 h-3.5" />
                 SMS
+              </>
+            ) : conversation.channel === 'broadcast' ? (
+              <>
+                <Megaphone className="w-3.5 h-3.5" />
+                Anuncios
               </>
             ) : (
               <>
@@ -331,6 +458,7 @@ export function MessageThread({ conversation, buildingId }: MessageThreadProps) 
           messages.map((message) => {
             const isResident = message.sender_type === 'resident';
             const isAI = message.sender_type === 'ai';
+            const isBroadcast = message.metadata?.broadcast_id;
 
             return (
               <div
@@ -350,11 +478,15 @@ export function MessageThread({ conversation, buildingId }: MessageThreadProps) 
                         ? 'bg-muted'
                         : isAI
                         ? 'bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-900/50'
+                        : isBroadcast
+                        ? 'bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/50'
                         : 'bg-primary text-primary-foreground'
                     }`}
                   >
                     {message.content && (
-                      <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
+                      <p className={`text-sm leading-relaxed whitespace-pre-wrap break-words ${
+                        isBroadcast ? 'text-foreground' : ''
+                      }`}>
                         {message.content}
                       </p>
                     )}
@@ -370,6 +502,12 @@ export function MessageThread({ conversation, buildingId }: MessageThreadProps) 
                         AI
                       </span>
                     )}
+                    {isBroadcast && (
+                      <span className="text-[11px] flex items-center gap-1 text-blue-600 dark:text-blue-400">
+                        <Megaphone className="w-3 h-3" />
+                        Anuncio
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -377,10 +515,14 @@ export function MessageThread({ conversation, buildingId }: MessageThreadProps) 
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-1 ${
                     isAI
                       ? 'bg-purple-100 dark:bg-purple-900/30'
+                      : isBroadcast
+                      ? 'bg-blue-100 dark:bg-blue-900/30'
                       : 'bg-primary'
                   }`}>
                     {isAI ? (
                       <Bot className="w-4 h-4 text-purple-600 dark:text-purple-300" />
+                    ) : isBroadcast ? (
+                      <Megaphone className="w-4 h-4 text-blue-600 dark:text-blue-300" />
                     ) : (
                       <UserCircle className="w-4 h-4 text-primary-foreground" />
                     )}
@@ -411,7 +553,58 @@ export function MessageThread({ conversation, buildingId }: MessageThreadProps) 
             />
           </div>
         )}
+
+        {/* File Preview */}
+        {selectedFile && (
+          <div className="mb-3 p-3 bg-muted/50 rounded-lg border border-border/40">
+            <div className="flex items-center gap-3">
+              {filePreview ? (
+                <img src={filePreview} alt="Preview" className="w-16 h-16 object-cover rounded" />
+              ) : (
+                <div className="w-16 h-16 bg-muted rounded flex items-center justify-center">
+                  <FileText className="w-8 h-8 text-muted-foreground" />
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{selectedFile.name}</p>
+                <p className="text-xs text-muted-foreground">
+                  {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={handleRemoveFile}
+                disabled={sending}
+                className="h-8 w-8 rounded-full"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        )}
+
         <form onSubmit={handleSendMessage} className="flex gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*,.pdf,video/mp4"
+            onChange={handleFileSelect}
+            className="hidden"
+            disabled={sending}
+          />
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={sending}
+            className="h-11 w-11 rounded-full flex-shrink-0"
+            title="Adjuntar archivo"
+          >
+            <Paperclip className="w-4 h-4" />
+          </Button>
           <input
             type="text"
             value={newMessage}
@@ -423,8 +616,8 @@ export function MessageThread({ conversation, buildingId }: MessageThreadProps) 
           <Button
             type="submit"
             size="icon"
-            className="h-11 w-11 rounded-full"
-            disabled={sending || !newMessage.trim()}
+            className="h-11 w-11 rounded-full flex-shrink-0"
+            disabled={sending || (!newMessage.trim() && !selectedFile)}
           >
             <Send className="w-4 h-4" />
           </Button>
