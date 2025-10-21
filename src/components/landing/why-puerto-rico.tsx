@@ -33,7 +33,7 @@ export function WhyPuertoRico() {
         <div className="max-w-6xl mx-auto">
           {/* Headline */}
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-center mb-16 text-balance">
-            {t.why.headline} <span className="gradient-text">{t.why.emoji}</span>
+            {t.why.headline}
           </h2>
 
           {/* Reasons */}

@@ -25,6 +25,7 @@ export function WaitlistModal({ open, onOpenChange }: WaitlistModalProps) {
   const [name, setName] = useState("")
   const [phone, setPhone] = useState("")
   const [building, setBuilding] = useState("")
+  const [role, setRole] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -40,6 +41,11 @@ export function WaitlistModal({ open, onOpenChange }: WaitlistModalProps) {
     phonePlaceholder: "787-555-1234",
     buildingLabel: "Edificio (Opcional)",
     buildingPlaceholder: "Nombre de tu edificio",
+    roleLabel: "Rol (Opcional)",
+    rolePlaceholder: "Selecciona tu rol",
+    roleOwner: "Propietario",
+    roleRenter: "Inquilino",
+    roleAdmin: "Administrador/Junta",
     submitButton: "Unirse a la Lista",
     submittingButton: "Enviando...",
     successTitle: "¡Todo listo! 🎉",
@@ -58,6 +64,11 @@ export function WaitlistModal({ open, onOpenChange }: WaitlistModalProps) {
     phonePlaceholder: "787-555-1234",
     buildingLabel: "Building (Optional)",
     buildingPlaceholder: "Your building name",
+    roleLabel: "Role (Optional)",
+    rolePlaceholder: "Select your role",
+    roleOwner: "Owner",
+    roleRenter: "Renter",
+    roleAdmin: "Administrator/Board",
     submitButton: "Join Waitlist",
     submittingButton: "Submitting...",
     successTitle: "All set! 🎉",
@@ -96,6 +107,7 @@ export function WaitlistModal({ open, onOpenChange }: WaitlistModalProps) {
           name: name.trim() || null,
           phone: phone.trim() || null,
           building: building.trim() || null,
+          role: role || null,
           language,
         }),
       })
@@ -117,6 +129,7 @@ export function WaitlistModal({ open, onOpenChange }: WaitlistModalProps) {
       setName("")
       setPhone("")
       setBuilding("")
+      setRole("")
 
     } catch (err) {
       console.error('Waitlist error:', err)
@@ -137,22 +150,22 @@ export function WaitlistModal({ open, onOpenChange }: WaitlistModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[540px] mx-6 sm:mx-0 p-6 sm:p-8 max-h-[90vh] overflow-y-auto">
         {!isSuccess ? (
           <>
-            <DialogHeader>
+            <DialogHeader className="space-y-3">
               <DialogTitle className="flex items-center gap-2 text-2xl">
                 <Mail className="h-6 w-6 text-primary" />
                 {t.title}
               </DialogTitle>
-              <DialogDescription className="text-base pt-2">
+              <DialogDescription className="text-base leading-relaxed">
                 {t.description}
               </DialogDescription>
             </DialogHeader>
 
-            <form onSubmit={handleSubmit} className="space-y-4 pt-4">
+            <form onSubmit={handleSubmit} className="space-y-5 pt-6">
               {/* Email (Required) */}
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 <Label htmlFor="email" className="text-sm font-medium">
                   {t.emailLabel} <span className="text-red-500">*</span>
                 </Label>
@@ -163,13 +176,13 @@ export function WaitlistModal({ open, onOpenChange }: WaitlistModalProps) {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={isLoading}
-                  className="h-11"
+                  className="h-12 text-base px-4"
                   required
                 />
               </div>
 
               {/* Name (Optional) */}
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 <Label htmlFor="name" className="text-sm font-medium">
                   {t.nameLabel}
                 </Label>
@@ -180,12 +193,12 @@ export function WaitlistModal({ open, onOpenChange }: WaitlistModalProps) {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   disabled={isLoading}
-                  className="h-11"
+                  className="h-12 text-base px-4"
                 />
               </div>
 
               {/* Phone (Optional) */}
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 <Label htmlFor="phone" className="text-sm font-medium">
                   {t.phoneLabel}
                 </Label>
@@ -196,12 +209,12 @@ export function WaitlistModal({ open, onOpenChange }: WaitlistModalProps) {
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   disabled={isLoading}
-                  className="h-11"
+                  className="h-12 text-base px-4"
                 />
               </div>
 
               {/* Building (Optional) */}
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 <Label htmlFor="building" className="text-sm font-medium">
                   {t.buildingLabel}
                 </Label>
@@ -212,13 +225,32 @@ export function WaitlistModal({ open, onOpenChange }: WaitlistModalProps) {
                   value={building}
                   onChange={(e) => setBuilding(e.target.value)}
                   disabled={isLoading}
-                  className="h-11"
+                  className="h-12 text-base px-4"
                 />
+              </div>
+
+              {/* Role (Optional) */}
+              <div className="space-y-2.5">
+                <Label htmlFor="role" className="text-sm font-medium">
+                  {t.roleLabel}
+                </Label>
+                <select
+                  id="role"
+                  value={role}
+                  onChange={(e) => setRole(e.target.value)}
+                  disabled={isLoading}
+                  className="w-full h-12 px-4 text-base border border-input rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                >
+                  <option value="">{t.rolePlaceholder}</option>
+                  <option value="owner">{t.roleOwner}</option>
+                  <option value="renter">{t.roleRenter}</option>
+                  <option value="admin">{t.roleAdmin}</option>
+                </select>
               </div>
 
               {/* Error Message */}
               {error && (
-                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 px-4 py-3 rounded-lg text-sm">
+                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 px-4 py-3.5 rounded-lg text-sm leading-relaxed">
                   {error}
                 </div>
               )}
@@ -226,7 +258,7 @@ export function WaitlistModal({ open, onOpenChange }: WaitlistModalProps) {
               {/* Submit Button */}
               <Button
                 type="submit"
-                className="w-full h-11 text-base bg-foreground text-background hover:bg-foreground/90"
+                className="w-full h-12 text-base font-medium bg-foreground text-background hover:bg-foreground/90 mt-2"
                 disabled={isLoading}
               >
                 {isLoading ? (
@@ -241,17 +273,17 @@ export function WaitlistModal({ open, onOpenChange }: WaitlistModalProps) {
             </form>
           </>
         ) : (
-          <div className="py-8 text-center">
-            <div className="flex justify-center mb-4">
-              <CheckCircle2 className="h-16 w-16 text-green-500" />
+          <div className="py-12 text-center px-4">
+            <div className="flex justify-center mb-6">
+              <CheckCircle2 className="h-20 w-20 text-green-500" />
             </div>
-            <DialogTitle className="text-2xl mb-3">{t.successTitle}</DialogTitle>
-            <DialogDescription className="text-base mb-6">
+            <DialogTitle className="text-2xl mb-4">{t.successTitle}</DialogTitle>
+            <DialogDescription className="text-base mb-8 leading-relaxed">
               {t.successMessage}
             </DialogDescription>
             <Button
               onClick={() => handleClose(false)}
-              className="bg-foreground text-background hover:bg-foreground/90"
+              className="bg-foreground text-background hover:bg-foreground/90 h-12 px-8"
             >
               {t.closeButton}
             </Button>

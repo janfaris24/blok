@@ -11,12 +11,14 @@ export function Navigation() {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [waitlistOpen, setWaitlistOpen] = useState(false)
+  const [isHomePage, setIsHomePage] = useState(true)
   const { language, setLanguage, t } = useLandingLanguage()
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
     setMounted(true)
+    setIsHomePage(window.location.pathname === '/')
   }, [])
 
   useEffect(() => {
@@ -32,8 +34,7 @@ export function Navigation() {
     setWaitlistOpen(true)
   }
 
-  // Detect if we're on a non-home page to fix anchor links
-  const isHomePage = typeof window !== 'undefined' && window.location.pathname === '/'
+  // Fix anchor links based on current page
   const prefix = isHomePage ? '' : '/'
 
   const navLinks: Array<{ label: string; href: string; badge?: boolean }> = [
@@ -50,7 +51,7 @@ export function Navigation() {
           isScrolled
             ? "bg-background/80 backdrop-blur-lg border border-border/40 shadow-lg shadow-black/5"
             : "bg-background/60 backdrop-blur-md border border-border/20"
-        } rounded-full`}
+        } rounded-2xl sm:rounded-full`}
       >
         <div className="flex items-center justify-between h-14 sm:h-16 px-4 sm:px-6">
           {/* Logo */}

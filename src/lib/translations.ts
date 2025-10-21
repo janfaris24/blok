@@ -701,9 +701,9 @@ Si es sobre reglas del edificio, envíalo a todos.`,
 
     // Landing Page
     hero: {
-      eyebrow: 'IA + WhatsApp para tu Condominio',
-      headline: 'Gestiona tu condominio con IA en WhatsApp',
-      subheadline: 'Blok automatiza las comunicaciones de tu condominio usando IA. Los residentes escriben por WhatsApp, la IA responde al instante y tú gestionas todo desde un dashboard moderno.',
+      eyebrow: 'WhatsApp Inteligente para tu Condominio',
+      headline: 'Gestiona tu condominio en WhatsApp',
+      subheadline: 'Blok automatiza las comunicaciones de tu condominio. Los residentes escriben por WhatsApp, reciben respuestas al instante y tú gestionas todo desde un dashboard moderno.',
       cta: 'Comenzar Gratis',
       waitlist: 'Únete a la Lista de Espera',
       login: 'Iniciar Sesión',
@@ -730,8 +730,8 @@ Si es sobre reglas del edificio, envíalo a todos.`,
     },
 
     solution: {
-      headline: 'Blok Automatiza con IA',
-      subheadline: 'Los residentes escriben por WhatsApp como siempre. La IA de Blok responde automáticamente.',
+      headline: 'Blok Automatiza Todo',
+      subheadline: 'Los residentes escriben por WhatsApp como siempre. Blok responde automáticamente.',
       steps: {
         step1: {
           title: 'Residente Escribe',
@@ -739,7 +739,7 @@ Si es sobre reglas del edificio, envíalo a todos.`,
           example: '"La planta eléctrica no prendió"',
         },
         step2: {
-          title: 'IA Analiza',
+          title: 'Sistema Analiza',
           subtitle: 'Detecta intención, urgencia y categoría automáticamente',
           example: 'priority: emergency',
         },
@@ -761,8 +761,8 @@ Si es sobre reglas del edificio, envíalo a todos.`,
       headline: 'Todo lo que Necesitas en un Solo Lugar',
       list: {
         aiResponses: {
-          title: 'Respuestas Automáticas con IA',
-          description: 'Claude responde preguntas comunes 24/7',
+          title: 'Respuestas Automáticas',
+          description: 'Responde preguntas comunes automáticamente 24/7',
         },
         smartRouting: {
           title: 'Routing Inteligente',
@@ -855,7 +855,6 @@ Si es sobre reglas del edificio, envíalo a todos.`,
 
     why: {
       headline: 'Diseñado para Puerto Rico',
-      emoji: '🇵🇷',
       features: {
         whatsapp: {
           title: 'WhatsApp es Cultura',
@@ -894,10 +893,10 @@ Si es sobre reglas del edificio, envíalo a todos.`,
     faq: {
       headline: 'Preguntas Frecuentes',
       questions: {
-        q1: '¿Cómo funciona la IA?',
-        a1: 'Usamos Claude AI de Anthropic para analizar mensajes, detectar intención y generar respuestas automáticas en español. La IA aprende de tu base de conocimiento.',
-        q2: '¿Qué pasa si la IA no sabe responder?',
-        a2: 'Si la IA detecta una consulta compleja o emergencia, escala automáticamente al administrador para respuesta manual.',
+        q1: '¿Cómo funciona el sistema automático?',
+        a1: 'Blok analiza mensajes automáticamente, detecta la intención y genera respuestas en español basadas en tu base de conocimiento. El sistema aprende de las respuestas anteriores.',
+        q2: '¿Qué pasa si el sistema no sabe responder?',
+        a2: 'Si el sistema detecta una consulta compleja o emergencia, escala automáticamente al administrador para respuesta manual.',
         q3: '¿Necesito un número de WhatsApp Business?',
         a3: 'Sí, te ayudamos a configurar un número de WhatsApp Business para tu condominio. Es requerido por WhatsApp para uso comercial.',
         q4: '¿Cuánto tiempo toma implementar?',
@@ -1643,9 +1642,9 @@ If it's about building rules, send it to everyone.`,
 
     // Landing Page
     hero: {
-      eyebrow: 'AI + WhatsApp for Your Condo',
-      headline: 'Manage your condo with AI on WhatsApp',
-      subheadline: 'Blok automates your condo communications using AI. Residents message via WhatsApp, AI responds instantly, and you manage everything from a modern dashboard.',
+      eyebrow: 'Smart WhatsApp for Your Condo',
+      headline: 'Manage your condo on WhatsApp',
+      subheadline: 'Blok automates your condo communications. Residents message via WhatsApp, get instant responses, and you manage everything from a modern dashboard.',
       cta: 'Get Started Free',
       waitlist: 'Join the Waitlist',
       login: 'Log In',
@@ -1672,8 +1671,8 @@ If it's about building rules, send it to everyone.`,
     },
 
     solution: {
-      headline: 'Blok Automates with AI',
-      subheadline: 'Residents message via WhatsApp as usual. Blok AI responds automatically.',
+      headline: 'Blok Automates Everything',
+      subheadline: 'Residents message via WhatsApp as usual. Blok responds automatically.',
       steps: {
         step1: {
           title: 'Resident Writes',
@@ -1681,7 +1680,7 @@ If it's about building rules, send it to everyone.`,
           example: '"The generator didn\'t turn on"',
         },
         step2: {
-          title: 'AI Analyzes',
+          title: 'System Analyzes',
           subtitle: 'Detects intent, urgency, and category automatically',
           example: 'priority: emergency',
         },
@@ -1703,8 +1702,8 @@ If it's about building rules, send it to everyone.`,
       headline: 'Everything You Need in One Place',
       list: {
         aiResponses: {
-          title: 'AI Auto-Responses',
-          description: 'Claude answers common questions 24/7',
+          title: 'Auto-Responses',
+          description: 'Automatically answers common questions 24/7',
         },
         smartRouting: {
           title: 'Smart Routing',
@@ -1836,10 +1835,10 @@ If it's about building rules, send it to everyone.`,
     faq: {
       headline: 'Frequently Asked Questions',
       questions: {
-        q1: 'How does the AI work?',
-        a1: 'We use Anthropic\'s Claude AI to analyze messages, detect intent, and generate automatic responses in Spanish. The AI learns from your knowledge base.',
-        q2: 'What if the AI doesn\'t know the answer?',
-        a2: 'If the AI detects a complex query or emergency, it automatically escalates to the admin for manual response.',
+        q1: 'How does the automatic system work?',
+        a1: 'Blok automatically analyzes messages, detects intent, and generates responses in Spanish based on your knowledge base. The system learns from previous responses.',
+        q2: 'What if the system doesn\'t know the answer?',
+        a2: 'If the system detects a complex query or emergency, it automatically escalates to the admin for manual response.',
         q3: 'Do I need a WhatsApp Business number?',
         a3: 'Yes, we help you set up a WhatsApp Business number for your condo. It\'s required by WhatsApp for commercial use.',
         q4: 'How long does implementation take?',

@@ -11,7 +11,7 @@ const supabase = createClient(
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email, name, phone, building, language = 'es' } = body;
+    const { email, name, phone, building, role, language = 'es' } = body;
 
     // Validate email
     if (!email || !email.trim()) {
@@ -61,6 +61,7 @@ export async function POST(request: NextRequest) {
         name: name?.trim() || null,
         phone: phone?.trim() || null,
         building: building?.trim() || null,
+        role: role || null,
         source: 'landing_page',
         referrer_url: referrerUrl,
         user_agent: userAgent,
