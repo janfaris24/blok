@@ -454,6 +454,67 @@ Deno.serve(async (req: Request) => {
       });
     }
 
+    // 8.7. Handle payment confirmation - update fee status to pending_pickup
+    if (analysis.intent === 'payment_confirmation') {
+      console.log(`💰 [${Date.now() - startTime}ms] Payment confirmation detected, updating fee status...`);
+
+      // Find the most recent pending/late fee for this resident
+      const { data: pendingFee } = await supabase
+        .from('maintenance_fees')
+        .select('id, unit_id, amount, total_amount, due_date')
+        .eq('building_id', building.id)
+        .in('status', ['pending', 'late'])
+        .or(`unit_id.eq.${resident.unit_id}`)
+        .order('due_date', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (pendingFee) {
+        // Update fee status to pending_pickup
+        await supabase
+          .from('maintenance_fees')
+          .update({
+            status: 'pending_pickup',
+            notes: `Residente confirmó pago el ${new Date().toLocaleDateString('es-PR')}`,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', pendingFee.id);
+
+        const language = resident.preferred_language || 'es';
+        const confirmationMessage = language === 'es'
+          ? `✅ Perfecto, he registrado tu pago de $${pendingFee.total_amount.toFixed(2)}. La administración confirmará la recepción pronto. ¡Gracias!`
+          : `✅ Perfect, I've recorded your payment of $${pendingFee.total_amount.toFixed(2)}. Administration will confirm receipt soon. Thank you!`;
+
+        await sendWhatsAppMessage(phoneNumber, buildingNumber, confirmationMessage);
+
+        // Save confirmation message
+        await supabase.from('messages').insert({
+          conversation_id: conversation.id,
+          sender_type: 'ai',
+          content: confirmationMessage,
+          channel: 'whatsapp',
+        });
+
+        console.log(`✅ [${Date.now() - startTime}ms] Fee status updated to pending_pickup`);
+
+        // Update conversation
+        await supabase
+          .from('conversations')
+          .update({ last_message_at: new Date().toISOString() })
+          .eq('id', conversation.id);
+
+        const totalTime = Date.now() - startTime;
+        console.log(`🎉 [${totalTime}ms] Payment confirmation complete`);
+
+        return new Response('<?xml version="1.0" encoding="UTF-8"?><Response></Response>', {
+          headers: { 'Content-Type': 'application/xml' }
+        });
+      } else {
+        console.log(`⚠️ [${Date.now() - startTime}ms] No pending fees found for resident`);
+        // Continue with normal flow (AI will respond appropriately)
+      }
+    }
+
     // 9. Send actual response to resident
     let responseMessage: string;
 
@@ -794,6 +855,7 @@ TAREA: Analiza este mensaje y responde en formato JSON con estos campos:
 1. **intent**: Clasifica el mensaje como uno de:
    - maintenance_request (reparaciones, problemas en unidad o áreas comunes)
    - status_inquiry (preguntar por el estado de su solicitud/ticket/reporte)
+   - payment_confirmation (residente confirma que pagó cuota, dejó cheque, hizo transferencia, etc.)
    - general_question (reglas, horarios, amenidades)
    - noise_complaint (quejas de ruido)
    - visitor_access (estacionamiento visitantes, códigos de entrada)
@@ -868,6 +930,7 @@ TASK: Analyze this message and respond in JSON format with these fields:
 1. **intent**: Classify as one of:
    - maintenance_request (repairs, issues in unit or common areas)
    - status_inquiry (asking about the status of their request/ticket/report)
+   - payment_confirmation (resident confirms they paid fee, left check, made transfer, etc.)
    - general_question (HOA rules, amenities, hours)
    - noise_complaint
    - visitor_access (guest parking, entrance codes)

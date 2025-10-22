@@ -44,10 +44,15 @@ export function BuildingManager({ building, initialUnits }: BuildingManagerProps
   const [units, setUnits] = useState(initialUnits);
   const [showBulkModal, setShowBulkModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showManualModal, setShowManualModal] = useState(false);
   const [bulkData, setBulkData] = useState({
     floors: 8,
     unitsPerFloor: 12,
     startFloor: 1,
+  });
+  const [manualData, setManualData] = useState({
+    unitNumber: '',
+    floor: 1,
   });
   const [editData, setEditData] = useState({
     name: building.name,
@@ -58,6 +63,43 @@ export function BuildingManager({ building, initialUnits }: BuildingManagerProps
   });
   const [loading, setLoading] = useState(false);
   const supabase = createClient();
+
+  const handleManualCreate = async () => {
+    if (!manualData.unitNumber.trim()) {
+      alert(t.building.unitNumberRequired || 'Número de unidad requerido');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const { data, error } = await supabase
+        .from('units')
+        .insert([{
+          building_id: building.id,
+          unit_number: manualData.unitNumber.trim(),
+          floor: manualData.floor,
+        }])
+        .select();
+
+      if (error) throw error;
+
+      setUnits(prev => [...prev, ...data]);
+      setShowManualModal(false);
+      setManualData({ unitNumber: '', floor: 1 });
+      alert(`✅ ${t.building.unitCreated || 'Unidad creada'}`);
+      window.location.reload();
+    } catch (error: any) {
+      console.error('Error creating unit:', error);
+      if (error.code === '23505') {
+        alert(t.building.duplicateError);
+      } else {
+        alert(t.building.errorCreating);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleBulkCreate = async () => {
     setLoading(true);
@@ -210,15 +252,29 @@ export function BuildingManager({ building, initialUnits }: BuildingManagerProps
                 <Building2 className="w-4 h-4" />
                 {t.building.buildingInfo}
               </CardTitle>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowEditModal(true)}
-                className="gap-2"
-              >
-                <Pencil className="w-3 h-3" />
-                {t.building.edit}
-              </Button>
+              <div className="flex flex-col gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowEditModal(true)}
+                  className="gap-2"
+                >
+                  <Pencil className="w-3 h-3" />
+                  {t.building.edit}
+                </Button>
+                {units.length > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleDeleteAllUnits}
+                    disabled={loading}
+                    className="gap-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                    {t.building.deleteAllUnits}
+                  </Button>
+                )}
+              </div>
             </div>
           </CardHeader>
           <CardContent>
@@ -275,23 +331,20 @@ export function BuildingManager({ building, initialUnits }: BuildingManagerProps
         {/* Actions */}
         <div className="flex gap-3">
           <Button
+            onClick={() => setShowManualModal(true)}
+            variant="outline"
+            className="gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            {t.building.addUnit || 'Agregar Unidad'}
+          </Button>
+          <Button
             onClick={() => setShowBulkModal(true)}
             className="gap-2"
           >
             <Zap className="w-4 h-4" />
             {t.building.createBulkUnits}
           </Button>
-          {units.length > 0 && (
-            <Button
-              variant="destructive"
-              onClick={handleDeleteAllUnits}
-              disabled={loading}
-              className="gap-2"
-            >
-              <Trash2 className="w-4 h-4" />
-              {t.building.deleteAllUnits}
-            </Button>
-          )}
         </div>
 
         {/* All Units */}
@@ -450,6 +503,61 @@ export function BuildingManager({ building, initialUnits }: BuildingManagerProps
               <Button
                 variant="outline"
                 onClick={() => setShowEditModal(false)}
+                disabled={loading}
+              >
+                {t.building.cancel}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Manual Unit Creation Modal */}
+      <Dialog open={showManualModal} onOpenChange={setShowManualModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Plus className="w-4 h-4" />
+              {t.building.addUnit || 'Agregar Unidad'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="unit-number">{t.building.unitNumber || 'Número de Unidad'} *</Label>
+              <Input
+                id="unit-number"
+                value={manualData.unitNumber}
+                onChange={(e) => setManualData({ ...manualData, unitNumber: e.target.value })}
+                placeholder="Ej: 301, A-12, PH-1"
+              />
+              <p className="text-xs text-muted-foreground">
+                {t.building.unitNumberHelp || 'Puede ser cualquier formato: 101, A-5, PH-1, etc.'}
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="floor">{t.building.floor || 'Piso'}</Label>
+              <Input
+                id="floor"
+                type="number"
+                value={manualData.floor}
+                onChange={(e) => setManualData({ ...manualData, floor: parseInt(e.target.value) || 1 })}
+                min="1"
+                max="50"
+              />
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <Button
+                onClick={handleManualCreate}
+                disabled={loading}
+                className="flex-1"
+              >
+                {loading ? t.building.creating : t.building.create || 'Crear'}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setShowManualModal(false)}
                 disabled={loading}
               >
                 {t.building.cancel}

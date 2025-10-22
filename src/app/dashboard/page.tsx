@@ -44,6 +44,8 @@ export default async function DashboardPage() {
     { count: openRequests },
     { count: inProgressRequests },
     { count: totalResidents },
+    { count: pendingPayments },
+    { count: latePayments },
   ] = await Promise.all([
     supabase
       .from('conversations')
@@ -72,7 +74,26 @@ export default async function DashboardPage() {
       .from('residents')
       .select('*', { count: 'exact', head: true })
       .eq('building_id', building.id),
+    supabase
+      .from('maintenance_fees')
+      .select('*', { count: 'exact', head: true })
+      .eq('building_id', building.id)
+      .eq('status', 'pending'),
+    supabase
+      .from('maintenance_fees')
+      .select('*', { count: 'exact', head: true })
+      .eq('building_id', building.id)
+      .eq('status', 'late'),
   ]);
+
+  // Get pending/late payment amounts
+  const { data: pendingFees } = await supabase
+    .from('maintenance_fees')
+    .select('total_amount')
+    .eq('building_id', building.id)
+    .in('status', ['pending', 'late']);
+
+  const totalPendingAmount = pendingFees?.reduce((sum, fee) => sum + parseFloat(fee.total_amount || '0'), 0) || 0;
 
   // Get recent conversations
   const { data: recentConversations } = await supabase
@@ -110,6 +131,9 @@ export default async function DashboardPage() {
     openRequests: openRequests || 0,
     totalMaintenanceRequests: totalMaintenanceRequests || 0,
     inProgressRequests: inProgressRequests || 0,
+    pendingPayments: pendingPayments || 0,
+    latePayments: latePayments || 0,
+    totalPendingAmount: totalPendingAmount,
   };
 
   return (

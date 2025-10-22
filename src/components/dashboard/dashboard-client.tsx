@@ -21,6 +21,7 @@ import {
   Bell,
   CheckCircle,
   Zap,
+  DollarSign,
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/language-context';
 
@@ -33,6 +34,9 @@ interface DashboardClientProps {
     openRequests: number;
     totalMaintenanceRequests: number;
     inProgressRequests: number;
+    pendingPayments: number;
+    latePayments: number;
+    totalPendingAmount: number;
   };
   recentConversations: any[];
   recentRequests: any[];
@@ -95,6 +99,18 @@ export function DashboardClient({
 
   const statsCards = [
     {
+      title: 'Pagos Pendientes',
+      value: stats.pendingPayments + stats.latePayments,
+      amount: stats.totalPendingAmount,
+      icon: DollarSign,
+      description: stats.latePayments > 0 ? `${stats.latePayments} atrasados` : 'Cuotas mensuales',
+      href: '/dashboard/fees',
+      color: 'from-green-500 to-emerald-500',
+      bgColor: 'bg-green-500/10',
+      textColor: 'text-green-600 dark:text-green-400',
+      urgent: stats.latePayments > 3,
+    },
+    {
       title: t.dashboard.activeConversations,
       value: stats.activeConversations,
       total: stats.totalConversations,
@@ -126,16 +142,6 @@ export function DashboardClient({
       bgColor: 'bg-red-500/10',
       textColor: 'text-red-600 dark:text-red-400',
       urgent: stats.openRequests > 5,
-    },
-    {
-      title: t.dashboard.inProgress,
-      value: stats.inProgressRequests,
-      icon: Clock,
-      description: t.dashboard.maintenanceTasks,
-      href: '/dashboard/maintenance',
-      color: 'from-yellow-500 to-amber-500',
-      bgColor: 'bg-yellow-500/10',
-      textColor: 'text-yellow-600 dark:text-yellow-400',
     },
   ];
 
@@ -315,6 +321,11 @@ export function DashboardClient({
                   <p className="text-sm text-muted-foreground">/ {stat.total}</p>
                 )}
               </div>
+              {stat.amount !== undefined && (
+                <p className="text-lg font-semibold text-green-600 dark:text-green-400">
+                  ${stat.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </p>
+              )}
               <p className="text-xs text-muted-foreground">{stat.description}</p>
             </CardContent>
           </Card>

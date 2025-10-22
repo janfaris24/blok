@@ -1,6 +1,6 @@
 "use client"
 
-import { Bot, Target, Wrench, Megaphone, MessageCircle, BarChart3 } from "lucide-react"
+import { Bot, Target, Wrench, Megaphone, MessageCircle, BarChart3, DollarSign } from "lucide-react"
 import { useScrollAnimation } from "@/hooks/use-scroll-animation"
 import { useLandingLanguage as useLanguage } from "@/contexts/landing-language-context"
 
@@ -9,6 +9,11 @@ export function FeaturesSection() {
   const { t } = useLanguage()
 
   const features = [
+    {
+      icon: DollarSign,
+      title: t.features.list.payments.title,
+      description: t.features.list.payments.description,
+    },
     {
       icon: Bot,
       title: t.features.list.aiResponses.title,
@@ -28,11 +33,6 @@ export function FeaturesSection() {
       icon: Megaphone,
       title: t.features.list.broadcasts.title,
       description: t.features.list.broadcasts.description,
-    },
-    {
-      icon: MessageCircle,
-      title: t.features.list.oneOnOne.title,
-      description: t.features.list.oneOnOne.description,
     },
     {
       icon: BarChart3,

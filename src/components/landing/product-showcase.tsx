@@ -69,7 +69,7 @@ export function ProductShowcase() {
                     <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
                       <showcase.icon size={28} className="text-primary" />
                     </div>
-                    <h3 className="text-3xl sm:text-4xl font-bold leading-tight">
+                    <h3 className="text-xl sm:text-2xl md:text-3xl font-bold leading-tight">
                       {showcase.title}
                     </h3>
                   </div>

@@ -18,7 +18,8 @@ import {
   BookOpen,
   UserCog,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  DollarSign
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -87,6 +88,11 @@ export function DashboardNav({ buildingName, buildingId, userEmail, userName }: 
     {
       label: t.nav.tools,
       items: [
+        {
+          title: 'Cuotas',
+          href: '/dashboard/fees',
+          icon: DollarSign,
+        },
         {
           title: t.nav.maintenance,
           href: '/dashboard/maintenance',
