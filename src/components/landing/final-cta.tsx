@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Button } from "@/components/ui/button"
+import { MagneticButton } from "@/components/ui/magnetic-button"
 import { Check } from "lucide-react"
 import { useLandingLanguage as useLanguage } from "@/contexts/landing-language-context"
 import { WaitlistModal } from "./waitlist-modal"
@@ -34,13 +34,13 @@ export function FinalCTA() {
           <p className="text-lg text-muted-foreground mb-8">{t.finalCta.subheadline}</p>
 
           {/* CTA Button */}
-          <Button
+          <MagneticButton
             size="lg"
             className="bg-foreground text-background hover:bg-foreground/90 text-lg px-12 py-6 h-auto mb-8"
             onClick={handleWaitlistClick}
           >
             {t.finalCta.waitlist}
-          </Button>
+          </MagneticButton>
 
           {/* Trust Signals */}
           <div className="flex flex-wrap items-center justify-center gap-6">

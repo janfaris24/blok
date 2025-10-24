@@ -1,16 +1,15 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Menu, X, Moon, Sun } from "lucide-react"
 import { useTheme } from "next-themes"
 import { useLandingLanguage } from "@/contexts/landing-language-context"
-import { WaitlistModal } from "./waitlist-modal"
 
 export function Navigation() {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const [waitlistOpen, setWaitlistOpen] = useState(false)
   const { language, setLanguage, t } = useLandingLanguage()
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
@@ -27,11 +26,6 @@ export function Navigation() {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
-  // Open waitlist modal
-  const handleWaitlistClick = () => {
-    setWaitlistOpen(true)
-  }
-
   const navLinks: Array<{ label: string; href: string; badge?: boolean }> = [
     { label: t.nav.pricing, href: "/pricing" },
     { label: "FAQ", href: "/faq" },
@@ -39,7 +33,12 @@ export function Navigation() {
   ]
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 px-4 sm:px-6 lg:px-8 pt-4">
+    <motion.nav
+      initial={{ y: -100, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
+      className="fixed top-0 left-0 right-0 z-50 px-4 sm:px-6 lg:px-8 pt-4"
+    >
       <div
         className={`container mx-auto transition-all duration-300 ${
           isScrolled
@@ -120,13 +119,6 @@ export function Navigation() {
             >
               {t.nav.login}
             </Button>
-            <Button
-              size="sm"
-              className="bg-foreground text-background hover:bg-foreground/90"
-              onClick={handleWaitlistClick}
-            >
-              {t.nav.waitlist}
-            </Button>
           </div>
 
           {/* Mobile Menu Button */}
@@ -193,19 +185,10 @@ export function Navigation() {
               >
                 {t.nav.login}
               </Button>
-              <Button
-                className="bg-foreground text-background hover:bg-foreground/90 w-full"
-                onClick={handleWaitlistClick}
-              >
-                {t.nav.waitlist}
-              </Button>
             </div>
           </div>
         )}
       </div>
-
-      {/* Waitlist Modal */}
-      <WaitlistModal open={waitlistOpen} onOpenChange={setWaitlistOpen} />
-    </nav>
+    </motion.nav>
   )
 }
