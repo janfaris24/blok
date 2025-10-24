@@ -58,11 +58,11 @@ export function FeaturesSection() {
             {features.map((feature, index) => (
               <div
                 key={index}
-                className={`gradient-border p-6 hover:scale-105 transition-all duration-300 group scroll-fade-in scroll-fade-in-delay-${(index % 3) + 1} ${isVisible ? "visible" : ""}`}
+                className={`border border-border rounded-lg p-6 hover:scale-105 transition-all duration-300 group scroll-fade-in scroll-fade-in-delay-${(index % 3) + 1} ${isVisible ? "visible" : ""}`}
               >
                 <div className="flex flex-col h-full">
-                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
-                    <feature.icon size={24} className="text-primary" />
+                  <div className="w-12 h-12 rounded-xl bg-foreground/5 border border-border flex items-center justify-center mb-4 group-hover:bg-foreground/10 transition-colors">
+                    <feature.icon size={24} className="text-foreground" />
                   </div>
                   <h3 className="text-lg font-semibold mb-2 text-foreground">{feature.title}</h3>
                   <p className="text-muted-foreground text-sm leading-relaxed">{feature.description}</p>

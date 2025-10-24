@@ -27,7 +27,7 @@ export function AIIntelligence() {
   ]
 
   return (
-    <section className="py-20 sm:py-32 relative">
+    <section id="intelligence" className="py-20 sm:py-32 relative">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto">
           {/* Headline */}
@@ -35,7 +35,7 @@ export function AIIntelligence() {
             ref={ref}
             className={`text-3xl sm:text-4xl md:text-5xl font-bold text-center mb-16 text-balance scroll-fade-in ${isVisible ? "visible" : ""}`}
           >
-            {t.ai.headline} <span className="gradient-text">{t.ai.headlineAccent}</span>
+            {t.ai.headline} <span className="text-primary">{t.ai.headlineAccent}</span>
           </h2>
 
           {/* Capabilities */}
@@ -43,7 +43,7 @@ export function AIIntelligence() {
             {capabilities.map((capability, index) => (
               <div
                 key={index}
-                className={`gradient-border p-6 scroll-fade-in scroll-fade-in-delay-${index + 1} ${isVisible ? "visible" : ""}`}
+                className={`border border-border rounded-lg p-6 scroll-fade-in scroll-fade-in-delay-${index + 1} ${isVisible ? "visible" : ""}`}
               >
                 <div className="flex flex-col items-center text-center">
                   <div className="w-16 h-16 rounded-full bg-secondary/10 flex items-center justify-center mb-4">
@@ -57,7 +57,7 @@ export function AIIntelligence() {
           </div>
 
           {/* AI Analysis Demo */}
-          <div className={`gradient-border p-1 scroll-fade-in ${isVisible ? "visible" : ""}`}>
+          <div className={`border border-border rounded-lg scroll-fade-in ${isVisible ? "visible" : ""}`}>
             <div className="bg-card rounded-lg p-6 sm:p-8">
               <div className="grid md:grid-cols-2 gap-8 items-center">
                 {/* Input */}

@@ -1,27 +1,30 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useRef } from "react"
+import { motion, useScroll, useTransform } from "framer-motion"
 import { Button } from "@/components/ui/button"
-import { Loader2 } from "lucide-react"
 import { useLandingLanguage as useLanguage } from "@/contexts/landing-language-context"
 import { WaitlistModal } from "./waitlist-modal"
 
 export function HeroSection() {
-  const { t, language } = useLanguage()
-  const [videoLoaded, setVideoLoaded] = useState(false)
-  const [videoError, setVideoError] = useState(false)
+  const { t } = useLanguage()
   const [waitlistOpen, setWaitlistOpen] = useState(false)
-  const videoRef = useRef<HTMLVideoElement>(null)
+  const sectionRef = useRef<HTMLElement>(null)
 
-  useEffect(() => {
-    if (videoRef.current) {
-      const video = videoRef.current;
-      // If video is already loaded
-      if (video.readyState >= 3) {
-        setVideoLoaded(true);
-      }
-    }
-  }, [])
+  // Track scroll progress through hero section
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start start", "end start"]
+  })
+
+  // Image fades out as you scroll (1 → 0)
+  const imageOpacity = useTransform(scrollYProgress, [0, 0.5], [1, 0])
+
+  // Grid fades in as you scroll (0 → 0.5)
+  const gridOpacity = useTransform(scrollYProgress, [0, 0.5], [0, 0.5])
+
+  // Slight zoom effect on image
+  const imageScale = useTransform(scrollYProgress, [0, 0.5], [1, 1.1])
 
   // Open waitlist modal
   const handleWaitlistClick = () => {
@@ -29,35 +32,56 @@ export function HeroSection() {
   }
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-24 sm:pt-28">
-      {/* Grid pattern background */}
-      <div className="absolute inset-0 grid-pattern opacity-50" />
+    <section id="hero" ref={sectionRef} className="relative min-h-screen flex items-center justify-center overflow-hidden pt-24 sm:pt-28">
+      {/* Condo background image - fades out on scroll */}
+      <motion.div
+        className="absolute inset-0 bg-cover bg-center"
+        style={{
+          backgroundImage: 'url(/images/condo-hero-main.jpg)',
+          opacity: imageOpacity,
+          scale: imageScale,
+        }}
+      />
 
-      {/* Gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/50 to-background" />
+      {/* Darker overlay for better text readability */}
+      <div className="absolute inset-0 bg-black/40" />
+
+      {/* Grid pattern background - fades in on scroll */}
+      <motion.div
+        className="absolute inset-0 grid-pattern"
+        style={{ opacity: gridOpacity }}
+      />
+
+      {/* Gradient overlay for text readability */}
+      <div className="absolute inset-0 bg-gradient-to-b from-background/20 via-background/50 to-background" />
 
       <div className="container relative z-10 mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-32">
-        <div className="max-w-5xl mx-auto text-center">
+        <motion.div
+          className="max-w-5xl mx-auto text-center"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.2 }}
+        >
           {/* Eyebrow */}
           <div className="inline-block mb-6">
-            <span className="text-sm font-medium gradient-text">{t.hero.eyebrow}</span>
+            <span className="text-sm font-medium text-white/80 drop-shadow-lg uppercase tracking-wider">{t.hero.eyebrow}</span>
           </div>
 
           {/* Headline */}
-          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-foreground mb-6 text-balance leading-tight">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6 text-balance leading-tight drop-shadow-2xl [text-shadow:_0_2px_10px_rgb(0_0_0_/_80%)]">
             {t.hero.headline}
           </h1>
 
           {/* Subheadline */}
-          <p className="text-lg sm:text-xl text-muted-foreground mb-8 max-w-3xl mx-auto text-pretty leading-relaxed">
+          <p className="text-lg sm:text-xl text-white/95 mb-8 max-w-3xl mx-auto text-pretty leading-relaxed drop-shadow-lg [text-shadow:_0_1px_8px_rgb(0_0_0_/_60%)]">
             {t.hero.subheadline}
           </p>
 
           {/* CTAs */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Button
               size="lg"
-              className="bg-foreground text-background hover:bg-foreground/90 text-base px-8"
+              className="bg-foreground text-background hover:bg-foreground/90 text-base px-8 shadow-2xl"
               onClick={handleWaitlistClick}
             >
               {t.hero.waitlist}
@@ -65,73 +89,13 @@ export function HeroSection() {
             <Button
               size="lg"
               variant="outline"
-              className="text-base px-8 gap-2 bg-transparent"
+              className="text-base px-8 gap-2 bg-background/80 backdrop-blur-sm hover:bg-background/90 shadow-xl"
               onClick={() => window.location.href = '/login'}
             >
               {t.hero.login}
             </Button>
           </div>
-
-          {/* Removed Social Proof */}
-          {/* <p className="text-sm text-muted-foreground">
-            {t.hero.socialProof.replace('{count}', '30')}
-          </p> */}
-
-          {/* Video Demo */}
-          <div className="mt-16 relative">
-            <div className="gradient-border p-1 max-w-4xl mx-auto">
-              <div className="bg-card rounded-lg p-4 sm:p-6">
-                <div className="relative aspect-video bg-muted rounded-lg overflow-hidden">
-                  {/* Loading Placeholder */}
-                  {!videoLoaded && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-muted z-10">
-                      <div className="text-center">
-                        <Loader2 className="w-12 h-12 text-primary animate-spin mx-auto mb-4" />
-                        <p className="text-sm text-muted-foreground">
-                          {language === 'es' ? 'Cargando demo...' : 'Loading demo...'}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Video */}
-                  <video
-                    ref={videoRef}
-                    autoPlay
-                    loop
-                    muted
-                    playsInline
-                    controls
-                    className={`w-full h-full object-cover transition-opacity duration-500 ${
-                      videoLoaded ? 'opacity-100' : 'opacity-0'
-                    }`}
-                    onLoadedData={() => setVideoLoaded(true)}
-                    onCanPlayThrough={() => setVideoLoaded(true)}
-                    onError={() => {
-                      setVideoError(true);
-                      setVideoLoaded(true);
-                    }}
-                  >
-                    <source src="/videos/BLOK-DEMO.mp4" type="video/mp4" />
-                    Your browser does not support the video tag.
-                  </video>
-
-                  {/* Error message if video fails */}
-                  {videoError && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-muted">
-                      <p className="text-sm text-muted-foreground">
-                        {language === 'es' ? 'Error cargando video' : 'Error loading video'}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Glow effect */}
-            <div className="absolute inset-0 bg-gradient-to-r from-primary/20 via-secondary/20 to-primary/20 blur-3xl -z-10 opacity-50" />
-          </div>
-        </div>
+        </motion.div>
       </div>
 
       {/* Waitlist Modal */}

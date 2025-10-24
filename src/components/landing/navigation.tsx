@@ -5,12 +5,10 @@ import { Button } from "@/components/ui/button"
 import { Menu, X, Moon, Sun } from "lucide-react"
 import { useTheme } from "next-themes"
 import { useLandingLanguage } from "@/contexts/landing-language-context"
-import { WaitlistModal } from "./waitlist-modal"
 
 export function Navigation() {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const [waitlistOpen, setWaitlistOpen] = useState(false)
   const { language, setLanguage, t } = useLandingLanguage()
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
@@ -26,11 +24,6 @@ export function Navigation() {
     window.addEventListener("scroll", handleScroll)
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
-
-  // Open waitlist modal
-  const handleWaitlistClick = () => {
-    setWaitlistOpen(true)
-  }
 
   const navLinks: Array<{ label: string; href: string; badge?: boolean }> = [
     { label: t.nav.pricing, href: "/pricing" },
@@ -120,13 +113,6 @@ export function Navigation() {
             >
               {t.nav.login}
             </Button>
-            <Button
-              size="sm"
-              className="bg-foreground text-background hover:bg-foreground/90"
-              onClick={handleWaitlistClick}
-            >
-              {t.nav.waitlist}
-            </Button>
           </div>
 
           {/* Mobile Menu Button */}
@@ -193,19 +179,10 @@ export function Navigation() {
               >
                 {t.nav.login}
               </Button>
-              <Button
-                className="bg-foreground text-background hover:bg-foreground/90 w-full"
-                onClick={handleWaitlistClick}
-              >
-                {t.nav.waitlist}
-              </Button>
             </div>
           </div>
         )}
       </div>
-
-      {/* Waitlist Modal */}
-      <WaitlistModal open={waitlistOpen} onOpenChange={setWaitlistOpen} />
     </nav>
   )
 }

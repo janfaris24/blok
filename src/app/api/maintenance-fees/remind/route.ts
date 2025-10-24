@@ -101,7 +101,7 @@ export async function POST(request: Request) {
 📅 *Vencimiento:* ${dueDate}
 ${fee.status === 'late' ? '\n⚠️ *Estado:* Atrasado' : ''}
 
-Por favor realiza tu pago lo antes posible. Si ya pagaste, ignora este mensaje.
+Por favor realiza tu pago lo antes posible.
 
 Para cualquier pregunta, responde a este mensaje.`
       : `Hello ${resident.first_name},
@@ -114,7 +114,7 @@ Para cualquier pregunta, responde a este mensaje.`
 📅 *Due Date:* ${dueDate}
 ${fee.status === 'late' ? '\n⚠️ *Status:* Late' : ''}
 
-Please make your payment as soon as possible. If you've already paid, please disregard this message.
+Please make your payment as soon as possible.
 
 For any questions, reply to this message.`;
 

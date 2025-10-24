@@ -22,6 +22,8 @@ import {
   CheckCircle,
   Zap,
   DollarSign,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/language-context';
 
@@ -66,11 +68,26 @@ export function DashboardClient({
   const router = useRouter();
   const [aiSummary, setAiSummary] = useState<AISummary | null>(null);
   const [loadingSummary, setLoadingSummary] = useState(true);
+  const [aiSummaryExpanded, setAiSummaryExpanded] = useState(() => {
+    // Load from localStorage, default to true (expanded)
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('aiSummaryExpanded');
+      return saved !== null ? JSON.parse(saved) : true;
+    }
+    return true;
+  });
 
   // Fetch AI summary on mount (uses cache)
   useEffect(() => {
     fetchAISummary(false); // Don't force refresh on initial load
   }, []);
+
+  // Save preference to localStorage when it changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('aiSummaryExpanded', JSON.stringify(aiSummaryExpanded));
+    }
+  }, [aiSummaryExpanded]);
 
   async function fetchAISummary(forceRefresh = false) {
     setLoadingSummary(true);
@@ -192,9 +209,22 @@ export function DashboardClient({
                   </Badge>
                 </CardTitle>
               </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setAiSummaryExpanded(!aiSummaryExpanded)}
+                className="h-8 w-8 p-0"
+              >
+                {aiSummaryExpanded ? (
+                  <ChevronUp className="w-4 h-4" />
+                ) : (
+                  <ChevronDown className="w-4 h-4" />
+                )}
+              </Button>
             </div>
           </CardHeader>
-          <CardContent className="space-y-4">
+          {aiSummaryExpanded && (
+            <CardContent className="space-y-4">
             {/* Summary */}
             <p className="text-sm leading-relaxed">{aiSummary.summary}</p>
 
@@ -278,7 +308,8 @@ export function DashboardClient({
                 </div>
               </div>
             </div>
-          </CardContent>
+            </CardContent>
+          )}
         </Card>
       )}
 
