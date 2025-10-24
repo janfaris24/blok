@@ -1,12 +1,80 @@
 "use client"
 
+import { useState, useEffect, useRef } from "react"
 import { Brain, Zap, BookOpen } from "lucide-react"
 import { useScrollAnimation } from "@/hooks/use-scroll-animation"
+import { useTypewriter } from "@/hooks/use-typewriter"
 import { useLandingLanguage as useLanguage } from "@/contexts/landing-language-context"
 
 export function AIIntelligence() {
   const { ref, isVisible } = useScrollAnimation()
   const { t } = useLanguage()
+  const [demoVisible, setDemoVisible] = useState(false)
+  const demoRef = useRef<HTMLDivElement>(null)
+
+  // Trigger typewriter when demo section comes into view
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && !demoVisible) {
+            setDemoVisible(true)
+          }
+        })
+      },
+      { threshold: 0.5 }
+    )
+
+    if (demoRef.current) {
+      observer.observe(demoRef.current)
+    }
+
+    return () => observer.disconnect()
+  }, [demoVisible])
+
+  // Loop the typewriter effect
+  useEffect(() => {
+    if (!demoVisible) return
+
+    // Calculate total animation duration
+    const totalDuration = 2400 + (t.ai.demo.exampleAction.length * 50) + 2000 // last delay + typing time + pause
+
+    const loopTimer = setTimeout(() => {
+      setDemoVisible(false)
+      setTimeout(() => setDemoVisible(true), 100)
+    }, totalDuration)
+
+    return () => clearTimeout(loopTimer)
+  }, [demoVisible, t.ai.demo.exampleAction])
+
+  // Typewriter animations for AI demo output
+  const intentText = useTypewriter({
+    text: `"${t.ai.demo.exampleIntent}"`,
+    speed: 50,
+    delay: 300,
+    enabled: demoVisible
+  })
+
+  const categoryText = useTypewriter({
+    text: `"${t.ai.demo.exampleCategory}"`,
+    speed: 50,
+    delay: 1000,
+    enabled: demoVisible
+  })
+
+  const priorityText = useTypewriter({
+    text: `"${t.ai.demo.examplePriority}"`,
+    speed: 50,
+    delay: 1700,
+    enabled: demoVisible
+  })
+
+  const actionText = useTypewriter({
+    text: `"${t.ai.demo.exampleAction}"`,
+    speed: 50,
+    delay: 2400,
+    enabled: demoVisible
+  })
 
   const capabilities = [
     {
@@ -57,7 +125,10 @@ export function AIIntelligence() {
           </div>
 
           {/* AI Analysis Demo */}
-          <div className={`border border-border rounded-lg scroll-fade-in ${isVisible ? "visible" : ""}`}>
+          <div
+            ref={demoRef}
+            className={`border border-border rounded-lg scroll-fade-in ${isVisible ? "visible" : ""}`}
+          >
             <div className="bg-card rounded-lg p-6 sm:p-8">
               <div className="grid md:grid-cols-2 gap-8 items-center">
                 {/* Input */}
@@ -68,23 +139,37 @@ export function AIIntelligence() {
                   </div>
                 </div>
 
-                {/* Output */}
+                {/* Output with Typewriter Effect */}
                 <div>
                   <div className="text-sm text-muted-foreground mb-2">{t.ai.demo.output}</div>
                   <div className="bg-muted rounded-lg p-4 font-mono text-xs space-y-2">
                     <div>
                       <span className="text-secondary">intent:</span>{" "}
-                      <span className="text-foreground">"{t.ai.demo.exampleIntent}"</span>
+                      <span className="text-foreground">
+                        {intentText.displayText}
+                        {!intentText.isComplete && <span className="animate-pulse">|</span>}
+                      </span>
                     </div>
                     <div>
-                      <span className="text-secondary">category:</span> <span className="text-foreground">"{t.ai.demo.exampleCategory}"</span>
+                      <span className="text-secondary">category:</span>{" "}
+                      <span className="text-foreground">
+                        {categoryText.displayText}
+                        {intentText.isComplete && !categoryText.isComplete && <span className="animate-pulse">|</span>}
+                      </span>
                     </div>
                     <div>
-                      <span className="text-secondary">priority:</span> <span className="text-primary">"{t.ai.demo.examplePriority}"</span>
+                      <span className="text-secondary">priority:</span>{" "}
+                      <span className="text-primary">
+                        {priorityText.displayText}
+                        {categoryText.isComplete && !priorityText.isComplete && <span className="animate-pulse">|</span>}
+                      </span>
                     </div>
                     <div>
                       <span className="text-secondary">action:</span>{" "}
-                      <span className="text-foreground">"{t.ai.demo.exampleAction}"</span>
+                      <span className="text-foreground">
+                        {actionText.displayText}
+                        {priorityText.isComplete && !actionText.isComplete && <span className="animate-pulse">|</span>}
+                      </span>
                     </div>
                   </div>
                 </div>

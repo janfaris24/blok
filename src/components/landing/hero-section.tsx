@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react"
 import { motion, useScroll, useTransform } from "framer-motion"
-import { Button } from "@/components/ui/button"
+import { MagneticButton } from "@/components/ui/magnetic-button"
 import { useLandingLanguage as useLanguage } from "@/contexts/landing-language-context"
 import { WaitlistModal } from "./waitlist-modal"
 
@@ -79,21 +79,21 @@ export function HeroSection() {
 
           {/* CTAs */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button
+            <MagneticButton
               size="lg"
               className="bg-foreground text-background hover:bg-foreground/90 text-base px-8 shadow-2xl"
               onClick={handleWaitlistClick}
             >
               {t.hero.waitlist}
-            </Button>
-            <Button
+            </MagneticButton>
+            <MagneticButton
               size="lg"
               variant="outline"
               className="text-base px-8 gap-2 bg-background/80 backdrop-blur-sm hover:bg-background/90 shadow-xl"
               onClick={() => window.location.href = '/login'}
             >
               {t.hero.login}
-            </Button>
+            </MagneticButton>
           </div>
         </motion.div>
       </div>

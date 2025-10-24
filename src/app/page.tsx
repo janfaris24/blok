@@ -2,7 +2,7 @@
 
 import { LandingLanguageProvider } from "@/contexts/landing-language-context";
 import { Navigation } from "@/components/landing/navigation";
-// import { ScrollProgressNav } from "@/components/landing/scroll-progress-nav";
+import { ScrollProgress } from "@/components/landing/scroll-progress";
 import { HeroSection } from "@/components/landing/hero-section";
 import { ScrollVideoDemo } from "@/components/landing/scroll-video-demo";
 import { StickyFeatureSection } from "@/components/landing/sticky-feature-section";
@@ -17,8 +17,8 @@ export default function Home() {
   return (
     <LandingLanguageProvider>
       <div className="min-h-screen bg-background">
+        <ScrollProgress />
         <Navigation />
-        {/* <ScrollProgressNav /> */}
         <main>
           <HeroSection />
           <ScrollVideoDemo />
