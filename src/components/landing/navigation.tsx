@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Menu, X, Moon, Sun } from "lucide-react"
 import { useTheme } from "next-themes"
@@ -32,7 +33,12 @@ export function Navigation() {
   ]
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 px-4 sm:px-6 lg:px-8 pt-4">
+    <motion.nav
+      initial={{ y: -100, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
+      className="fixed top-0 left-0 right-0 z-50 px-4 sm:px-6 lg:px-8 pt-4"
+    >
       <div
         className={`container mx-auto transition-all duration-300 ${
           isScrolled
@@ -183,6 +189,6 @@ export function Navigation() {
           </div>
         )}
       </div>
-    </nav>
+    </motion.nav>
   )
 }

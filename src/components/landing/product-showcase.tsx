@@ -1,6 +1,8 @@
 "use client"
 
+import { useState } from "react"
 import Image from "next/image"
+import { motion } from "framer-motion"
 import { useScrollAnimation } from "@/hooks/use-scroll-animation"
 import { useLandingLanguage as useLanguage } from "@/contexts/landing-language-context"
 import { MessageCircle, LayoutDashboard, Wrench } from "lucide-react"
@@ -8,6 +10,36 @@ import { MessageCircle, LayoutDashboard, Wrench } from "lucide-react"
 export function ProductShowcase() {
   const { ref, isVisible } = useScrollAnimation()
   const { t } = useLanguage()
+  const [rotations, setRotations] = useState([
+    { x: 0, y: 0 },
+    { x: 0, y: 0 },
+    { x: 0, y: 0 }
+  ])
+  const [isHovering, setIsHovering] = useState([false, false, false])
+
+  const handleMouseMove = (index: number) => (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect()
+    const x = (e.clientX - rect.left) / rect.width - 0.5
+    const y = (e.clientY - rect.top) / rect.height - 0.5
+
+    const newRotations = [...rotations]
+    newRotations[index] = { x: -y * 15, y: x * 15 }  // Max 15deg tilt (increased for visibility)
+    setRotations(newRotations)
+
+    const newHovering = [...isHovering]
+    newHovering[index] = true
+    setIsHovering(newHovering)
+  }
+
+  const handleMouseLeave = (index: number) => () => {
+    const newRotations = [...rotations]
+    newRotations[index] = { x: 0, y: 0 }
+    setRotations(newRotations)
+
+    const newHovering = [...isHovering]
+    newHovering[index] = false
+    setIsHovering(newHovering)
+  }
 
   const showcases = [
     {
@@ -78,13 +110,27 @@ export function ProductShowcase() {
                   </p>
                 </div>
 
-                {/* Screenshot */}
+                {/* Screenshot with 3D Tilt */}
                 <div
                   className={`lg:col-span-3 ${
                     index % 2 === 1 ? "lg:order-1" : ""
                   } scroll-fade-in scroll-fade-in-delay-1 ${isVisible ? "visible" : ""}`}
+                  style={{ perspective: '1500px' }}
                 >
-                  <div className="relative rounded-xl overflow-hidden hover:scale-[1.02] transition-transform duration-300">
+                  <motion.div
+                    className={`relative rounded-xl overflow-hidden shadow-2xl cursor-pointer ${
+                      isHovering[index] ? 'ring-2 ring-primary/50' : ''
+                    }`}
+                    style={{ transformStyle: 'preserve-3d' }}
+                    onMouseMove={handleMouseMove(index)}
+                    onMouseLeave={handleMouseLeave(index)}
+                    animate={{
+                      rotateX: rotations[index].x,
+                      rotateY: rotations[index].y,
+                      scale: isHovering[index] ? 1.05 : 1,
+                    }}
+                    transition={{ type: 'spring', stiffness: 150, damping: 15 }}
+                  >
                     <Image
                       src={showcase.image}
                       alt={showcase.title}
@@ -94,7 +140,15 @@ export function ProductShowcase() {
                       quality={100}
                       priority={index === 0}
                     />
-                  </div>
+                    {/* Hover indicator */}
+                    {isHovering[index] && (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-secondary/10 pointer-events-none"
+                      />
+                    )}
+                  </motion.div>
                 </div>
               </div>
             ))}
