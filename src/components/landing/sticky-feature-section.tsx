@@ -20,7 +20,7 @@ const features: Feature[] = [
   {
     icon: MessageSquare,
     title: {
-      es: 'AI Analiza Mensajes',
+      es: 'IA Analiza Mensajes',
       en: 'AI Analyzes Messages'
     },
     description: {
@@ -46,8 +46,8 @@ const features: Feature[] = [
       en: 'Automatic Tracking'
     },
     description: {
-      es: 'Crea tickets de mantenimiento y da seguimiento hasta resolver cada solicitud de los residentes',
-      en: 'Creates maintenance tickets and tracks every resident request to resolution'
+      es: 'Crea boletos de mantenimiento y recomienda proveedores dependiendo de la necesidad. Da seguimiento hasta resolver cada solicitud.',
+      en: 'Creates maintenance tickets and recommends service providers based on need. Tracks every request to resolution.'
     }
   }
 ];

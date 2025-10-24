@@ -101,14 +101,14 @@ export function ScrollVideoDemo() {
         >
           <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6 text-foreground">
             {language === 'es'
-              ? 'Gestiona tu Edificio desde WhatsApp'
-              : 'Manage Your Building from WhatsApp'
+              ? 'Blok Gestiona Tu Condominio A Través de WhatsApp'
+              : 'Blok Manages Your Condo Through WhatsApp'
             }
           </h2>
           <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto">
             {language === 'es'
-              ? 'Mira cómo Blok conecta WhatsApp con tu administración en tiempo real'
-              : 'See how Blok connects WhatsApp with your administration in real-time'
+              ? 'Los residentes escriben por WhatsApp. Blok analiza, responde y gestiona automáticamente en tiempo real.'
+              : 'Residents message via WhatsApp. Blok analyzes, responds, and manages automatically in real-time.'
             }
           </p>
         </motion.div>

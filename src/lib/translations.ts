@@ -708,7 +708,7 @@ Si es sobre reglas del edificio, envíalo a todos.`,
     hero: {
       eyebrow: 'Comunicación Profesional para Tu Condominio',
       headline: 'Respuestas Instantáneas 24/7. Administración Organizada. Residentes Satisfechos.',
-      subheadline: 'IA que atiende residentes automáticamente, mientras tu equipo se enfoca en lo importante. Mejora el servicio, reduce costos operativos.',
+      subheadline: 'Inteligencia Artificial (IA) que atiende residentes automáticamente, mientras tu equipo se enfoca en lo importante. Mejora el servicio, reduce costos operativos.',
       cta: 'Comenzar Gratis',
       waitlist: 'Prueba Gratis 30 Días',
       login: 'Iniciar Sesión',
@@ -766,7 +766,7 @@ Si es sobre reglas del edificio, envíalo a todos.`,
       headline: 'Recupera Tu Dinero. Recupera Tu Tiempo.',
       list: {
         payments: {
-          title: 'Deja de Perder $15K al Año',
+          title: 'Deja de Perder $15K al Año (Ejemplo)',
           description: 'Rastrea cuotas pendientes. Recordatorios automáticos por WhatsApp. Cobra lo que te deben.',
         },
         aiResponses: {
@@ -778,8 +778,8 @@ Si es sobre reglas del edificio, envíalo a todos.`,
           description: 'Solicitudes importantes nunca se pierden entre 200 mensajes. Todo organizado automáticamente.',
         },
         autoTickets: {
-          title: 'Adiós al Excel de Mantenimiento',
-          description: 'Cada problema se convierte en ticket. Seguimiento visual. Cero papel.',
+          title: 'Seguimiento Automático',
+          description: 'Crea boletos de mantenimiento y recomienda proveedores dependiendo de la necesidad. Da seguimiento hasta resolver cada solicitud.',
         },
         broadcasts: {
           title: 'Anuncios en 10 Segundos',
