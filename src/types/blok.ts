@@ -2,6 +2,9 @@
 
 export type MessageIntent =
   | 'maintenance_request'
+  | 'status_inquiry' // Asking about status of existing requests/tickets
+  | 'payment_confirmation' // Confirming payment of HOA fees
+  | 'issue_resolved' // Resident confirms issue has been fixed
   | 'general_question'
   | 'noise_complaint'
   | 'visitor_access'
@@ -28,6 +31,8 @@ export interface AIAnalysisResult {
     maintenanceCategory?: string;
     urgency?: string;
     location?: string;
+    recommendProviders?: boolean; // Whether to recommend service providers (PR model)
+    isCommonArea?: boolean; // True if issue is in common area vs private unit
     [key: string]: any;
   };
 }

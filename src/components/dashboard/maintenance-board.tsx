@@ -42,9 +42,11 @@ import {
   Zap,
   AlertTriangle,
   Info,
+  X,
 } from 'lucide-react';
 import { MaintenanceDetailModal } from './maintenance-detail-modal';
 import { useLanguage } from '@/contexts/language-context';
+import { useDebounce } from '@/hooks/use-debounce';
 
 interface MaintenanceRequest {
   id: string;
@@ -105,6 +107,9 @@ export function MaintenanceBoard({ initialRequests, buildingId }: MaintenanceBoa
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const supabase = createClient();
+
+  // Debounce search query for better performance (300ms delay)
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
   const columns = [
     {
@@ -250,16 +255,19 @@ export function MaintenanceBoard({ initialRequests, buildingId }: MaintenanceBoa
     };
   }, [buildingId, supabase]);
 
-  // Filtered requests
+  // Filtered requests with enhanced search
   const filteredRequests = useMemo(() => {
     return requests.filter((req) => {
+      // Enhanced search: title, description, category, resident name, unit number
       const matchesSearch =
-        searchQuery === '' ||
-        req.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        req.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        debouncedSearchQuery === '' ||
+        req.title?.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
+        req.description.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
+        req.category.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
         `${req.residents.first_name} ${req.residents.last_name}`
           .toLowerCase()
-          .includes(searchQuery.toLowerCase());
+          .includes(debouncedSearchQuery.toLowerCase()) ||
+        req.units?.unit_number.toLowerCase().includes(debouncedSearchQuery.toLowerCase());
 
       const matchesPriority =
         priorityFilter === 'all' || req.priority === priorityFilter;
@@ -269,7 +277,7 @@ export function MaintenanceBoard({ initialRequests, buildingId }: MaintenanceBoa
 
       return matchesSearch && matchesPriority && matchesCategory;
     });
-  }, [requests, searchQuery, priorityFilter, categoryFilter]);
+  }, [requests, debouncedSearchQuery, priorityFilter, categoryFilter]);
 
   // Stats
   const stats = useMemo(() => {
@@ -488,8 +496,25 @@ export function MaintenanceBoard({ initialRequests, buildingId }: MaintenanceBoa
                   placeholder={t.maintenance.searchPlaceholder}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-8 h-9 text-sm"
+                  className="pl-8 pr-20 h-9 text-sm"
                 />
+                {/* Clear button */}
+                {searchQuery && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-16 top-1/2 -translate-y-1/2 h-6 w-6 hover:bg-muted"
+                    onClick={() => setSearchQuery('')}
+                  >
+                    <X className="w-3 h-3" />
+                  </Button>
+                )}
+                {/* Search results count */}
+                {debouncedSearchQuery && (
+                  <div className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-medium text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                    {filteredRequests.length}
+                  </div>
+                )}
               </div>
 
               <div className="relative w-full md:w-[180px]">
@@ -543,7 +568,40 @@ export function MaintenanceBoard({ initialRequests, buildingId }: MaintenanceBoa
         </Card>
       </div>
 
+      {/* No Results Empty State */}
+      {filteredRequests.length === 0 && (debouncedSearchQuery || priorityFilter !== 'all' || categoryFilter !== 'all') && (
+        <Card className="border-border/40">
+          <CardContent className="p-12">
+            <div className="text-center max-w-md mx-auto">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
+                <Search className="w-8 h-8 text-muted-foreground/40" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">
+                {t.maintenance.noResults || 'No se encontraron resultados'}
+              </h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                {debouncedSearchQuery
+                  ? t.maintenance.noResultsDesc || `No se encontraron solicitudes que coincidan con "${debouncedSearchQuery}"`
+                  : t.maintenance.noResultsFilters || 'No se encontraron solicitudes con los filtros seleccionados'}
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setSearchQuery('');
+                  setPriorityFilter('all');
+                  setCategoryFilter('all');
+                }}
+              >
+                {t.maintenance.clearFilters || 'Limpiar filtros'}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Kanban Board */}
+      {filteredRequests.length > 0 && (
       <DndContext
         sensors={sensors}
         onDragStart={handleDragStart}
@@ -627,6 +685,7 @@ export function MaintenanceBoard({ initialRequests, buildingId }: MaintenanceBoa
           onStatusChange={handleStatusChange}
         />
       </DndContext>
+      )}
     </div>
   );
 }

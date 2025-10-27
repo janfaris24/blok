@@ -220,6 +220,32 @@ Deno.serve(async (req: Request) => {
       console.log('✅ Using existing conversation');
     }
 
+    // 4.5. 💬 FETCH CONVERSATION HISTORY for context-aware AI responses
+    console.log(`💬 [${Date.now() - startTime}ms] Fetching conversation history for context...`);
+
+    let conversationHistory: Array<{ role: 'resident' | 'ai' | 'admin'; content: string }> = [];
+
+    if (conversation) {
+      const { data: recentMessages } = await supabase
+        .from('messages')
+        .select('sender_type, content, created_at')
+        .eq('conversation_id', conversation.id)
+        .order('created_at', { ascending: false })
+        .limit(10); // Last 10 messages for context
+
+      if (recentMessages && recentMessages.length > 0) {
+        // Reverse to get chronological order (oldest first)
+        conversationHistory = recentMessages.reverse().map((msg: any) => ({
+          role: msg.sender_type === 'resident' ? 'resident' : (msg.sender_type === 'ai' ? 'ai' : 'admin'),
+          content: msg.content || ''
+        }));
+
+        console.log(`✅ [${Date.now() - startTime}ms] Loaded ${conversationHistory.length} messages for context`);
+      } else {
+        console.log(`ℹ️ [${Date.now() - startTime}ms] No previous messages (new conversation)`);
+      }
+    }
+
     // 5. ⚡ INSTANT ACKNOWLEDGMENT - COMMENTED OUT TO TEST HAIKU 4.5 SPEED
     // const isSpanish = (resident.preferred_language || 'es') === 'es';
     // const quickAck = isSpanish
@@ -274,15 +300,17 @@ Deno.serve(async (req: Request) => {
       console.log(`📝 [${Date.now() - startTime}ms] Text-only message (no media)`);
     }
 
-    // 6. Analyze message with AI (with knowledge base lookup)
-    console.log(`🤖 [${Date.now() - startTime}ms] Analyzing message with Claude AI...`);
+    // 6. Analyze message with AI (with knowledge base lookup + conversation context)
+    console.log(`🤖 [${Date.now() - startTime}ms] Analyzing message with Claude AI (w/ conversation context)...`);
     const analysis = await analyzeMessage(
       messageData.body || (storedMediaUrl ? 'Imagen enviada' : ''),
       resident.type,
       resident.preferred_language || 'es',
       building.name,
       building.id,
-      supabase
+      supabase,
+      conversationHistory,
+      building.maintenance_model || 'admin_managed'
     );
 
     console.log(`✅ [${Date.now() - startTime}ms] AI Analysis complete: intent=${analysis.intent}, priority=${analysis.priority}, routeTo=${analysis.routeTo}`);
@@ -310,9 +338,13 @@ Deno.serve(async (req: Request) => {
 
     // 8. Create maintenance request if AI detected one
     if (analysis.intent === 'maintenance_request') {
-      // Determine initial status based on maintenance model
-      const isResidentResponsibility = building.maintenance_model === 'resident_responsibility';
-      const initialStatus = isResidentResponsibility ? 'referred_to_provider' : 'open';
+      // 🎯 INTELLIGENT ROUTING: Use AI's decision on whether to recommend providers
+      // AI considers: building model, common area vs unit, emergency status
+      const shouldRecommendProviders = analysis.extractedData?.recommendProviders || false;
+      const isCommonArea = analysis.extractedData?.isCommonArea || false;
+      const initialStatus = shouldRecommendProviders ? 'referred_to_provider' : 'open';
+
+      console.log(`[Routing Decision] recommendProviders=${shouldRecommendProviders}, isCommonArea=${isCommonArea}, status=${initialStatus}`);
 
       await supabase.from('maintenance_requests').insert({
         building_id: building.id,
@@ -332,8 +364,8 @@ Deno.serve(async (req: Request) => {
 
       console.log(`✅ Maintenance request created (${building.maintenance_model}, status: ${initialStatus})${storedMediaUrl ? ' with photo attachment' : ''}`);
 
-      // 8.5. Send recommended service providers if Puerto Rico model
-      if (building.maintenance_model === 'resident_responsibility' && analysis.extractedData?.maintenanceCategory) {
+      // 8.5. 🔧 Send recommended service providers if AI decided to recommend them
+      if (shouldRecommendProviders && analysis.extractedData?.maintenanceCategory) {
         console.log(`🔧 [${Date.now() - startTime}ms] Fetching recommended providers for category: ${analysis.extractedData.maintenanceCategory}`);
 
         try {
@@ -512,6 +544,97 @@ Deno.serve(async (req: Request) => {
       } else {
         console.log(`⚠️ [${Date.now() - startTime}ms] No pending fees found for resident`);
         // Continue with normal flow (AI will respond appropriately)
+      }
+    }
+
+    // 8.8. Handle issue resolution - update ticket status when resident confirms fix
+    if (analysis.intent === 'issue_resolved') {
+      console.log(`✅ [${Date.now() - startTime}ms] Issue resolution detected`);
+
+      // Check if this is a partial resolution (better but not fully fixed)
+      const isPartialResolution = analysis.extractedData?.isPartialResolution || false;
+
+      if (isPartialResolution) {
+        console.log(`⚠️ [${Date.now() - startTime}ms] Partial resolution detected - not auto-closing ticket`);
+        // Don't auto-close, but AI will respond acknowledging improvement
+      } else {
+        console.log(`🎯 [${Date.now() - startTime}ms] Complete resolution - finding ticket to close`);
+
+        // Find the best matching ticket to resolve
+        const ticketToResolve = await findTicketToResolve(
+          supabase,
+          resident.id,
+          building.id,
+          analysis.extractedData?.resolvedCategory
+        );
+
+        if (ticketToResolve) {
+          console.log(`📝 [${Date.now() - startTime}ms] Resolving ticket: ${ticketToResolve.id} (${ticketToResolve.title || ticketToResolve.category})`);
+
+          // Update ticket to resolved
+          const { error: updateError } = await supabase
+            .from('maintenance_requests')
+            .update({
+              status: 'resolved',
+              resolved_at: new Date().toISOString(),
+              notes: `Residente confirmó resolución el ${new Date().toLocaleDateString('es-PR')}: "${messageData.body}"`,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', ticketToResolve.id);
+
+          if (updateError) {
+            console.error(`❌ [${Date.now() - startTime}ms] Failed to update ticket:`, updateError);
+          } else {
+            const language = resident.preferred_language || 'es';
+            const issueDescription = analysis.extractedData?.resolvedIssue || ticketToResolve.title || 'tu solicitud';
+
+            const confirmationMessage = language === 'es'
+              ? `✅ ¡Excelente! He marcado tu solicitud de ${issueDescription} como resuelta. Gracias por informarnos.`
+              : `✅ Excellent! I've marked your request for ${issueDescription} as resolved. Thank you for letting us know.`;
+
+            await sendWhatsAppMessage(phoneNumber, buildingNumber, confirmationMessage);
+
+            // Save confirmation message
+            await supabase.from('messages').insert({
+              conversation_id: conversation.id,
+              sender_type: 'ai',
+              content: confirmationMessage,
+              channel: 'whatsapp',
+            });
+
+            console.log(`✅ [${Date.now() - startTime}ms] Ticket marked as resolved and resident notified`);
+          }
+        } else {
+          console.log(`⚠️ [${Date.now() - startTime}ms] No open tickets found to resolve`);
+
+          // Acknowledge even if no ticket found (maybe it was already closed)
+          const language = resident.preferred_language || 'es';
+          const acknowledgmentMessage = language === 'es'
+            ? `Me alegro que todo esté funcionando bien. Si necesitas algo más, no dudes en escribir.`
+            : `I'm glad everything is working well. If you need anything else, don't hesitate to reach out.`;
+
+          await sendWhatsAppMessage(phoneNumber, buildingNumber, acknowledgmentMessage);
+
+          await supabase.from('messages').insert({
+            conversation_id: conversation.id,
+            sender_type: 'ai',
+            content: acknowledgmentMessage,
+            channel: 'whatsapp',
+          });
+        }
+
+        // Update conversation timestamp
+        await supabase
+          .from('conversations')
+          .update({ last_message_at: new Date().toISOString() })
+          .eq('id', conversation.id);
+
+        const totalTime = Date.now() - startTime;
+        console.log(`🎉 [${totalTime}ms] Issue resolution complete`);
+
+        return new Response('<?xml version="1.0" encoding="UTF-8"?><Response></Response>', {
+          headers: { 'Content-Type': 'application/xml' }
+        });
       }
     }
 
@@ -730,7 +853,9 @@ async function analyzeMessage(
   language: 'es' | 'en' = 'es',
   buildingContext?: string,
   buildingId?: string,
-  supabase?: any
+  supabase?: any,
+  conversationHistory: Array<{ role: 'resident' | 'ai' | 'admin'; content: string }> = [],
+  maintenanceModel: 'admin_managed' | 'resident_responsibility' = 'admin_managed'
 ): Promise<AIAnalysisResult> {
   const anthropicApiKey = Deno.env.get('ANTHROPIC_API_KEY');
 
@@ -773,8 +898,10 @@ ${idx + 1}. Pregunta: ${entry.question}
 
   console.log('[AI Analysis] ⚡ Using Claude Haiku 4.5 for instant response');
   console.log(`[AI Analysis] 💡 KB entries found: ${knowledgeEntries.length}`);
+  console.log(`[AI Analysis] 💬 Conversation history: ${conversationHistory.length} messages`);
+  console.log(`[AI Analysis] 🏗️ Maintenance model: ${maintenanceModel}`);
 
-  const prompt = buildAIPrompt(message, residentType, language, buildingContext, knowledgeContext);
+  const prompt = buildAIPrompt(message, residentType, language, buildingContext, knowledgeContext, conversationHistory, maintenanceModel);
 
   try {
     console.log(`[AI Analysis] 🚀 Calling Anthropic API with model: ${selectedModel}`);
@@ -834,9 +961,87 @@ function buildAIPrompt(
   residentType: 'owner' | 'renter',
   language: 'es' | 'en',
   buildingContext?: string,
-  knowledgeContext?: string
+  knowledgeContext?: string,
+  conversationHistory: Array<{ role: 'resident' | 'ai' | 'admin'; content: string }> = [],
+  maintenanceModel: 'admin_managed' | 'resident_responsibility' = 'admin_managed'
 ): string {
   const isSpanish = language === 'es';
+
+  // Format conversation history for context
+  let historyContext = '';
+  if (conversationHistory.length > 0) {
+    const historyText = conversationHistory
+      .map(msg => {
+        const roleLabel = msg.role === 'resident' ? (isSpanish ? 'Residente' : 'Resident') :
+                         msg.role === 'ai' ? 'Blok AI' :
+                         (isSpanish ? 'Administrador' : 'Admin');
+        return `${roleLabel}: ${msg.content}`;
+      })
+      .join('\n');
+
+    historyContext = isSpanish
+      ? `\nHISTORIAL DE CONVERSACIÓN (últimos ${conversationHistory.length} mensajes):\n${historyText}\n`
+      : `\nCONVERSATION HISTORY (last ${conversationHistory.length} messages):\n${historyText}\n`;
+  }
+
+  // Routing intelligence based on maintenance model
+  const routingGuidance = isSpanish ? `
+🏗️ MODELO DE MANTENIMIENTO DEL EDIFICIO: ${maintenanceModel === 'admin_managed' ? 'Administrado por el Edificio' : 'Responsabilidad del Residente (Modelo Puerto Rico)'}
+
+REGLAS DE ENRUTAMIENTO INTELIGENTE:
+
+${maintenanceModel === 'resident_responsibility' ? `
+**Modelo Puerto Rico (Resident Responsibility)**:
+- ✅ Problemas en UNIDADES → Recomendar proveedores (extractedData.recommendProviders = true)
+- ❌ Problemas en ÁREAS COMUNES → Admin debe manejar (routeTo = 'admin', extractedData.recommendProviders = false)
+- 🚨 EMERGENCIAS → SIEMPRE admin primero (routeTo = 'admin', extractedData.recommendProviders = false)
+- 🔧 Solicitudes de ESCALACIÓN → Admin review (requiresHumanReview = true)
+
+Ejemplos de ÁREAS COMUNES que van a admin:
+- Ascensor, piscina, gimnasio, lobby, estacionamiento visitantes
+- Puerta principal, sistema de seguridad
+- Jardines compartidos, techo del edificio
+` : `
+**Modelo Administrado (Admin Managed)**:
+- 🏢 TODOS los problemas de mantenimiento van al administrador
+- extractedData.recommendProviders = false (siempre)
+- routeTo = 'admin' para maintenance_request
+`}
+
+**Prioridad de Emergencias**:
+- 🚨 emergency: fugas graves, incendio, falta de electricidad total, ascensor atascado con personas
+- ⚠️ high: aire acondicionado roto (calor), fuga menor, problemas eléctricos parciales
+- 📌 medium: reparaciones necesarias pero no urgentes
+- 📝 low: mejoras estéticas, mantenimiento preventivo
+` : `
+🏗️ BUILDING MAINTENANCE MODEL: ${maintenanceModel === 'admin_managed' ? 'Admin Managed' : 'Resident Responsibility (Puerto Rico Model)'}
+
+INTELLIGENT ROUTING RULES:
+
+${maintenanceModel === 'resident_responsibility' ? `
+**Puerto Rico Model (Resident Responsibility)**:
+- ✅ UNIT issues → Recommend providers (extractedData.recommendProviders = true)
+- ❌ COMMON AREA issues → Admin must handle (routeTo = 'admin', extractedData.recommendProviders = false)
+- 🚨 EMERGENCIES → ALWAYS admin first (routeTo = 'admin', extractedData.recommendProviders = false)
+- 🔧 ESCALATION requests → Admin review (requiresHumanReview = true)
+
+Examples of COMMON AREAS that go to admin:
+- Elevator, pool, gym, lobby, visitor parking
+- Main entrance, security system
+- Shared gardens, building roof
+` : `
+**Admin Managed Model**:
+- 🏢 ALL maintenance issues go to administrator
+- extractedData.recommendProviders = false (always)
+- routeTo = 'admin' for maintenance_request
+`}
+
+**Emergency Priority**:
+- 🚨 emergency: major leaks, fire, total power outage, elevator stuck with people
+- ⚠️ high: broken AC (heat), minor leak, partial electrical issues
+- 📌 medium: needed repairs but not urgent
+- 📝 low: aesthetic improvements, preventive maintenance
+`;
 
   return isSpanish ? `
 Eres un asistente AI para Blok, un sistema de gestión de condominios en Puerto Rico.
@@ -846,9 +1051,12 @@ CONTEXTO:
 - Idioma: Español
 - Edificio: ${buildingContext || 'N/A'}
 ${knowledgeContext || ''}
+${historyContext}
+${routingGuidance}
 
-MENSAJE DEL RESIDENTE:
+MENSAJE ACTUAL DEL RESIDENTE:
 "${message}"
+${historyContext ? '\n⚠️ IMPORTANTE: Usa el historial de conversación para entender el contexto. Si el residente se refiere a "eso" o "todavía", busca en mensajes anteriores.' : ''}
 
 TAREA: Analiza este mensaje y responde en formato JSON con estos campos:
 
@@ -856,6 +1064,7 @@ TAREA: Analiza este mensaje y responde en formato JSON con estos campos:
    - maintenance_request (reparaciones, problemas en unidad o áreas comunes)
    - status_inquiry (preguntar por el estado de su solicitud/ticket/reporte)
    - payment_confirmation (residente confirma que pagó cuota, dejó cheque, hizo transferencia, etc.)
+   - issue_resolved (residente confirma que el problema YA ESTÁ ARREGLADO/RESUELTO/FUNCIONANDO)
    - general_question (reglas, horarios, amenidades)
    - noise_complaint (quejas de ruido)
    - visitor_access (estacionamiento visitantes, códigos de entrada)
@@ -864,6 +1073,11 @@ TAREA: Analiza este mensaje y responde en formato JSON con estos campos:
    - document_request (reglamentos, estados financieros)
    - emergency (incendio, inundación, amenaza de seguridad)
    - other
+
+   **IMPORTANTE - Detección de issue_resolved**:
+   - ✅ SÍ es issue_resolved: "ya lo arreglaron", "ya está funcionando", "ya funciona", "el técnico lo arregló", "problema resuelto", "ya todo bien", "ya está arreglado"
+   - ❌ NO es issue_resolved: "todavía no lo arreglan", "sigue roto", "aún no funciona", "está mejor pero no perfecto"
+   - ⚠️ Contexto: Solo usa issue_resolved si hay indicación CLARA que algo se resolvió completamente
 
 2. **priority**: low | medium | high | emergency
 
@@ -883,6 +1097,14 @@ TAREA: Analiza este mensaje y responde en formato JSON con estos campos:
 5. **requiresHumanReview**: true si admin DEBE revisar (emergencias, quejas, problemas complejos)
 
 6. **extractedData**: Extrae detalles relevantes (categoría, urgencia, ubicación, etc.)
+   - **recommendProviders** (boolean): true si debe recomendar proveedores (según reglas de enrutamiento arriba)
+   - **isCommonArea** (boolean): true si el problema es en área común vs unidad privada
+
+   **Para intent = issue_resolved**:
+   - **resolvedIssue** (string): Descripción de lo que se resolvió (ej: "aire acondicionado", "lavadora", "inodoro")
+   - **resolvedCategory** (string): Categoría del problema resuelto (usa los mismos valores de maintenanceCategory abajo)
+   - **isPartialResolution** (boolean): true si dice "mejor" pero no "arreglado completamente"
+
    - Para solicitudes de mantenimiento, **maintenanceCategory** debe ser EXACTAMENTE uno de estos valores:
      * "plumber" - fugas de agua, tuberías, desagües, inodoros, lavamanos
      * "electrician" - problemas eléctricos, enchufes, breakers, luces
@@ -910,7 +1132,9 @@ RESPUESTA (solo JSON, sin markdown):
   "extractedData": {
     "maintenanceCategory": "plumber",
     "urgency": "high",
-    "location": "unit"
+    "location": "unit",
+    "recommendProviders": false,
+    "isCommonArea": false
   }
 }
 ` : `
@@ -921,9 +1145,12 @@ CONTEXT:
 - Language: English
 - Building: ${buildingContext || 'N/A'}
 ${knowledgeContext || ''}
+${historyContext}
+${routingGuidance}
 
-MESSAGE FROM RESIDENT:
+CURRENT MESSAGE FROM RESIDENT:
 "${message}"
+${historyContext ? '\n⚠️ IMPORTANT: Use conversation history to understand context. If resident refers to "it" or "still", look at previous messages.' : ''}
 
 TASK: Analyze this message and respond in JSON format with these fields:
 
@@ -931,6 +1158,7 @@ TASK: Analyze this message and respond in JSON format with these fields:
    - maintenance_request (repairs, issues in unit or common areas)
    - status_inquiry (asking about the status of their request/ticket/report)
    - payment_confirmation (resident confirms they paid fee, left check, made transfer, etc.)
+   - issue_resolved (resident confirms the issue HAS BEEN FIXED/RESOLVED/WORKING)
    - general_question (HOA rules, amenities, hours)
    - noise_complaint
    - visitor_access (guest parking, entrance codes)
@@ -939,6 +1167,11 @@ TASK: Analyze this message and respond in JSON format with these fields:
    - document_request (bylaws, financial statements)
    - emergency (fire, flood, security threat)
    - other
+
+   **IMPORTANT - issue_resolved Detection**:
+   - ✅ YES is issue_resolved: "it's fixed", "it's working now", "the technician fixed it", "problem solved", "all good now", "it's been repaired"
+   - ❌ NO is issue_resolved: "still not fixed", "still broken", "not working yet", "it's better but not perfect"
+   - ⚠️ Context: Only use issue_resolved if there's CLEAR indication something is completely resolved
 
 2. **priority**: low | medium | high | emergency
 
@@ -958,6 +1191,14 @@ TASK: Analyze this message and respond in JSON format with these fields:
 5. **requiresHumanReview**: true if admin MUST review (emergencies, complaints, complex issues)
 
 6. **extractedData**: Extract relevant details (category, urgency, location, etc.)
+   - **recommendProviders** (boolean): true if should recommend providers (based on routing rules above)
+   - **isCommonArea** (boolean): true if issue is in common area vs private unit
+
+   **For intent = issue_resolved**:
+   - **resolvedIssue** (string): Description of what was resolved (e.g., "air conditioning", "washer", "toilet")
+   - **resolvedCategory** (string): Category of resolved issue (use same values as maintenanceCategory below)
+   - **isPartialResolution** (boolean): true if says "better" but not "completely fixed"
+
    - For maintenance requests, **maintenanceCategory** must be EXACTLY one of these values:
      * "plumber" - water leaks, pipes, drains, toilets, sinks
      * "electrician" - electrical issues, outlets, breakers, lights
@@ -985,7 +1226,9 @@ RESPONSE (JSON only, no markdown):
   "extractedData": {
     "maintenanceCategory": "plumber",
     "urgency": "high",
-    "location": "unit"
+    "location": "unit",
+    "recommendProviders": false,
+    "isCommonArea": false
   }
 }
 `;
@@ -1055,6 +1298,67 @@ async function routeToOwner(
     }
   } catch (error) {
     console.error('❌ Error routing to owner:', error);
+  }
+}
+
+// Find best matching ticket to resolve based on AI analysis
+async function findTicketToResolve(
+  supabase: any,
+  residentId: string,
+  buildingId: string,
+  resolvedCategory?: string
+): Promise<any | null> {
+  try {
+    console.log(`[Ticket Matching] Finding ticket to resolve for resident ${residentId}`);
+    console.log(`[Ticket Matching] Resolved category hint: ${resolvedCategory || 'none'}`);
+
+    // Get all open/in_progress tickets for this resident
+    const { data: openTickets, error } = await supabase
+      .from('maintenance_requests')
+      .select('id, title, description, category, priority, status, reported_at')
+      .eq('building_id', buildingId)
+      .eq('resident_id', residentId)
+      .in('status', ['open', 'in_progress', 'referred_to_provider'])
+      .order('reported_at', { ascending: false });
+
+    if (error) {
+      console.error('[Ticket Matching] Error fetching tickets:', error);
+      return null;
+    }
+
+    if (!openTickets || openTickets.length === 0) {
+      console.log('[Ticket Matching] No open tickets found');
+      return null;
+    }
+
+    console.log(`[Ticket Matching] Found ${openTickets.length} open ticket(s)`);
+
+    // Case 1: Only one open ticket - resolve it
+    if (openTickets.length === 1) {
+      console.log('[Ticket Matching] Only one ticket, resolving it');
+      return openTickets[0];
+    }
+
+    // Case 2: Multiple tickets - try to match by category
+    if (resolvedCategory) {
+      const matchedTicket = openTickets.find(
+        (ticket: any) => ticket.category === resolvedCategory
+      );
+
+      if (matchedTicket) {
+        console.log(`[Ticket Matching] Matched ticket by category: ${resolvedCategory}`);
+        return matchedTicket;
+      }
+
+      console.log(`[Ticket Matching] No exact category match for: ${resolvedCategory}`);
+    }
+
+    // Case 3: Multiple tickets, no category match - resolve most recent
+    console.log('[Ticket Matching] Multiple tickets, resolving most recent');
+    return openTickets[0];
+  } catch (error) {
+    console.error('[Ticket Matching] Error:', error);
+    return null;
   }
 }
 

@@ -66,7 +66,15 @@ export default function FeedbackPage() {
                 <CheckCircle2 className="w-20 h-20 sm:w-24 sm:h-24 text-green-500 mx-auto mb-6" />
                 <h2 className="text-2xl sm:text-3xl font-bold mb-3">¡Gracias por tu feedback!</h2>
                 <p className="text-base sm:text-lg text-muted-foreground mb-8 leading-relaxed">
-                  Tu opinión es muy valiosa para nosotros. Estaremos en contacto pronto.
+                  {formData.interested === 'yes' ? (
+                    <>
+                      Tu opinión es muy valiosa para nosotros. <strong>Te hemos añadido a nuestra lista de espera</strong> y estaremos en contacto pronto para coordinar tu prueba gratuita de Blok.
+                    </>
+                  ) : (
+                    <>
+                      Tu opinión es muy valiosa para nosotros. Estaremos en contacto pronto.
+                    </>
+                  )}
                 </p>
                 <Button onClick={() => window.location.href = "/"} className="w-full h-12 sm:h-14 text-base sm:text-lg font-semibold">
                   Volver al Inicio
@@ -111,10 +119,11 @@ export default function FeedbackPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-sm font-medium text-gray-700 dark:text-gray-300">Email</Label>
+                  <Label htmlFor="email" className="text-sm font-medium text-gray-700 dark:text-gray-300">Email *</Label>
                   <Input
                     id="email"
                     type="email"
+                    required
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     placeholder="tu@email.com"
@@ -123,10 +132,9 @@ export default function FeedbackPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="phone" className="text-sm font-medium text-gray-700 dark:text-gray-300">Teléfono *</Label>
+                  <Label htmlFor="phone" className="text-sm font-medium text-gray-700 dark:text-gray-300">Teléfono</Label>
                   <Input
                     id="phone"
-                    required
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     placeholder="787-123-4567"
@@ -263,7 +271,7 @@ export default function FeedbackPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="interested" className="text-sm font-medium leading-relaxed text-gray-700 dark:text-gray-300">¿Estarías interesado en probar Blok gratis por 30 días? *</Label>
+                  <Label htmlFor="interested" className="text-sm font-medium leading-relaxed text-gray-700 dark:text-gray-300">¿Estarías interesado en probar Blok gratis? *</Label>
                   <select
                     id="interested"
                     required
@@ -272,7 +280,7 @@ export default function FeedbackPage() {
                     className="w-full h-12 px-4 text-base text-gray-900 dark:text-white border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800"
                   >
                     <option value="">Selecciona una opción</option>
-                    <option value="yes">✅ Sí, me interesa</option>
+                    <option value="yes">✅ Sí, me interesa probar gratis</option>
                     <option value="maybe">🤔 Tal vez</option>
                     <option value="no">❌ No por ahora</option>
                   </select>

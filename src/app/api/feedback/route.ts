@@ -35,6 +35,29 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    // If user is interested in trying Blok, add to waitlist
+    if (data.interested === 'yes' && data.email) {
+      const { error: waitlistError } = await supabase
+        .from('waitlist')
+        .upsert({
+          email: data.email,
+          name: data.name,
+          phone: data.phone,
+          building: data.building,
+          role: data.role,
+          source: 'feedback_form',
+          created_at: new Date().toISOString(),
+        }, {
+          onConflict: 'email',
+          ignoreDuplicates: true
+        });
+
+      if (waitlistError) {
+        console.error('Waitlist error (non-critical):', waitlistError);
+        // Don't fail the request - feedback was saved successfully
+      }
+    }
+
     return NextResponse.json({ success: true });
   } catch (error: any) {
     console.error('Error saving feedback:', error);

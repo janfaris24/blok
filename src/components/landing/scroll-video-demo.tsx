@@ -17,10 +17,10 @@ export function ScrollVideoDemo() {
     offset: ["start end", "end start"]
   });
 
-  // Intercom-style: starts small (0.8), grows large (1.05) at peak
+  // Subtle zoom: starts slightly small (0.9), grows to normal (1.0) at peak
   const scale = useTransform(scrollYProgress,
     [0, 0.5, 1],
-    [0.8, 1.05, 0.9]
+    [0.9, 1.0, 0.95]
   );
 
   const opacity = useTransform(scrollYProgress,
@@ -116,7 +116,7 @@ export function ScrollVideoDemo() {
         {/* Borderless, clean video - Intercom style */}
         <motion.div
           style={{ scale, opacity }}
-          className="relative mx-auto max-w-7xl"
+          className="relative mx-auto max-w-6xl"
         >
           <div className="relative aspect-video bg-muted overflow-hidden shadow-2xl rounded-xl">
             {/* Loading Placeholder */}
