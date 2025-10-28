@@ -11,7 +11,7 @@ export function Footer() {
       { label: t.footer.links.pricing, href: "#pricing" },
     ],
     empresa: [
-      { label: t.footer.links.about, href: "#" },
+      { label: t.footer.links.about, href: "#about" },
       { label: t.footer.links.blog, href: "#" },
     ],
     legal: [
@@ -72,6 +72,43 @@ export function Footer() {
                   </li>
                 ))}
               </ul>
+            </div>
+          </div>
+
+          {/* Contact Information */}
+          <div className="mt-12 pt-8 border-t border-border">
+            <div className="grid sm:grid-cols-2 gap-8">
+              <div>
+                <h3 className="font-semibold text-foreground mb-3">{t.footer.contact.title}</h3>
+                <div className="space-y-2 text-sm text-muted-foreground">
+                  <p>
+                    <strong className="text-foreground">{t.footer.contact.address}</strong><br />
+                    San Juan, PR 00925<br />
+                    Puerto Rico
+                  </p>
+                  <p>
+                    <strong className="text-foreground">{t.footer.contact.website}</strong>{" "}
+                    <a
+                      href="https://www.blokpr.co/"
+                      className="hover:text-foreground transition-colors underline"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      www.blokpr.co
+                    </a>
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="font-semibold text-foreground mb-3">{t.footer.about.title}</h3>
+                <div className="space-y-2 text-sm text-muted-foreground">
+                  <p>
+                    <strong className="text-foreground">{t.footer.about.founder}</strong> Jan Faris
+                  </p>
+                  <p>{t.footer.about.description}</p>
+                </div>
+              </div>
             </div>
           </div>
 

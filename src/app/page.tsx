@@ -10,6 +10,7 @@ import { FeaturesSection } from "@/components/landing/features-section";
 import { ProductShowcase } from "@/components/landing/product-showcase";
 import { AIIntelligence } from "@/components/landing/ai-intelligence";
 import { TwilightPeace } from "@/components/landing/twilight-peace";
+import { AboutSection } from "@/components/landing/about-section";
 import { FinalCTA } from "@/components/landing/final-cta";
 import { Footer } from "@/components/landing/footer";
 
@@ -27,6 +28,7 @@ export default function Home() {
           <ProductShowcase />
           <AIIntelligence />
           <TwilightPeace />
+          <AboutSection />
           <FinalCTA />
         </main>
         <Footer />
