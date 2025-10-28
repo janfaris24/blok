@@ -92,28 +92,6 @@ export function AboutSection() {
               </div>
             </div>
           </motion.div>
-
-          {/* Company Info */}
-          <motion.div
-            className="mt-12 grid sm:grid-cols-3 gap-6"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-          >
-            <div className="text-center p-6 bg-card border border-border rounded-xl">
-              <div className="text-3xl font-bold text-primary mb-2">2025</div>
-              <div className="text-sm text-muted-foreground">{t.about.company.founded}</div>
-            </div>
-            <div className="text-center p-6 bg-card border border-border rounded-xl">
-              <div className="text-3xl font-bold text-primary mb-2">🇵🇷</div>
-              <div className="text-sm text-muted-foreground">{t.about.company.based}</div>
-            </div>
-            <div className="text-center p-6 bg-card border border-border rounded-xl">
-              <div className="text-3xl font-bold text-primary mb-2">AI</div>
-              <div className="text-sm text-muted-foreground">{t.about.company.technology}</div>
-            </div>
-          </motion.div>
         </div>
       </div>
     </section>
