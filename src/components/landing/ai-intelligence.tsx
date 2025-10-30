@@ -101,10 +101,30 @@ export function AIIntelligence() {
           {/* Headline */}
           <h2
             ref={ref}
-            className={`text-3xl sm:text-4xl md:text-5xl font-bold text-center mb-16 text-balance scroll-fade-in ${isVisible ? "visible" : ""}`}
+            className={`text-3xl sm:text-4xl md:text-5xl font-bold text-center mb-8 text-balance scroll-fade-in ${isVisible ? "visible" : ""}`}
           >
             {t.ai.headline} <span className="text-primary">{t.ai.headlineAccent}</span>
           </h2>
+
+          {/* Control Section */}
+          <div className={`max-w-3xl mx-auto mb-16 scroll-fade-in scroll-fade-in-delay-1 ${isVisible ? "visible" : ""}`}>
+            <div className="bg-card border border-border rounded-lg p-6 sm:p-8">
+              <h3 className="text-xl sm:text-2xl font-semibold text-center mb-4 text-foreground">
+                {t.ai.control.title}
+              </h3>
+              <p className="text-muted-foreground text-center mb-6 leading-relaxed">
+                {t.ai.control.description}
+              </p>
+              <div className="grid sm:grid-cols-2 gap-4">
+                {t.ai.control.features.map((feature, index) => (
+                  <div key={index} className="flex items-start gap-2">
+                    <span className="text-primary mt-1">✓</span>
+                    <span className="text-sm text-muted-foreground">{feature}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
 
           {/* Capabilities */}
           <div className="grid md:grid-cols-3 gap-6 mb-12">

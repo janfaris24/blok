@@ -27,6 +27,7 @@ export function Navigation() {
   }, [])
 
   const navLinks: Array<{ label: string; href: string; badge?: boolean }> = [
+    { label: t.nav.features, href: "/features" },
     { label: t.nav.pricing, href: "/pricing" },
     { label: "FAQ", href: "/faq" },
     { label: t.nav.feedback, href: "/feedback", badge: true },

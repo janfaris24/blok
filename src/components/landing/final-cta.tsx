@@ -23,7 +23,10 @@ export function FinalCTA() {
       {/* Background gradient */}
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/5 to-transparent" />
 
-      <div className="container relative mx-auto px-4 sm:px-6 lg:px-8">
+      {/* Grid pattern background */}
+      <div className="absolute inset-0 grid-pattern opacity-40" />
+
+      <div className="container relative z-10 mx-auto px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto text-center">
           {/* Headline */}
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6 text-balance">

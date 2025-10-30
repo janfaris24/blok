@@ -709,12 +709,21 @@ Si es sobre reglas del edificio, envíalo a todos.`,
     },
 
     // Landing Page
+    paperFlyerPain: {
+      headline: '¿Aún Imprimiendo Avisos?',
+      subheadline: 'Hay Una Mejor Manera',
+      description: 'Deje de imprimir. Deje de pegar papel en el elevador. Deje de perder tiempo. Blok lleva sus anuncios a cada residente en segundos.',
+    },
+
     hero: {
       eyebrow: 'Comunicación Profesional para Tu Condominio',
       headline: 'Respuestas Instantáneas 24/7. Administración Organizada. Residentes Satisfechos.',
       subheadline: 'Inteligencia Artificial (IA) que atiende residentes automáticamente, mientras tu equipo se enfoca en lo importante. Mejora el servicio, reduce costos operativos.',
+      audience: 'Para Administradores, Juntas y Property Managers de Condominios en Puerto Rico',
       cta: 'Comenzar Gratis',
-      waitlist: 'Prueba Gratis 30 Días',
+      waitlist: 'Reserva tu Acceso',
+      waitlistSubtext: 'Acceso Anticipado',
+      talkToFounder: 'Hablar con Jan (Fundador)',
       login: 'Iniciar Sesión',
       socialProof: 'Confiado por más de {count} condominios en Puerto Rico',
       comingSoon: 'Próximamente disponible',
@@ -815,9 +824,44 @@ Si es sobre reglas del edificio, envíalo a todos.`,
       },
     },
 
+    comparison: {
+      headline: 'Antes vs. Ahora',
+      subheadline: 'Vea la Diferencia Real',
+      before: {
+        title: 'ANTES: Método Tradicional',
+        steps: [
+          'Imprimir 100 avisos: $50',
+          'Pegar en lobby y elevadores: 30 minutos',
+          'Residentes no ven el aviso: 50%',
+          'Llamadas preguntando lo mismo: 1 hora',
+        ],
+        total: 'Total: $50 + 1.5 horas + Frustración',
+      },
+      after: {
+        title: 'CON BLOK: Comunicación Moderna',
+        steps: [
+          'Escribir mensaje: 2 minutos',
+          'Enviar a todos: 10 segundos',
+          'Confirmación instantánea: 100%',
+          'Llamadas de seguimiento: 0',
+        ],
+        total: 'Total: $0 + 2 minutos + Tranquilidad',
+      },
+    },
+
     ai: {
-      headline: 'La IA Que Trabaja',
-      headlineAccent: 'Mientras Tú Descansas',
+      headline: 'Usted Siempre Tiene Control.',
+      headlineAccent: 'La IA Sólo Ayuda.',
+      control: {
+        title: 'Control Total en Sus Manos',
+        description: 'Apague la IA cuando quiera. Responda manualmente cualquier mensaje. Revise cada conversación. Usted decide.',
+        features: [
+          'Desactive la IA con un clic',
+          'Responda manualmente cuando prefiera',
+          'Revise todas las conversaciones',
+          'Configure qué preguntas responde la IA',
+        ],
+      },
       capabilities: {
         intent: {
           title: 'Entiende Sin Que Le Expliques',
@@ -1708,12 +1752,21 @@ If it's about building rules, send it to everyone.`,
     },
 
     // Landing Page
+    paperFlyerPain: {
+      headline: 'Still Printing Flyers?',
+      subheadline: 'There\'s a Better Way',
+      description: 'Stop printing. Stop taping paper in the elevator. Stop wasting time. Blok delivers your announcements to every resident in seconds.',
+    },
+
     hero: {
       eyebrow: 'Professional Communication for Your Condo',
       headline: 'Instant 24/7 Responses. Organized Management. Happy Residents.',
       subheadline: 'AI that handles residents automatically, while your team focuses on what matters. Better service, lower operating costs.',
+      audience: 'For Condo Administrators, Boards, and Property Managers in Puerto Rico',
       cta: 'Get Started Free',
-      waitlist: 'Try Free for 30 Days',
+      waitlist: 'Reserve Your Access',
+      waitlistSubtext: 'Early Access',
+      talkToFounder: 'Talk to Jan (Founder)',
       login: 'Log In',
       socialProof: 'Trusted by over {count} condos in Puerto Rico',
       comingSoon: 'Coming soon',
@@ -1814,9 +1867,44 @@ If it's about building rules, send it to everyone.`,
       },
     },
 
+    comparison: {
+      headline: 'Before vs. Now',
+      subheadline: 'See the Real Difference',
+      before: {
+        title: 'BEFORE: Traditional Method',
+        steps: [
+          'Print 100 flyers: $50',
+          'Post in lobby and elevators: 30 minutes',
+          'Residents don\'t see notice: 50%',
+          'Calls asking the same thing: 1 hour',
+        ],
+        total: 'Total: $50 + 1.5 hours + Frustration',
+      },
+      after: {
+        title: 'WITH BLOK: Modern Communication',
+        steps: [
+          'Write message: 2 minutes',
+          'Send to everyone: 10 seconds',
+          'Instant confirmation: 100%',
+          'Follow-up calls: 0',
+        ],
+        total: 'Total: $0 + 2 minutes + Peace of Mind',
+      },
+    },
+
     ai: {
-      headline: 'The AI That Works',
-      headlineAccent: 'While You Rest',
+      headline: 'You Always Have Control.',
+      headlineAccent: 'AI Only Helps.',
+      control: {
+        title: 'Total Control in Your Hands',
+        description: 'Turn off AI whenever you want. Respond manually to any message. Review every conversation. You decide.',
+        features: [
+          'Disable AI with one click',
+          'Respond manually when you prefer',
+          'Review all conversations',
+          'Configure which questions AI answers',
+        ],
+      },
       capabilities: {
         intent: {
           title: 'Understands Without Explaining',

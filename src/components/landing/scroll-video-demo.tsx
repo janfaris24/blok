@@ -90,6 +90,9 @@ export function ScrollVideoDemo() {
       ref={containerRef}
       className="relative py-24 sm:py-32 lg:py-40 overflow-hidden bg-background"
     >
+      {/* Grid pattern background */}
+      <div className="absolute inset-0 grid-pattern opacity-40" />
+
       <div className="container relative z-10 mx-auto px-4 sm:px-6 lg:px-8">
         {/* Headline */}
         <motion.div
@@ -101,14 +104,14 @@ export function ScrollVideoDemo() {
         >
           <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6 text-foreground">
             {language === 'es'
-              ? 'Blok Gestiona Tu Condominio A Través de WhatsApp'
-              : 'Blok Manages Your Condo Through WhatsApp'
+              ? 'Únete a la Lista de Espera'
+              : 'Join the Waitlist'
             }
           </h2>
           <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto">
             {language === 'es'
-              ? 'Los residentes escriben por WhatsApp. Blok analiza, responde y gestiona automáticamente en tiempo real.'
-              : 'Residents message via WhatsApp. Blok analyzes, responds, and manages automatically in real-time.'
+              ? 'Sé de los primeros en transformar la gestión de tu condominio con IA'
+              : 'Be among the first to transform your condo management with AI'
             }
           </p>
         </motion.div>
