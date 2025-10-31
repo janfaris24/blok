@@ -8,8 +8,10 @@ export function AboutSection() {
   const { t } = useLanguage()
 
   return (
-    <section id="about" className="py-20 sm:py-32 bg-muted/30">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="about" className="py-20 sm:py-32 relative bg-background">
+      {/* Grid pattern background */}
+      <div className="absolute inset-0 grid-pattern opacity-40" />
+      <div className="container relative z-10 mx-auto px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">
           {/* Section Header */}
           <motion.div

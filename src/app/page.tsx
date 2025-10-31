@@ -9,6 +9,7 @@ import { ScrollVideoDemo } from "@/components/landing/scroll-video-demo";
 import { SimpleSolution } from "@/components/landing/simple-solution";
 import { TopBenefits } from "@/components/landing/top-benefits";
 import { SocialProof } from "@/components/landing/social-proof";
+import { AboutSection } from "@/components/landing/about-section";
 import { FinalCTA } from "@/components/landing/final-cta";
 import { Footer } from "@/components/landing/footer";
 
@@ -25,6 +26,7 @@ export default function Home() {
           <SimpleSolution />
           <TopBenefits />
           <SocialProof />
+          <AboutSection />
           <FinalCTA />
         </main>
         <Footer />
