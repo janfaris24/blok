@@ -77,11 +77,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Send confirmation email
-    try {
-      const resend = new Resend(process.env.RESEND_API_KEY);
+    // Send confirmation email (skip if RESEND_API_KEY not configured)
+    if (process.env.RESEND_API_KEY) {
+      try {
+        const resend = new Resend(process.env.RESEND_API_KEY);
 
-      const emailContent = language === 'es' ? {
+        const emailContent = language === 'es' ? {
         subject: '¡Bienvenido a la lista de espera de Blok! 🎉',
         html: `
           <!DOCTYPE html>
@@ -205,15 +206,18 @@ export async function POST(request: NextRequest) {
         `
       };
 
-      await resend.emails.send({
-        from: 'Blok <waitlist@blokpr.co>',
-        to: email,
-        subject: emailContent.subject,
-        html: emailContent.html,
-      });
-    } catch (emailError) {
-      console.error('Error sending confirmation email:', emailError);
-      // Don't fail the request if email fails - they're still on the waitlist
+        await resend.emails.send({
+          from: 'Blok <waitlist@blokpr.co>',
+          to: email,
+          subject: emailContent.subject,
+          html: emailContent.html,
+        });
+      } catch (emailError) {
+        console.error('Error sending confirmation email:', emailError);
+        // Don't fail the request if email fails - they're still on the waitlist
+      }
+    } else {
+      console.log('Skipping email send - RESEND_API_KEY not configured');
     }
 
     return NextResponse.json({

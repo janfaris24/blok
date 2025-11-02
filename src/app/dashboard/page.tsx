@@ -20,11 +20,16 @@ export default async function DashboardPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
+  // Redirect to login if not authenticated
+  if (!user) {
+    redirect('/login');
+  }
+
   // Get building
   const { data: building } = await supabase
     .from('buildings')
     .select('*')
-    .eq('admin_user_id', user!.id)
+    .eq('admin_user_id', user.id)
     .single();
 
   if (!building) {
