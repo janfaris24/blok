@@ -7,7 +7,7 @@ import { Selectors } from './selectors';
  */
 
 export class TestHelpers {
-  constructor(private page: Page) {}
+  constructor(protected page: Page) {}
 
   /**
    * Wait for page to be fully loaded (network idle)
