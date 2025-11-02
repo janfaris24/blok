@@ -213,7 +213,7 @@ test.describe('Authentication Flow - QA Engineer Tests', () => {
   });
 
   test.describe('Session Persistence', () => {
-    test('should persist session after page reload', async ({ page, context }) => {
+    test('should persist session after page reload', async ({ page }) => {
       // This test requires actual login
       // Skip if no test credentials available
       test.skip(!process.env.TEST_USER_EMAIL, 'No test credentials');

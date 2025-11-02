@@ -53,12 +53,15 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Run Playwright tests
-        run: npm test
+        run: npm run test:chromium
         env:
           # CI mode - enables retries and sequential execution
           CI: true
           # Prevent test errors from going to Sentry
           PLAYWRIGHT_TEST_BASE_URL: http://localhost:3000
+          # Test credentials
+          TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL }}
+          TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
           # Required env vars for tests (use GitHub secrets in production)
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
