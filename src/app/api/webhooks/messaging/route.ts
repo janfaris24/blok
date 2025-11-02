@@ -4,6 +4,7 @@ import { analyzeMessage } from '@/lib/blok-ai';
 import { sendMessage, detectChannelFromPayload, extractPhoneNumber } from '@/lib/messaging-client';
 import { routeMessage } from '@/lib/message-router';
 import { notifyBuildingAdmins } from '@/lib/notification-service';
+import { formatMessageWithIndicator } from '@/lib/message-formatter';
 import type { TwilioWebhookPayload, Channel } from '@/types/blok';
 
 /**
@@ -314,14 +315,21 @@ async function processMessageAsync(
       console.log(`[${channelLabel}] Sending AI response to resident...`);
 
       try {
+        // Format message with AI indicator for WhatsApp/SMS display
+        const formattedResponse = formatMessageWithIndicator(
+          analysis.suggestedResponse,
+          'ai'
+        );
+
+        // Send formatted message (with indicator) to resident
         await sendMessage(
           residentPhone,
           businessPhone,
-          analysis.suggestedResponse,
+          formattedResponse,
           channel
         );
 
-        // Save AI response to database with channel
+        // Save original message (without indicator) to database
         await supabase
           .from('messages')
           .insert({
@@ -335,7 +343,7 @@ async function processMessageAsync(
             requires_human_review: false,
           });
 
-        console.log(`[${channelLabel}] ✅ AI response sent via ${channel}`);
+        console.log(`[${channelLabel}] ✅ AI response sent via ${channel} (with 🤖 indicator)`);
       } catch (error) {
         console.error(`[${channelLabel}] Failed to send AI response:`, error);
       }

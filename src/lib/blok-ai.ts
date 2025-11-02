@@ -7,99 +7,75 @@ const anthropic = new Anthropic({
 });
 
 /**
- * Generate embedding for text using OpenAI
- * Uses text-embedding-3-small (1536 dimensions, $0.02 per 1M tokens)
+ * Fetches ALL knowledge base entries for a building
+ * Let Claude Haiku 4.5 intelligently decide which entries are relevant
+ * This is simpler, faster, and more reliable than embeddings
  */
-async function generateEmbedding(text: string): Promise<number[] | null> {
+async function getAllKnowledgeBase(buildingId: string): Promise<any[]> {
   try {
-    const openaiApiKey = process.env.OPENAI_API_KEY;
+    console.log(`[Knowledge Base] Fetching all entries for building ${buildingId}`);
 
-    if (!openaiApiKey) {
-      console.warn('[Embeddings] OPENAI_API_KEY not configured, falling back to keyword search');
-      return null;
+    const supabase = await createClient();
+
+    // Fetch all active knowledge base entries for this building
+    // Order by priority to give Claude the most important info first
+    const { data: entries, error } = await supabase
+      .from('knowledge_base')
+      .select('question, answer, category, priority')
+      .eq('building_id', buildingId)
+      .eq('active', true)
+      .order('priority', { ascending: false })
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('[Knowledge Base] Error fetching entries:', error);
+      return [];
     }
 
-    const response = await fetch('https://api.openai.com/v1/embeddings', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openaiApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'text-embedding-3-small',
-        input: text,
-        encoding_format: 'float',
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    return data.data[0].embedding;
+    console.log(`[Knowledge Base] ✅ Found ${entries?.length || 0} total entries`);
+    return entries || [];
   } catch (error) {
-    console.error('[Embeddings] Error generating embedding:', error);
-    return null;
+    console.error('[Knowledge Base] Fetch error:', error);
+    return [];
   }
 }
 
 /**
- * Searches the knowledge base for relevant information using semantic search
- * Falls back to keyword search if embeddings are not available
+ * Fetches the next upcoming asamblea for a building
+ * Used by AI to answer questions about upcoming meetings
  */
-async function searchKnowledgeBase(query: string, buildingId: string): Promise<any[]> {
+async function getNextAsamblea(buildingId: string): Promise<any | null> {
   try {
-    console.log(`[Knowledge Base] Searching for: "${query}" in building ${buildingId}`);
+    console.log(`[Asamblea] Fetching next asamblea for building ${buildingId}`);
 
     const supabase = await createClient();
 
-    // Try semantic search first
-    const embedding = await generateEmbedding(query);
-
-    if (embedding) {
-      console.log('[Knowledge Base] Using semantic search with embeddings');
-
-      // Use the match_knowledge function for semantic search
-      const { data: entries, error } = await supabase.rpc('match_knowledge', {
-        query_embedding: embedding,
-        match_threshold: 0.5, // 50% similarity threshold (lowered for better recall)
-        match_count: 5,
-        filter_building_id: buildingId,
-      });
-
-      if (error) {
-        console.error('[Knowledge Base] Semantic search error:', error);
-        // Fall back to keyword search below
-      } else {
-        console.log(`[Knowledge Base] Found ${entries?.length || 0} entries (semantic)`);
-        if (entries && entries.length > 0) {
-          return entries;
-        }
-      }
-    }
-
-    // Fallback to keyword search if semantic search failed or returned no results
-    console.log('[Knowledge Base] Falling back to keyword search');
-    const { data: entries, error } = await supabase
-      .from('knowledge_base')
-      .select('*')
+    // Fetch next scheduled asamblea in the future
+    const { data: nextMeeting, error } = await supabase
+      .from('asambleas')
+      .select('meeting_date, meeting_type, location, agenda, meeting_link')
       .eq('building_id', buildingId)
-      .eq('active', true)
-      .or(`question.ilike.%${query}%,answer.ilike.%${query}%,keywords.cs.{${query}}`)
-      .order('priority', { ascending: false })
-      .limit(5);
+      .eq('status', 'scheduled')
+      .gte('meeting_date', new Date().toISOString())
+      .order('meeting_date', { ascending: true })
+      .limit(1)
+      .maybeSingle();
 
     if (error) {
-      console.error('[Knowledge Base] Keyword search error:', error);
-      return [];
+      console.error('[Asamblea] Error fetching next asamblea:', error);
+      return null;
     }
 
-    console.log(`[Knowledge Base] Found ${entries?.length || 0} entries (keyword)`);
-    return entries || [];
+    if (nextMeeting) {
+      console.log(`[Asamblea] ✅ Found next asamblea on ${nextMeeting.meeting_date}`);
+    } else {
+      console.log(`[Asamblea] No upcoming asamblea scheduled`);
+    }
+
+    return nextMeeting;
   } catch (error) {
-    console.error('[Knowledge Base] Search error:', error);
-    return [];
+    console.error('[Asamblea] Fetch error:', error);
+    return null;
   }
 }
 
@@ -120,20 +96,83 @@ export async function analyzeMessage(
   buildingContext?: string,
   buildingId?: string
 ): Promise<AIAnalysisResult> {
-  // Search knowledge base for relevant information
+  // Fetch ALL knowledge base entries for this building
+  // Let Claude intelligently decide which ones are relevant
   let knowledgeContext = '';
   if (buildingId) {
-    const knowledgeEntries = await searchKnowledgeBase(message, buildingId);
+    const knowledgeEntries = await getAllKnowledgeBase(buildingId);
 
     if (knowledgeEntries.length > 0) {
       knowledgeContext = `
-BUILDING KNOWLEDGE BASE (Use this information to answer questions):
+BUILDING KNOWLEDGE BASE (${knowledgeEntries.length} entries - use ONLY the relevant ones to answer questions):
 ${knowledgeEntries.map((entry, idx) => `
 ${idx + 1}. Q: ${entry.question}
    A: ${entry.answer}
    Category: ${entry.category}
+   Priority: ${entry.priority || 'normal'}
 `).join('\n')}
+
+**IMPORTANT**: Only use knowledge base entries that are DIRECTLY relevant to the resident's question. Ignore irrelevant entries.
 `;
+    }
+  }
+
+  // Fetch next upcoming asamblea
+  let asambleaContext = '';
+  if (buildingId) {
+    const nextAsamblea = await getNextAsamblea(buildingId);
+
+    if (nextAsamblea) {
+      const meetingDate = new Date(nextAsamblea.meeting_date);
+      const formatted = meetingDate.toLocaleDateString(language === 'es' ? 'es-PR' : 'en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+
+      if (language === 'es') {
+        asambleaContext = `
+PRÓXIMA ASAMBLEA PROGRAMADA:
+- Fecha: ${formatted}
+- Tipo: ${nextAsamblea.meeting_type === 'ordinaria' ? 'Ordinaria' : 'Extraordinaria'}
+- Lugar: ${nextAsamblea.location}
+${nextAsamblea.agenda?.length ? `- Agenda:\n${nextAsamblea.agenda.map((item: string, i: number) => `  ${i + 1}. ${item}`).join('\n')}` : ''}
+${nextAsamblea.meeting_link ? `- Link virtual: ${nextAsamblea.meeting_link}` : ''}
+
+**Si el residente pregunta sobre la asamblea, proporciona TODA esta información de forma clara y completa.**
+`;
+      } else {
+        asambleaContext = `
+NEXT SCHEDULED MEETING:
+- Date: ${formatted}
+- Type: ${nextAsamblea.meeting_type === 'ordinaria' ? 'Regular' : 'Special'}
+- Location: ${nextAsamblea.location}
+${nextAsamblea.agenda?.length ? `- Agenda:\n${nextAsamblea.agenda.map((item: string, i: number) => `  ${i + 1}. ${item}`).join('\n')}` : ''}
+${nextAsamblea.meeting_link ? `- Virtual link: ${nextAsamblea.meeting_link}` : ''}
+
+**If the resident asks about the meeting, provide ALL this information clearly and completely.**
+`;
+      }
+    } else {
+      // Explicitly tell the AI there's no meeting scheduled
+      if (language === 'es') {
+        asambleaContext = `
+ASAMBLEAS:
+No hay asambleas programadas en este momento.
+
+**Si el residente pregunta sobre asambleas, informa que actualmente no hay ninguna programada.**
+`;
+      } else {
+        asambleaContext = `
+MEETINGS:
+No meetings are currently scheduled.
+
+**If the resident asks about meetings, inform them that none are currently scheduled.**
+`;
+      }
     }
   }
 
@@ -145,6 +184,7 @@ CONTEXT:
 - Language: ${language}
 - Building: ${buildingContext || 'N/A'}
 ${knowledgeContext}
+${asambleaContext}
 
 MESSAGE FROM RESIDENT:
 "${message}"
@@ -172,14 +212,25 @@ TASK: Analyze this message and provide a structured response in JSON format with
 
 4. **suggestedResponse**: Write a helpful response in ${language === 'es' ? 'Spanish' : 'English'}.
    - Be professional, warm, and concise (2-3 sentences)
-   - **IMPORTANT**: If the BUILDING KNOWLEDGE BASE contains relevant information, USE IT to answer the question accurately
+   - **CRITICAL**: If the BUILDING KNOWLEDGE BASE contains a direct answer to the resident's question:
+     * ANSWER THE QUESTION using the KB information
+     * DO NOT say "admin will review" or "we'll get back to you"
+     * Provide the specific answer from the knowledge base
    - If it's a maintenance request, acknowledge and say admin will review
-   - If it's a question you can answer with knowledge base info, provide that specific answer
-   - If you don't know, say admin will follow up within 24 hours
+   - If you don't have KB info to answer, say admin will follow up within 24 hours
 
-5. **requiresHumanReview**: true if admin MUST review (emergencies, complaints, complex issues)
+5. **requiresHumanReview**: Set this carefully based on these rules:
+   - **FALSE** = Questions answered by knowledge base (pool hours, fees, trash schedule, etc.)
+   - **FALSE** = Simple general questions you can answer
+   - **TRUE** = Maintenance requests, emergencies, complaints, complex issues
+   - **TRUE** = Questions NOT covered by knowledge base that need admin input
 
-6. **extractedData**: Extract relevant details (location, category, urgency, etc.)
+6. **priority**: Set appropriately:
+   - **low/medium** = General questions answered by knowledge base
+   - **high** = Maintenance issues, urgent requests
+   - **emergency** = Fire, flood, security threats
+
+7. **extractedData**: Extract relevant details (location, category, urgency, etc.)
    - For maintenance requests, **maintenanceCategory** must be one of these exact values:
      * "plumber" - water leaks, pipes, drains, toilets, sinks
      * "electrician" - electrical issues, outlets, breakers, lights

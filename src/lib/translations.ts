@@ -10,6 +10,7 @@ export const translations = {
       residents: 'Residentes',
       building: 'Edificio',
       knowledge: 'Base de Conocimiento',
+      meetings: 'Asambleas',
       settings: 'Configuración',
       help: 'Ayuda',
       logout: 'Salir',
@@ -449,6 +450,75 @@ export const translations = {
       answer: 'Respuesta',
       category: 'Categoría',
       active: 'Activa',
+    },
+
+    // Meetings (Asambleas)
+    meetings: {
+      title: 'Asambleas',
+      pageTitle: 'Gestión de Asambleas',
+      description: 'Gestiona las asambleas de tu condominio. El AI usará la próxima asamblea para responder preguntas.',
+      aiDescription: 'El AI usará la próxima asamblea para responder preguntas de residentes',
+      nextMeeting: 'Próxima Asamblea',
+      newMeeting: 'Nueva Asamblea',
+      editMeeting: 'Editar Asamblea',
+      createMeeting: 'Crear Asamblea',
+      deleteMeeting: 'Eliminar Asamblea',
+      confirmDelete: '¿Seguro que deseas eliminar esta asamblea?',
+
+      // Sections
+      upcoming: 'Próximas Asambleas',
+      history: 'Historial',
+
+      // Stats
+      total: 'Total',
+      scheduled: 'Programadas',
+      completed: 'Completadas',
+
+      // Status
+      statusScheduled: 'Programada',
+      statusCompleted: 'Completada',
+      statusCancelled: 'Cancelada',
+
+      // Types
+      typeRegular: 'Ordinaria',
+      typeSpecial: 'Extraordinaria',
+
+      // Form fields
+      dateTime: 'Fecha y Hora',
+      type: 'Tipo',
+      location: 'Ubicación',
+      locationPlaceholder: 'Salón de Eventos, Virtual (Zoom), etc.',
+      virtualLink: 'Link Virtual (opcional)',
+      virtualLinkPlaceholder: 'https://zoom.us/j/123456789',
+      agenda: 'Agenda (una por línea)',
+      agendaPlaceholder: 'Aprobación presupuesto 2025\nReparación piscina\nElección junta directiva',
+      agendaLabel: 'Agenda:',
+      notes: 'Notas (opcional)',
+      notesPlaceholder: 'Notas adicionales, resultados de votación, etc.',
+      status: 'Estado',
+      virtualLinkLabel: 'Link de la reunión virtual',
+
+      // Actions
+      create: 'Crear',
+      update: 'Actualizar',
+      cancel: 'Cancelar',
+      save: 'Guardar',
+
+      // Messages
+      created: 'Asamblea creada',
+      updated: 'Asamblea actualizada',
+      deleted: 'Asamblea eliminada',
+      errorSaving: 'Error al guardar',
+      errorDeleting: 'Error al eliminar',
+
+      // Empty state
+      noMeetings: 'No hay asambleas programadas. Crea la primera asamblea.',
+
+      // Dialog
+      dialogDescription: 'Programa una asamblea y el AI responderá automáticamente preguntas de residentes',
+
+      // Actions
+      sendReminder: 'Enviar recordatorio a residentes',
     },
 
     // Help & Support
@@ -1053,6 +1123,7 @@ Si es sobre reglas del edificio, envíalo a todos.`,
       residents: 'Residents',
       building: 'Building',
       knowledge: 'Knowledge Base',
+      meetings: 'Meetings',
       settings: 'Settings',
       help: 'Help',
       logout: 'Logout',
@@ -1492,6 +1563,75 @@ Si es sobre reglas del edificio, envíalo a todos.`,
       answer: 'Answer',
       category: 'Category',
       active: 'Active',
+    },
+
+    // Meetings
+    meetings: {
+      title: 'Meetings',
+      pageTitle: 'Meeting Management',
+      description: 'Manage your condo meetings. AI will use the next meeting to answer questions.',
+      aiDescription: 'AI will use the next meeting to answer resident questions',
+      nextMeeting: 'Next Meeting',
+      newMeeting: 'New Meeting',
+      editMeeting: 'Edit Meeting',
+      createMeeting: 'Create Meeting',
+      deleteMeeting: 'Delete Meeting',
+      confirmDelete: 'Are you sure you want to delete this meeting?',
+
+      // Sections
+      upcoming: 'Upcoming Meetings',
+      history: 'History',
+
+      // Stats
+      total: 'Total',
+      scheduled: 'Scheduled',
+      completed: 'Completed',
+
+      // Status
+      statusScheduled: 'Scheduled',
+      statusCompleted: 'Completed',
+      statusCancelled: 'Cancelled',
+
+      // Types
+      typeRegular: 'Regular',
+      typeSpecial: 'Special',
+
+      // Form fields
+      dateTime: 'Date & Time',
+      type: 'Type',
+      location: 'Location',
+      locationPlaceholder: 'Event Hall, Virtual (Zoom), etc.',
+      virtualLink: 'Virtual Link (optional)',
+      virtualLinkPlaceholder: 'https://zoom.us/j/123456789',
+      agenda: 'Agenda (one per line)',
+      agendaPlaceholder: 'Budget approval 2025\nPool repair\nBoard election',
+      agendaLabel: 'Agenda:',
+      notes: 'Notes (optional)',
+      notesPlaceholder: 'Additional notes, voting results, etc.',
+      status: 'Status',
+      virtualLinkLabel: 'Virtual meeting link',
+
+      // Actions
+      create: 'Create',
+      update: 'Update',
+      cancel: 'Cancel',
+      save: 'Save',
+
+      // Messages
+      created: 'Meeting created',
+      updated: 'Meeting updated',
+      deleted: 'Meeting deleted',
+      errorSaving: 'Error saving',
+      errorDeleting: 'Error deleting',
+
+      // Empty state
+      noMeetings: 'No meetings scheduled. Create the first meeting.',
+
+      // Dialog
+      dialogDescription: 'Schedule a meeting and AI will automatically answer resident questions',
+
+      // Actions
+      sendReminder: 'Send reminder to residents',
     },
 
     // Help & Support

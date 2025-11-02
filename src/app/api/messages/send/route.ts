@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
 import { sendWhatsAppMessage, sendSMSMessage } from '@/lib/messaging-client';
+import { formatMessageWithIndicator } from '@/lib/message-formatter';
 
 export async function POST(request: NextRequest) {
   try {
@@ -100,13 +101,20 @@ export async function POST(request: NextRequest) {
         ? building.whatsapp_business_number
         : (building.sms_number || building.whatsapp_business_number);
 
+      // Format message with admin indicator for WhatsApp/SMS display
+      const formattedMessage = formatMessageWithIndicator(
+        message,
+        'admin',
+        resident.preferred_language || 'es'
+      );
+
       try {
         // Send via WhatsApp with media support
         if (channel === 'whatsapp') {
           await sendWhatsAppMessage(
             recipientNumber,
             businessNumber,
-            message,
+            formattedMessage,
             mediaUrl ? [mediaUrl] : undefined
           );
         } else {
@@ -114,11 +122,11 @@ export async function POST(request: NextRequest) {
           await sendSMSMessage(
             recipientNumber,
             businessNumber,
-            message
+            formattedMessage
           );
         }
 
-        console.log(`[Message API] ✅ ${channel.toUpperCase()} message sent to ${recipientNumber}${mediaUrl ? ' (with media)' : ''}`);
+        console.log(`[Message API] ✅ ${channel.toUpperCase()} message sent to ${recipientNumber}${mediaUrl ? ' (with media)' : ''} (with 👤 admin indicator)`);
       } catch (sendError) {
         console.error(`[Message API] ${channel.toUpperCase()} send error:`, sendError);
         // Don't fail the request - message is saved in DB

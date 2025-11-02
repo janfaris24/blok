@@ -17,12 +17,22 @@ interface BroadcastComposerProps {
   buildingId: string;
   units: Unit[];
   onBroadcastSent?: () => void;
+  initialTitle?: string;
+  initialMessage?: string;
+  initialTarget?: 'all' | 'owners' | 'renters' | 'specific_units';
 }
 
-export function BroadcastComposer({ buildingId, units, onBroadcastSent }: BroadcastComposerProps) {
-  const [subject, setSubject] = useState('');
-  const [message, setMessage] = useState('');
-  const [targetAudience, setTargetAudience] = useState<'all' | 'owners' | 'renters' | 'specific_units'>('all');
+export function BroadcastComposer({
+  buildingId,
+  units,
+  onBroadcastSent,
+  initialTitle = '',
+  initialMessage = '',
+  initialTarget = 'all',
+}: BroadcastComposerProps) {
+  const [subject, setSubject] = useState(initialTitle);
+  const [message, setMessage] = useState(initialMessage);
+  const [targetAudience, setTargetAudience] = useState<'all' | 'owners' | 'renters' | 'specific_units'>(initialTarget);
   const [selectedUnits, setSelectedUnits] = useState<string[]>([]);
   const [sendViaWhatsApp, setSendViaWhatsApp] = useState(true);
   const [sendViaEmail, setSendViaEmail] = useState(false);
