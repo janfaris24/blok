@@ -64,11 +64,12 @@ test.describe('Waitlist Flow - Complete QA Testing', () => {
 
     // Should show validation error
     const emailInput = page.getByLabel(/email|correo/i);
-    const isInvalid = await emailInput.evaluate((el) =>
-      el.hasAttribute('aria-invalid') ||
-      el.classList.contains('invalid') ||
-      el.getAttribute('type') === 'email' && !el.checkValidity()
-    );
+    const isInvalid = await emailInput.evaluate((el) => {
+      const inputEl = el as HTMLInputElement;
+      return el.hasAttribute('aria-invalid') ||
+        el.classList.contains('invalid') ||
+        (inputEl.type === 'email' && !inputEl.checkValidity());
+    });
 
     expect(isInvalid).toBeTruthy();
   });
