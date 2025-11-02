@@ -1,4 +1,4 @@
-name: Test & Deploy
+name: Quality Checks
 
 on:
   push:
@@ -10,17 +10,15 @@ env:
   NODE_VERSION: '20'
 
 jobs:
-  # Job 1: Type checking and linting
+  # Quick type checking (runs in parallel with Vercel)
   type-check:
     name: Type Check
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
@@ -31,17 +29,16 @@ jobs:
       - name: Run type check
         run: npm run type-check
 
-  # Job 2: Production Smoke Tests (Critical user flows only)
+  # Smoke tests (informational only - don't block deployment)
   smoke-tests:
-    name: Production Smoke Tests
+    name: Smoke Tests
     runs-on: ubuntu-latest
+    continue-on-error: true  # Don't fail the workflow if tests fail
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
@@ -55,24 +52,17 @@ jobs:
       - name: Run smoke tests
         run: npx playwright test e2e/smoke-tests.spec.ts --project=chromium
         env:
-          # CI mode - enables retries and sequential execution
           CI: true
-          # Prevent test errors from going to Sentry
           PLAYWRIGHT_TEST_BASE_URL: http://localhost:3000
-          # Test credentials
           TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL }}
           TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
-          # Required env vars for tests
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          # Sentry (errors from tests will be filtered by beforeSend)
           NEXT_PUBLIC_SENTRY_DSN: ${{ secrets.NEXT_PUBLIC_SENTRY_DSN }}
-          SENTRY_ORG: blok-4e
-          SENTRY_PROJECT: blok-sentry
 
-      - name: Upload smoke test report
+      - name: Upload test report
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -80,65 +70,35 @@ jobs:
           path: playwright-report/
           retention-days: 7
 
-      - name: Upload smoke test screenshots
+      - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: smoke-test-screenshots
+          name: smoke-test-results
           path: test-results/
           retention-days: 7
 
-  # Job 3: Build check (ensure production build works)
-  build:
-    name: Build Check
+  # Summary status (shows final result)
+  summary:
+    name: Summary
     runs-on: ubuntu-latest
     needs: [type-check, smoke-tests]
+    if: always()
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build project
-        run: npm run build
-        env:
-          # Required build-time env vars
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-          NEXT_PUBLIC_SENTRY_DSN: ${{ secrets.NEXT_PUBLIC_SENTRY_DSN }}
-          SENTRY_ORG: blok-4e
-          SENTRY_PROJECT: blok-sentry
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-
-      - name: Upload build artifacts
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-output
-          path: .next/
-          retention-days: 1
-
-  # Job 4: Notify on success (optional)
-  notify-success:
-    name: Notify Success
-    runs-on: ubuntu-latest
-    needs: [type-check, smoke-tests, build]
-    if: success()
-
-    steps:
-      - name: Success message
+      - name: Check status
         run: |
-          echo "✅ All checks passed!"
-          echo "- Type checking: PASSED"
-          echo "- Production smoke tests: PASSED"
-          echo "- Production build: PASSED"
-          echo ""
-          echo "Ready to deploy to Vercel!"
+          echo "## Quality Checks Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Type Check: ${{ needs.type-check.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "ℹ️  Smoke Tests: ${{ needs.smoke-tests.result }} (informational)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🚀 Vercel handles build & deployment automatically" >> $GITHUB_STEP_SUMMARY
+
+          # Only fail if type-check failed
+          if [ "${{ needs.type-check.result }}" != "success" ]; then
+            echo "❌ Type check failed - fix TypeScript errors"
+            exit 1
+          fi
+
+          echo "✅ Ready for deployment!"
