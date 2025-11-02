@@ -521,6 +521,39 @@ export const translations = {
       sendReminder: 'Enviar recordatorio a residentes',
     },
 
+    // Board Members
+    boardMembers: {
+      title: 'Miembros de la Junta',
+      description: 'Gestiona los contactos de la junta directiva. El AI usará esta información para responder preguntas de residentes.',
+      addMember: 'Agregar Miembro',
+      name: 'Nombre',
+      namePlaceholder: 'Nombre completo',
+      role: 'Cargo',
+      phone: 'Teléfono',
+      email: 'Email',
+      create: 'Crear',
+      update: 'Actualizar',
+      cancel: 'Cancelar',
+      noMembers: 'No hay miembros de la junta registrados',
+
+      // Roles
+      rolePresident: 'Presidente',
+      roleVicePresident: 'Vicepresidente',
+      roleTreasurer: 'Tesorero',
+      roleSecretary: 'Secretario',
+      roleMember: 'Vocal',
+
+      // Messages
+      successCreated: 'Miembro agregado exitosamente',
+      successUpdated: 'Miembro actualizado exitosamente',
+      successDeleted: 'Miembro eliminado exitosamente',
+      errorFetching: 'Error al cargar miembros',
+      errorSaving: 'Error al guardar miembro',
+      errorDeleting: 'Error al eliminar miembro',
+      errorMissingFields: 'El nombre y cargo son requeridos',
+      confirmDelete: '¿Seguro que deseas eliminar este miembro?',
+    },
+
     // Help & Support
     help: {
       title: 'Ayuda y Soporte',
@@ -1632,6 +1665,39 @@ Si es sobre reglas del edificio, envíalo a todos.`,
 
       // Actions
       sendReminder: 'Send reminder to residents',
+    },
+
+    // Board Members
+    boardMembers: {
+      title: 'Board Members',
+      description: 'Manage board members contacts. AI will use this information to answer resident questions.',
+      addMember: 'Add Member',
+      name: 'Name',
+      namePlaceholder: 'Full name',
+      role: 'Role',
+      phone: 'Phone',
+      email: 'Email',
+      create: 'Create',
+      update: 'Update',
+      cancel: 'Cancel',
+      noMembers: 'No board members registered',
+
+      // Roles
+      rolePresident: 'President',
+      roleVicePresident: 'Vice President',
+      roleTreasurer: 'Treasurer',
+      roleSecretary: 'Secretary',
+      roleMember: 'Member',
+
+      // Messages
+      successCreated: 'Member added successfully',
+      successUpdated: 'Member updated successfully',
+      successDeleted: 'Member deleted successfully',
+      errorFetching: 'Error loading members',
+      errorSaving: 'Error saving member',
+      errorDeleting: 'Error deleting member',
+      errorMissingFields: 'Name and role are required',
+      confirmDelete: 'Are you sure you want to delete this member?',
     },
 
     // Help & Support

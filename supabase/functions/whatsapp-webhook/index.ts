@@ -816,6 +816,29 @@ async function getAllKnowledgeBase(buildingId: string, supabase: any): Promise<a
 
 // Fetch next upcoming asamblea for a building
 // Used by AI to answer questions about upcoming meetings
+async function getBoardMembers(buildingId: string, supabase: any): Promise<any[]> {
+  try {
+    console.log(`[Board Members] 👥 Fetching board members for building ${buildingId}`);
+
+    const { data: members, error } = await supabase
+      .from('board_members')
+      .select('name, role, phone, email')
+      .eq('building_id', buildingId)
+      .order('created_at', { ascending: true });
+
+    if (error) {
+      console.error('[Board Members] ❌ Error fetching members:', error);
+      return [];
+    }
+
+    console.log(`[Board Members] ✅ Found ${members?.length || 0} board members`);
+    return members || [];
+  } catch (error) {
+    console.error('[Board Members] ❌ Fetch error:', error);
+    return [];
+  }
+}
+
 async function getNextAsamblea(buildingId: string, supabase: any): Promise<any | null> {
   try {
     console.log(`[Asamblea] 📅 Fetching next asamblea for building ${buildingId}`);
@@ -959,6 +982,38 @@ No meetings are currently scheduled.
     }
   }
 
+  // Fetch board members
+  let boardMembersContext = '';
+  if (buildingId && supabase) {
+    console.log('[AI Analysis] 👥 Fetching board members...');
+    const boardMembers = await getBoardMembers(buildingId, supabase);
+
+    if (boardMembers.length > 0) {
+      if (language === 'es') {
+        boardMembersContext = `
+MIEMBROS DE LA JUNTA DIRECTIVA:
+${boardMembers.map((member: any) => `
+- ${member.role}: ${member.name}${member.phone ? `\n  Teléfono: ${member.phone}` : ''}${member.email ? `\n  Email: ${member.email}` : ''}
+`).join('')}
+
+**Si el residente pregunta sobre la junta directiva o cómo contactar a un miembro, proporciona esta información.**
+`;
+      } else {
+        boardMembersContext = `
+BOARD MEMBERS:
+${boardMembers.map((member: any) => `
+- ${member.role}: ${member.name}${member.phone ? `\n  Phone: ${member.phone}` : ''}${member.email ? `\n  Email: ${member.email}` : ''}
+`).join('')}
+
+**If the resident asks about board members or how to contact them, provide this information.**
+`;
+      }
+      console.log('[AI Analysis] 👥 Board members context added to prompt');
+    } else {
+      console.log('[AI Analysis] ℹ️ No board members found');
+    }
+  }
+
   // 🚀 HAIKU 4.5 - Fast, cost-effective, similar quality to Sonnet for structured tasks
   // Performance: ~160-375ms (4-5x faster than Sonnet), 1/3 the cost
   // Perfect for real-time WhatsApp chat with structured JSON output
@@ -969,7 +1024,7 @@ No meetings are currently scheduled.
   console.log(`[AI Analysis] 💬 Conversation history: ${conversationHistory.length} messages`);
   console.log(`[AI Analysis] 🏗️ Maintenance model: ${maintenanceModel}`);
 
-  const prompt = buildAIPrompt(message, residentType, language, buildingContext, knowledgeContext, asambleaContext, conversationHistory, maintenanceModel);
+  const prompt = buildAIPrompt(message, residentType, language, buildingContext, knowledgeContext, asambleaContext, boardMembersContext, conversationHistory, maintenanceModel);
 
   try {
     console.log(`[AI Analysis] 🚀 Calling Anthropic API with model: ${selectedModel}`);
@@ -1031,6 +1086,7 @@ function buildAIPrompt(
   buildingContext?: string,
   knowledgeContext?: string,
   asambleaContext?: string,
+  boardMembersContext?: string,
   conversationHistory: Array<{ role: 'resident' | 'ai' | 'admin'; content: string }> = [],
   maintenanceModel: 'admin_managed' | 'resident_responsibility' = 'admin_managed'
 ): string {
@@ -1121,6 +1177,7 @@ CONTEXTO:
 - Edificio: ${buildingContext || 'N/A'}
 ${knowledgeContext || ''}
 ${asambleaContext || ''}
+${boardMembersContext || ''}
 ${historyContext}
 ${routingGuidance}
 
@@ -1225,6 +1282,7 @@ CONTEXT:
 - Building: ${buildingContext || 'N/A'}
 ${knowledgeContext || ''}
 ${asambleaContext || ''}
+${boardMembersContext || ''}
 ${historyContext}
 ${routingGuidance}
 

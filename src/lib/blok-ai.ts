@@ -41,6 +41,35 @@ async function getAllKnowledgeBase(buildingId: string): Promise<any[]> {
 }
 
 /**
+ * Fetches board members for a building
+ * Used by AI to answer questions about board members and their contact information
+ */
+async function getBoardMembers(buildingId: string): Promise<any[]> {
+  try {
+    console.log(`[Board Members] Fetching board members for building ${buildingId}`);
+
+    const supabase = await createClient();
+
+    const { data: members, error } = await supabase
+      .from('board_members')
+      .select('name, role, phone, email')
+      .eq('building_id', buildingId)
+      .order('created_at', { ascending: true });
+
+    if (error) {
+      console.error('[Board Members] Error fetching members:', error);
+      return [];
+    }
+
+    console.log(`[Board Members] ✅ Found ${members?.length || 0} board members`);
+    return members || [];
+  } catch (error) {
+    console.error('[Board Members] Fetch error:', error);
+    return [];
+  }
+}
+
+/**
  * Fetches the next upcoming asamblea for a building
  * Used by AI to answer questions about upcoming meetings
  */
@@ -176,6 +205,34 @@ No meetings are currently scheduled.
     }
   }
 
+  // Fetch board members
+  let boardMembersContext = '';
+  if (buildingId) {
+    const boardMembers = await getBoardMembers(buildingId);
+
+    if (boardMembers.length > 0) {
+      if (language === 'es') {
+        boardMembersContext = `
+MIEMBROS DE LA JUNTA DIRECTIVA:
+${boardMembers.map((member) => `
+- ${member.role}: ${member.name}${member.phone ? `\n  Teléfono: ${member.phone}` : ''}${member.email ? `\n  Email: ${member.email}` : ''}
+`).join('')}
+
+**Si el residente pregunta sobre la junta directiva o cómo contactar a un miembro, proporciona esta información.**
+`;
+      } else {
+        boardMembersContext = `
+BOARD MEMBERS:
+${boardMembers.map((member) => `
+- ${member.role}: ${member.name}${member.phone ? `\n  Phone: ${member.phone}` : ''}${member.email ? `\n  Email: ${member.email}` : ''}
+`).join('')}
+
+**If the resident asks about board members or how to contact them, provide this information.**
+`;
+      }
+    }
+  }
+
   const prompt = `
 You are an AI assistant for Blok, a Puerto Rico condominium management system.
 
@@ -185,6 +242,7 @@ CONTEXT:
 - Building: ${buildingContext || 'N/A'}
 ${knowledgeContext}
 ${asambleaContext}
+${boardMembersContext}
 
 MESSAGE FROM RESIDENT:
 "${message}"
