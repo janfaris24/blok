@@ -2,12 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
 
 /**
- * Create Knowledge Base Entry
- *
- * No embeddings needed - Claude Haiku 4.5 intelligently filters all entries
- * This is simpler, faster, and more reliable than embedding-based search
+ * Create a new asamblea
+ * POST /api/asambleas/create
  */
-
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
@@ -18,12 +15,12 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { category, question, answer, keywords, priority } = body;
+    const { meeting_date, meeting_type, location, agenda, meeting_link, notes, status } = body;
 
     // Validation
-    if (!category || !question || !answer) {
+    if (!meeting_date || !meeting_type || !location) {
       return NextResponse.json(
-        { error: 'Category, question, and answer are required' },
+        { error: 'meeting_date, meeting_type, and location are required' },
         { status: 400 }
       );
     }
@@ -39,29 +36,31 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Building not found' }, { status: 404 });
     }
 
-    // Create knowledge base entry (no embeddings needed)
-    const { data: entry, error } = await supabase
-      .from('knowledge_base')
+    // Create asamblea
+    const { data: asamblea, error } = await supabase
+      .from('asambleas')
       .insert({
         building_id: building.id,
-        category,
-        question,
-        answer,
-        keywords: keywords || [],
-        priority: priority || 0,
+        meeting_date,
+        meeting_type,
+        location,
+        agenda: agenda || [],
+        meeting_link,
+        notes,
+        status: status || 'scheduled',
         created_by: user.id,
       })
       .select()
       .single();
 
     if (error) {
-      console.error('Error creating knowledge base entry:', error);
+      console.error('Error creating asamblea:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ entry }, { status: 201 });
+    return NextResponse.json({ asamblea }, { status: 201 });
   } catch (error: any) {
-    console.error('Error in knowledge base create:', error);
+    console.error('Error in asamblea create:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

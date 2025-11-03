@@ -20,6 +20,7 @@ import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/contexts/language-context';
 import { BillingSection } from './billing-section';
 import { type UsageStats } from '@/lib/usage-tracking';
+import { BoardMembersManager } from './board-members-manager';
 
 interface SettingsManagerProps {
   building: any;
@@ -258,6 +259,9 @@ export function SettingsManager({ building, userEmail, userName, usageStats }: S
               </div>
             </CardContent>
           </Card>
+
+          {/* Board Members */}
+          <BoardMembersManager buildingId={building.id} />
         </div>
       </TabsContent>
 

@@ -49,6 +49,34 @@ interface AIAnalysisResult {
   };
 }
 
+/**
+ * Message formatting utility - adds visual indicators to distinguish AI from admin messages
+ */
+function formatMessageWithIndicator(
+  message: string,
+  senderType: 'ai' | 'admin' | 'resident',
+  language: 'es' | 'en' = 'es'
+): string {
+  // Residents don't get indicators (they're the ones receiving messages)
+  if (senderType === 'resident') {
+    return message;
+  }
+
+  // AI bot indicator - clean, just emoji
+  if (senderType === 'ai') {
+    return `🤖 ${message}`;
+  }
+
+  // Admin indicator - language-specific but shorter
+  if (senderType === 'admin') {
+    const adminLabel = language === 'es' ? 'Admin' : 'Admin';
+    return `👤 ${adminLabel}: ${message}`;
+  }
+
+  // Fallback: return message as-is
+  return message;
+}
+
 // Main webhook handler
 Deno.serve(async (req: Request) => {
   try {
@@ -421,8 +449,13 @@ Deno.serve(async (req: Request) => {
               ? 'Puedes contactar directamente a cualquiera de estos proveedores.'
               : 'You can contact any of these providers directly.';
 
-            // Send providers message
-            await sendWhatsAppMessage(phoneNumber, buildingNumber, providersMessage);
+            // Format and send providers message with AI indicator
+            const formattedProvidersMsg = formatMessageWithIndicator(
+              providersMessage,
+              'ai',
+              language
+            );
+            await sendWhatsAppMessage(phoneNumber, buildingNumber, formattedProvidersMsg);
 
             // Save providers message to conversation
             await supabase.from('messages').insert({
@@ -459,8 +492,13 @@ Deno.serve(async (req: Request) => {
 
       console.log(`✅ [${Date.now() - startTime}ms] Found ${requests.length} of ${total} active requests`);
 
-      // Send status response immediately
-      await sendWhatsAppMessage(phoneNumber, buildingNumber, statusResponse);
+      // Format and send status response with AI indicator
+      const formattedStatusResponse = formatMessageWithIndicator(
+        statusResponse,
+        'ai',
+        resident.preferred_language || 'es'
+      );
+      await sendWhatsAppMessage(phoneNumber, buildingNumber, formattedStatusResponse);
 
       // Save status response message
       await supabase.from('messages').insert({
@@ -517,7 +555,13 @@ Deno.serve(async (req: Request) => {
           ? `✅ Perfecto, he registrado tu pago de $${pendingFee.total_amount.toFixed(2)}. La administración confirmará la recepción pronto. ¡Gracias!`
           : `✅ Perfect, I've recorded your payment of $${pendingFee.total_amount.toFixed(2)}. Administration will confirm receipt soon. Thank you!`;
 
-        await sendWhatsAppMessage(phoneNumber, buildingNumber, confirmationMessage);
+        // Format and send with AI indicator
+        const formattedConfirmation = formatMessageWithIndicator(
+          confirmationMessage,
+          'ai',
+          language
+        );
+        await sendWhatsAppMessage(phoneNumber, buildingNumber, formattedConfirmation);
 
         // Save confirmation message
         await supabase.from('messages').insert({
@@ -592,7 +636,13 @@ Deno.serve(async (req: Request) => {
               ? `✅ ¡Excelente! He marcado tu solicitud de ${issueDescription} como resuelta. Gracias por informarnos.`
               : `✅ Excellent! I've marked your request for ${issueDescription} as resolved. Thank you for letting us know.`;
 
-            await sendWhatsAppMessage(phoneNumber, buildingNumber, confirmationMessage);
+            // Format and send with AI indicator
+            const formattedConfirmation = formatMessageWithIndicator(
+              confirmationMessage,
+              'ai',
+              language
+            );
+            await sendWhatsAppMessage(phoneNumber, buildingNumber, formattedConfirmation);
 
             // Save confirmation message
             await supabase.from('messages').insert({
@@ -613,7 +663,13 @@ Deno.serve(async (req: Request) => {
             ? `Me alegro que todo esté funcionando bien. Si necesitas algo más, no dudes en escribir.`
             : `I'm glad everything is working well. If you need anything else, don't hesitate to reach out.`;
 
-          await sendWhatsAppMessage(phoneNumber, buildingNumber, acknowledgmentMessage);
+          // Format and send with AI indicator
+          const formattedAcknowledgment = formatMessageWithIndicator(
+            acknowledgmentMessage,
+            'ai',
+            language
+          );
+          await sendWhatsAppMessage(phoneNumber, buildingNumber, formattedAcknowledgment);
 
           await supabase.from('messages').insert({
             conversation_id: conversation.id,
@@ -642,16 +698,26 @@ Deno.serve(async (req: Request) => {
     let responseMessage: string;
 
     if (!analysis.requiresHumanReview && analysis.suggestedResponse) {
-      // Send AI's suggested response
-      responseMessage = analysis.suggestedResponse;
-      console.log(`⚡ [${Date.now() - startTime}ms] Sending AI auto-response`);
+      // Send AI's suggested response with indicator
+      responseMessage = formatMessageWithIndicator(
+        analysis.suggestedResponse,
+        'ai',
+        resident.preferred_language || 'es'
+      );
+      console.log(`⚡ [${Date.now() - startTime}ms] Sending AI auto-response (with 🤖 indicator)`);
     } else {
       // Send acknowledgment for issues requiring human review
-      responseMessage = resident.preferred_language === 'en'
+      const ackMessage = resident.preferred_language === 'en'
         ? `Thank you for contacting us. Your ${analysis.intent === 'maintenance_request' ? 'maintenance request' : 'message'} has been received and forwarded to our team. We'll respond as soon as possible.`
         : `Gracias por contactarnos. Tu ${analysis.intent === 'maintenance_request' ? 'solicitud de mantenimiento' : 'mensaje'} ha sido recibida y enviada a nuestro equipo. Te responderemos lo antes posible.`;
 
-      console.log(`⚡ [${Date.now() - startTime}ms] Sending final acknowledgment (requires human review)`);
+      responseMessage = formatMessageWithIndicator(
+        ackMessage,
+        'ai',
+        resident.preferred_language || 'es'
+      );
+
+      console.log(`⚡ [${Date.now() - startTime}ms] Sending final acknowledgment (requires human review, with 🤖 indicator)`);
     }
 
     await sendWhatsAppMessage(
@@ -718,131 +784,91 @@ function parseWebhookData(body: string): IncomingMessageData | null {
   }
 }
 
-// Generate embedding using OpenAI
-async function generateEmbedding(text: string): Promise<number[] | null> {
+// Fetch ALL knowledge base entries for a building
+// Let Claude Haiku 4.5 intelligently decide which ones are relevant
+// This is simpler, faster, and more reliable than embeddings
+async function getAllKnowledgeBase(buildingId: string, supabase: any): Promise<any[]> {
   try {
-    console.log('[Embedding] 🔧 Starting embedding generation...');
-    console.log('[Embedding] 📝 Text to embed:', text.substring(0, 100));
+    console.log(`[Knowledge Base] 📚 Fetching all entries for building ${buildingId}`);
 
-    const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
-
-    if (!openaiApiKey) {
-      console.warn('[Embedding] ⚠️ OPENAI_API_KEY not configured, falling back to keyword search');
-      return null;
-    }
-
-    console.log('[Embedding] 🔑 OpenAI key found, making API call...');
-
-    const response = await fetch('https://api.openai.com/v1/embeddings', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openaiApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'text-embedding-3-small',
-        input: text,
-        encoding_format: 'float',
-      }),
-    });
-
-    console.log('[Embedding] 📡 OpenAI response status:', response.status);
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('[Embedding] ❌ OpenAI API error:', response.status, errorText);
-      throw new Error(`OpenAI API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    const embedding = data.data[0].embedding;
-    console.log('[Embedding] ✅ Embedding generated successfully, dimensions:', embedding.length);
-
-    return embedding;
-  } catch (error) {
-    console.error('[Embedding] ❌ Error generating embedding:', error);
-    console.error('[Embedding] ❌ Error details:', JSON.stringify(error));
-    return null;
-  }
-}
-
-// Search knowledge base for relevant information using semantic search
-async function searchKnowledgeBase(query: string, buildingId: string, supabase: any): Promise<any[]> {
-  try {
-    console.log('[KB Search] 🔍 Starting knowledge base search...');
-    console.log('[KB Search] 📝 Query:', query);
-    console.log('[KB Search] 🏢 Building ID:', buildingId);
-
-    // Try semantic search first
-    const embedding = await generateEmbedding(query);
-
-    if (embedding) {
-      console.log('[KB Search] 🎯 Using semantic search with embeddings');
-      console.log('[KB Search] 📊 Embedding dimensions:', embedding.length);
-
-      // Use the match_knowledge function for semantic search
-      console.log('[KB Search] 🔧 Calling match_knowledge RPC function...');
-      const { data: entries, error } = await supabase.rpc('match_knowledge', {
-        query_embedding: embedding,
-        match_threshold: 0.5, // Lowered from 0.7 to 0.5 (50% similarity)
-        match_count: 5,
-        filter_building_id: buildingId,
-      });
-
-      console.log('[KB Search] 📡 RPC response received');
-
-      if (error) {
-        console.error('[KB Search] ❌ Semantic search error:', error);
-        console.error('[KB Search] ❌ Error details:', JSON.stringify(error));
-      } else {
-        console.log('[KB Search] 📦 Semantic search returned:', entries?.length || 0, 'entries');
-        if (entries && entries.length > 0) {
-          console.log('[KB Search] ✅ Semantic search successful!');
-          console.log('[KB Search] 📄 Results with similarity scores:');
-          entries.forEach((entry: any, idx: number) => {
-            console.log(`[KB Search]   ${idx + 1}. [${(entry.similarity * 100).toFixed(1)}%] ${entry.question?.substring(0, 60)}`);
-          });
-          return entries;
-        } else {
-          console.log('[KB Search] ⚠️ Semantic search returned 0 results (threshold: 0.5)');
-        }
-      }
-    } else {
-      console.log('[KB Search] ⚠️ No embedding generated, skipping semantic search');
-    }
-
-    // Fallback to keyword search
-    console.log('[KB Search] 🔍 Falling back to keyword search');
-    console.log('[KB Search] 📝 Keyword query pattern:', `question.ilike.%${query}%`);
-
+    // Fetch all active knowledge base entries for this building
+    // Order by priority to give Claude the most important info first
     const { data: entries, error } = await supabase
       .from('knowledge_base')
-      .select('*')
+      .select('question, answer, category, priority')
       .eq('building_id', buildingId)
       .eq('active', true)
-      .or(`question.ilike.%${query}%,answer.ilike.%${query}%,keywords.cs.{${query}}`)
       .order('priority', { ascending: false })
-      .limit(5);
-
-    console.log('[KB Search] 📡 Keyword search response received');
+      .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('[KB Search] ❌ Keyword search error:', error);
-      console.error('[KB Search] ❌ Error details:', JSON.stringify(error));
+      console.error('[Knowledge Base] ❌ Error fetching entries:', error);
       return [];
     }
 
-    console.log('[KB Search] 📦 Keyword search returned:', entries?.length || 0, 'entries');
-    if (entries && entries.length > 0) {
-      console.log('[KB Search] ✅ Keyword search successful!');
-      console.log('[KB Search] 📄 First result:', entries[0].question?.substring(0, 50));
-    }
-
+    console.log(`[Knowledge Base] ✅ Found ${entries?.length || 0} total entries`);
     return entries || [];
   } catch (error) {
-    console.error('[KB Search] ❌ Knowledge base search error:', error);
-    console.error('[KB Search] ❌ Error stack:', error instanceof Error ? error.stack : 'No stack');
+    console.error('[Knowledge Base] ❌ Fetch error:', error);
     return [];
+  }
+}
+
+// Fetch next upcoming asamblea for a building
+// Used by AI to answer questions about upcoming meetings
+async function getBoardMembers(buildingId: string, supabase: any): Promise<any[]> {
+  try {
+    console.log(`[Board Members] 👥 Fetching board members for building ${buildingId}`);
+
+    const { data: members, error } = await supabase
+      .from('board_members')
+      .select('name, role, phone, email')
+      .eq('building_id', buildingId)
+      .order('created_at', { ascending: true });
+
+    if (error) {
+      console.error('[Board Members] ❌ Error fetching members:', error);
+      return [];
+    }
+
+    console.log(`[Board Members] ✅ Found ${members?.length || 0} board members`);
+    return members || [];
+  } catch (error) {
+    console.error('[Board Members] ❌ Fetch error:', error);
+    return [];
+  }
+}
+
+async function getNextAsamblea(buildingId: string, supabase: any): Promise<any | null> {
+  try {
+    console.log(`[Asamblea] 📅 Fetching next asamblea for building ${buildingId}`);
+
+    // Fetch next scheduled asamblea in the future
+    const { data: nextMeeting, error } = await supabase
+      .from('asambleas')
+      .select('meeting_date, meeting_type, location, agenda, meeting_link')
+      .eq('building_id', buildingId)
+      .eq('status', 'scheduled')
+      .gte('meeting_date', new Date().toISOString())
+      .order('meeting_date', { ascending: true })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) {
+      console.error('[Asamblea] ❌ Error fetching next asamblea:', error);
+      return null;
+    }
+
+    if (nextMeeting) {
+      console.log(`[Asamblea] ✅ Found next asamblea on ${nextMeeting.meeting_date}`);
+    } else {
+      console.log(`[Asamblea] ℹ️ No upcoming asamblea scheduled`);
+    }
+
+    return nextMeeting;
+  } catch (error) {
+    console.error('[Asamblea] ❌ Fetch error:', error);
+    return null;
   }
 }
 
@@ -864,31 +890,128 @@ async function analyzeMessage(
     return getFallbackResponse(language);
   }
 
-  // Search knowledge base for relevant information
+  // Fetch ALL knowledge base entries for this building
+  // Let Claude intelligently decide which ones are relevant
   let knowledgeContext = '';
   let knowledgeEntries: any[] = [];
 
   if (buildingId && supabase) {
-    console.log('[AI Analysis] 📚 Searching knowledge base...');
-    knowledgeEntries = await searchKnowledgeBase(message, buildingId, supabase);
+    console.log('[AI Analysis] 📚 Fetching all knowledge base entries...');
+    knowledgeEntries = await getAllKnowledgeBase(buildingId, supabase);
 
     if (knowledgeEntries.length > 0) {
-      console.log(`[AI Analysis] ✅ Found ${knowledgeEntries.length} knowledge base entries`);
-      console.log('[AI Analysis] 📄 Entries:', knowledgeEntries.map(e => e.question?.substring(0, 50)));
+      console.log(`[AI Analysis] ✅ Found ${knowledgeEntries.length} total knowledge base entries`);
       knowledgeContext = `
-BASE DE CONOCIMIENTO DEL EDIFICIO (Usa esta información para responder preguntas):
+BASE DE CONOCIMIENTO DEL EDIFICIO (${knowledgeEntries.length} entradas - usa SOLO las relevantes):
 ${knowledgeEntries.map((entry, idx) => `
 ${idx + 1}. Pregunta: ${entry.question}
    Respuesta: ${entry.answer}
    Categoría: ${entry.category}
+   Prioridad: ${entry.priority || 'normal'}
 `).join('\n')}
+
+**IMPORTANTE**: Solo usa las entradas de la base de conocimiento que sean DIRECTAMENTE relevantes a la pregunta del residente. Ignora las entradas irrelevantes.
 `;
       console.log('[AI Analysis] 📝 Knowledge context added to prompt (length:', knowledgeContext.length, 'chars)');
     } else {
       console.log('[AI Analysis] ⚠️ No knowledge base entries found');
     }
   } else {
-    console.log('[AI Analysis] ⚠️ Skipping knowledge base search (buildingId or supabase missing)');
+    console.log('[AI Analysis] ⚠️ Skipping knowledge base fetch (buildingId or supabase missing)');
+  }
+
+  // Fetch next upcoming asamblea
+  let asambleaContext = '';
+  if (buildingId && supabase) {
+    console.log('[AI Analysis] 📅 Fetching next asamblea...');
+    const nextAsamblea = await getNextAsamblea(buildingId, supabase);
+
+    if (nextAsamblea) {
+      const meetingDate = new Date(nextAsamblea.meeting_date);
+      const formatted = meetingDate.toLocaleDateString(language === 'es' ? 'es-PR' : 'en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+
+      if (language === 'es') {
+        asambleaContext = `
+PRÓXIMA ASAMBLEA PROGRAMADA:
+- Fecha: ${formatted}
+- Tipo: ${nextAsamblea.meeting_type === 'ordinaria' ? 'Ordinaria' : 'Extraordinaria'}
+- Lugar: ${nextAsamblea.location}
+${nextAsamblea.agenda?.length ? `- Agenda:\n${nextAsamblea.agenda.map((item: string, i: number) => `  ${i + 1}. ${item}`).join('\n')}` : ''}
+${nextAsamblea.meeting_link ? `- Link virtual: ${nextAsamblea.meeting_link}` : ''}
+
+**Si el residente pregunta sobre la asamblea, proporciona TODA esta información de forma clara y completa.**
+`;
+      } else {
+        asambleaContext = `
+NEXT SCHEDULED MEETING:
+- Date: ${formatted}
+- Type: ${nextAsamblea.meeting_type === 'ordinaria' ? 'Regular' : 'Special'}
+- Location: ${nextAsamblea.location}
+${nextAsamblea.agenda?.length ? `- Agenda:\n${nextAsamblea.agenda.map((item: string, i: number) => `  ${i + 1}. ${item}`).join('\n')}` : ''}
+${nextAsamblea.meeting_link ? `- Virtual link: ${nextAsamblea.meeting_link}` : ''}
+
+**If the resident asks about the meeting, provide ALL this information clearly and completely.**
+`;
+      }
+      console.log('[AI Analysis] 📅 Asamblea context added to prompt');
+    } else {
+      // Explicitly tell the AI there's no meeting scheduled
+      if (language === 'es') {
+        asambleaContext = `
+ASAMBLEAS:
+No hay asambleas programadas en este momento.
+
+**Si el residente pregunta sobre asambleas, informa que actualmente no hay ninguna programada.**
+`;
+      } else {
+        asambleaContext = `
+MEETINGS:
+No meetings are currently scheduled.
+
+**If the resident asks about meetings, inform them that none are currently scheduled.**
+`;
+      }
+      console.log('[AI Analysis] ℹ️ No upcoming asamblea found - added explicit context');
+    }
+  }
+
+  // Fetch board members
+  let boardMembersContext = '';
+  if (buildingId && supabase) {
+    console.log('[AI Analysis] 👥 Fetching board members...');
+    const boardMembers = await getBoardMembers(buildingId, supabase);
+
+    if (boardMembers.length > 0) {
+      if (language === 'es') {
+        boardMembersContext = `
+MIEMBROS DE LA JUNTA DIRECTIVA:
+${boardMembers.map((member: any) => `
+- ${member.role}: ${member.name}${member.phone ? `\n  Teléfono: ${member.phone}` : ''}${member.email ? `\n  Email: ${member.email}` : ''}
+`).join('')}
+
+**Si el residente pregunta sobre la junta directiva o cómo contactar a un miembro, proporciona esta información.**
+`;
+      } else {
+        boardMembersContext = `
+BOARD MEMBERS:
+${boardMembers.map((member: any) => `
+- ${member.role}: ${member.name}${member.phone ? `\n  Phone: ${member.phone}` : ''}${member.email ? `\n  Email: ${member.email}` : ''}
+`).join('')}
+
+**If the resident asks about board members or how to contact them, provide this information.**
+`;
+      }
+      console.log('[AI Analysis] 👥 Board members context added to prompt');
+    } else {
+      console.log('[AI Analysis] ℹ️ No board members found');
+    }
   }
 
   // 🚀 HAIKU 4.5 - Fast, cost-effective, similar quality to Sonnet for structured tasks
@@ -901,7 +1024,7 @@ ${idx + 1}. Pregunta: ${entry.question}
   console.log(`[AI Analysis] 💬 Conversation history: ${conversationHistory.length} messages`);
   console.log(`[AI Analysis] 🏗️ Maintenance model: ${maintenanceModel}`);
 
-  const prompt = buildAIPrompt(message, residentType, language, buildingContext, knowledgeContext, conversationHistory, maintenanceModel);
+  const prompt = buildAIPrompt(message, residentType, language, buildingContext, knowledgeContext, asambleaContext, boardMembersContext, conversationHistory, maintenanceModel);
 
   try {
     console.log(`[AI Analysis] 🚀 Calling Anthropic API with model: ${selectedModel}`);
@@ -962,6 +1085,8 @@ function buildAIPrompt(
   language: 'es' | 'en',
   buildingContext?: string,
   knowledgeContext?: string,
+  asambleaContext?: string,
+  boardMembersContext?: string,
   conversationHistory: Array<{ role: 'resident' | 'ai' | 'admin'; content: string }> = [],
   maintenanceModel: 'admin_managed' | 'resident_responsibility' = 'admin_managed'
 ): string {
@@ -1051,6 +1176,8 @@ CONTEXTO:
 - Idioma: Español
 - Edificio: ${buildingContext || 'N/A'}
 ${knowledgeContext || ''}
+${asambleaContext || ''}
+${boardMembersContext || ''}
 ${historyContext}
 ${routingGuidance}
 
@@ -1079,7 +1206,10 @@ TAREA: Analiza este mensaje y responde en formato JSON con estos campos:
    - ❌ NO es issue_resolved: "todavía no lo arreglan", "sigue roto", "aún no funciona", "está mejor pero no perfecto"
    - ⚠️ Contexto: Solo usa issue_resolved si hay indicación CLARA que algo se resolvió completamente
 
-2. **priority**: low | medium | high | emergency
+2. **priority**: Establece apropiadamente:
+   - **low/medium** = Preguntas generales respondidas por la base de conocimiento
+   - **high** = Problemas de mantenimiento, solicitudes urgentes
+   - **emergency** = Incendio, inundación, amenazas de seguridad
 
 3. **routeTo**: ¿Quién debe manejar esto?
    - 'admin' = Administrador debe responder
@@ -1089,12 +1219,18 @@ TAREA: Analiza este mensaje y responde en formato JSON con estos campos:
 
 4. **suggestedResponse**: Respuesta útil en español (2-3 oraciones)
    - Profesional, cálida y concisa
-   - **IMPORTANTE**: Si la BASE DE CONOCIMIENTO DEL EDIFICIO contiene información relevante, ÚSALA para responder la pregunta con precisión
+   - **CRÍTICO**: Si la BASE DE CONOCIMIENTO DEL EDIFICIO contiene una respuesta directa a la pregunta del residente:
+     * RESPONDE LA PREGUNTA usando la información de la base de conocimiento
+     * NO digas "admin revisará" o "te responderemos después"
+     * Provee la respuesta específica de la base de conocimiento
    - Si es mantenimiento, confirma recepción y di que admin revisará
-   - Si es pregunta que puedes responder con info de la base de conocimiento, provee esa respuesta específica
-   - Si no sabes, di que admin responderá en 24 horas
+   - Si no tienes info de KB para responder, di que admin responderá en 24 horas
 
-5. **requiresHumanReview**: true si admin DEBE revisar (emergencias, quejas, problemas complejos)
+5. **requiresHumanReview**: Establece esto cuidadosamente según estas reglas:
+   - **FALSE** = Preguntas respondidas por la base de conocimiento (horarios, cuotas, basura, etc.)
+   - **FALSE** = Preguntas generales simples que puedes responder
+   - **TRUE** = Solicitudes de mantenimiento, emergencias, quejas, problemas complejos
+   - **TRUE** = Preguntas NO cubiertas por la base de conocimiento que necesitan input del admin
 
 6. **extractedData**: Extrae detalles relevantes (categoría, urgencia, ubicación, etc.)
    - **recommendProviders** (boolean): true si debe recomendar proveedores (según reglas de enrutamiento arriba)
@@ -1145,6 +1281,8 @@ CONTEXT:
 - Language: English
 - Building: ${buildingContext || 'N/A'}
 ${knowledgeContext || ''}
+${asambleaContext || ''}
+${boardMembersContext || ''}
 ${historyContext}
 ${routingGuidance}
 
@@ -1173,7 +1311,10 @@ TASK: Analyze this message and respond in JSON format with these fields:
    - ❌ NO is issue_resolved: "still not fixed", "still broken", "not working yet", "it's better but not perfect"
    - ⚠️ Context: Only use issue_resolved if there's CLEAR indication something is completely resolved
 
-2. **priority**: low | medium | high | emergency
+2. **priority**: Set appropriately:
+   - **low/medium** = General questions answered by knowledge base
+   - **high** = Maintenance issues, urgent requests
+   - **emergency** = Fire, flood, security threats
 
 3. **routeTo**: Who should handle this?
    - 'admin' = Building admin/manager must respond
@@ -1183,12 +1324,18 @@ TASK: Analyze this message and respond in JSON format with these fields:
 
 4. **suggestedResponse**: Helpful response in English (2-3 sentences)
    - Professional, warm, and concise
-   - **IMPORTANT**: If the BUILDING KNOWLEDGE BASE contains relevant information, USE IT to answer the question accurately
+   - **CRITICAL**: If the BUILDING KNOWLEDGE BASE contains a direct answer to the resident's question:
+     * ANSWER THE QUESTION using the KB information
+     * DO NOT say "admin will review" or "we'll get back to you"
+     * Provide the specific answer from the knowledge base
    - If maintenance, acknowledge and say admin will review
-   - If question you can answer with knowledge base info, provide that specific answer
-   - If you don't know, say admin will follow up within 24 hours
+   - If you don't have KB info to answer, say admin will follow up within 24 hours
 
-5. **requiresHumanReview**: true if admin MUST review (emergencies, complaints, complex issues)
+5. **requiresHumanReview**: Set this carefully based on these rules:
+   - **FALSE** = Questions answered by knowledge base (pool hours, fees, trash schedule, etc.)
+   - **FALSE** = Simple general questions you can answer
+   - **TRUE** = Maintenance requests, emergencies, complaints, complex issues
+   - **TRUE** = Questions NOT covered by knowledge base that need admin input
 
 6. **extractedData**: Extract relevant details (category, urgency, location, etc.)
    - **recommendProviders** (boolean): true if should recommend providers (based on routing rules above)
@@ -1286,10 +1433,17 @@ async function routeToOwner(
     if (owner.whatsapp_number && owner.opted_in_whatsapp) {
       const forwardMessage = `📨 *Mensaje de inquilino - Unidad ${unit.unit_number}*\n\n${message}\n\n_Este mensaje fue enviado por ${resident.first_name} ${resident.last_name}_`;
 
+      // Format with admin indicator since this is a system notification
+      const formattedForward = formatMessageWithIndicator(
+        forwardMessage,
+        'admin',
+        owner.preferred_language ||'es'
+      );
+
       await sendWhatsAppMessage(
         owner.whatsapp_number,
         building.whatsapp_business_number,
-        forwardMessage
+        formattedForward
       );
 
       console.log(`✅ Message forwarded to owner: ${owner.first_name} ${owner.last_name}`);

@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase-client';
 import { BroadcastComposer } from '@/components/dashboard/broadcast-composer';
 import { BroadcastsList } from '@/components/dashboard/broadcasts-list';
@@ -9,13 +10,19 @@ import { UpgradePrompt } from '@/components/upgrade-prompt';
 import { CardSkeleton } from '@/components/ui/skeleton';
 import type { Broadcast } from '@/types/blok';
 
-export default function BroadcastsPage() {
+function BroadcastsContent() {
+  const searchParams = useSearchParams();
   const [building, setBuilding] = useState<any>(null);
   const [units, setUnits] = useState<any[]>([]);
   const [broadcasts, setBroadcasts] = useState<Broadcast[]>([]);
   const [broadcastCount, setBroadcastCount] = useState(0);
   const [hasAccess, setHasAccess] = useState(true);
   const [loading, setLoading] = useState(true);
+
+  // Read prefill data from URL params
+  const initialTitle = searchParams.get('title') || '';
+  const initialMessage = searchParams.get('message') || '';
+  const initialTarget = (searchParams.get('target') as 'all' | 'owners' | 'renters' | 'specific_units') || 'all';
 
   // Fetch broadcasts from server
   const fetchBroadcasts = async (buildingId: string) => {
@@ -134,6 +141,9 @@ export default function BroadcastsPage() {
             buildingId={building.id}
             units={units}
             onBroadcastSent={handleBroadcastSent}
+            initialTitle={initialTitle}
+            initialMessage={initialMessage}
+            initialTarget={initialTarget}
           />
 
           {/* Recent Broadcasts */}
@@ -141,5 +151,24 @@ export default function BroadcastsPage() {
         </>
       )}
     </div>
+  );
+}
+
+export default function BroadcastsPage() {
+  return (
+    <Suspense fallback={
+      <div className="space-y-6 pb-24 lg:pb-8">
+        <div>
+          <h1 className="text-2xl font-bold mb-1">Anuncios</h1>
+          <p className="text-sm text-muted-foreground">
+            Envía mensajes masivos a tus residentes
+          </p>
+        </div>
+        <CardSkeleton />
+        <CardSkeleton />
+      </div>
+    }>
+      <BroadcastsContent />
+    </Suspense>
   );
 }

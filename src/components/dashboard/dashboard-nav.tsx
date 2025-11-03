@@ -19,7 +19,8 @@ import {
   UserCog,
   ChevronLeft,
   ChevronRight,
-  DollarSign
+  DollarSign,
+  Calendar
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -122,6 +123,11 @@ export function DashboardNav({ buildingName, buildingId, userEmail, userName }: 
           title: t.nav.knowledge,
           href: '/dashboard/knowledge',
           icon: BookOpen,
+        },
+        {
+          title: t.nav.meetings,
+          href: '/dashboard/meetings',
+          icon: Calendar,
         },
       ],
     },

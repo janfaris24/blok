@@ -297,7 +297,7 @@ export function KnowledgeBaseManager({ initialEntries, buildingId }: KnowledgeBa
                     {editingEntry ? 'Editar Entrada' : 'Nueva Entrada'}
                   </DialogTitle>
                   <DialogDescription>
-                    El AI usará esta información para responder preguntas de los residentes
+                    Claude AI usará esta información para responder preguntas automáticamente
                   </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -349,7 +349,7 @@ export function KnowledgeBaseManager({ initialEntries, buildingId }: KnowledgeBa
                       placeholder="basura, trash, recoger, camión"
                     />
                     <p className="text-xs text-muted-foreground mt-1">
-                      Ayuda al AI a encontrar esta respuesta
+                      Palabras relacionadas que ayudan a identificar esta información (opcional)
                     </p>
                   </div>
                   <div>
@@ -365,7 +365,7 @@ export function KnowledgeBaseManager({ initialEntries, buildingId }: KnowledgeBa
                       }
                     />
                     <p className="text-xs text-muted-foreground mt-1">
-                      Mayor prioridad = aparece primero
+                      Mayor prioridad = el AI ve esta información primero (10 = más importante)
                     </p>
                   </div>
                   <div className="flex gap-2 justify-end">
