@@ -9,8 +9,8 @@ export function SocialProof() {
   const stats = [
     {
       icon: Users,
-      value: "500+",
-      label: language === 'es' ? "Residentes Activos" : "Active Residents",
+      value: "Beta",
+      label: language === 'es' ? "Fase de Pruebas" : "Testing Phase",
     },
     {
       icon: Clock,
